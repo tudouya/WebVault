@@ -142,6 +142,14 @@ export function HomePage({
   // 使用模拟数据作为默认值，如果没有提供 websites prop
   const displayWebsites = websites || getMockWebsites(12);
 
+  // 更新分页状态以反映当前数据
+  React.useEffect(() => {
+    if (displayWebsites) {
+      // 这里可以添加更新分页总数的逻辑
+      // 暂时使用静态值，后续可以根据实际数据动态计算
+    }
+  }, [displayWebsites]);
+
   // 移动端侧边栏状态
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = React.useState(false);
 

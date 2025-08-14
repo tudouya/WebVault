@@ -176,45 +176,72 @@ export function SidebarFilters({
             </Button>
           </div>
 
-          {/* 分类层次结构 */}
-          <div className="space-y-2">
+          {/* 分类层次结构 - 改进版 */}
+          <div className="space-y-1">
             {mockCategories.map((group) => (
               <div key={group.id} className="space-y-1">
-                {/* 分组标题 */}
+                {/* 分组标题 - 更现代的卡片式设计 */}
                 <button
                   className={cn(
-                    "flex w-full items-center justify-between py-2 px-3 text-sm font-medium",
-                    "hover:bg-muted rounded-md transition-colors",
-                    expandedGroups.has(group.id) ? "text-foreground" : "text-muted-foreground"
+                    "group flex w-full items-center justify-between py-3 px-4 text-sm font-semibold",
+                    "bg-muted/30 hover:bg-muted/60 rounded-lg transition-all duration-200",
+                    "border border-transparent hover:border-border/50",
+                    expandedGroups.has(group.id) 
+                      ? "text-foreground bg-muted/60 border-border/50 shadow-sm" 
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                   onClick={() => toggleGroup(group.id)}
                   disabled={isLoading}
                 >
-                  <span>{group.name}</span>
-                  {expandedGroups.has(group.id) ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
+                  <span className="flex items-center gap-2">
+                    {/* 分组图标 */}
+                    <div className={cn(
+                      "w-2 h-2 rounded-full transition-colors duration-200",
+                      expandedGroups.has(group.id) ? "bg-primary" : "bg-muted-foreground/40"
+                    )} />
+                    {group.name}
+                  </span>
+                  <div className={cn(
+                    "transition-transform duration-200",
+                    expandedGroups.has(group.id) && "rotate-180"
+                  )}>
+                    <ChevronDown className={cn(
+                      "h-4 w-4 transition-colors duration-200",
+                      expandedGroups.has(group.id) ? "text-foreground" : "text-muted-foreground"
+                    )} />
+                  </div>
                 </button>
 
-                {/* 子分类 */}
+                {/* 子分类 - 更精致的子项设计 */}
                 {expandedGroups.has(group.id) && (
-                  <div className="ml-4 space-y-1">
-                    {group.children.map((child) => (
+                  <div className="ml-2 space-y-1 animate-in slide-in-from-top-2 duration-200">
+                    {group.children.map((child, index) => (
                       <button
                         key={child.id}
                         className={cn(
-                          "flex w-full items-center justify-start py-1.5 px-3 text-sm",
-                          "hover:bg-muted rounded-md transition-colors text-left",
+                          "flex w-full items-center gap-3 py-2.5 px-4 text-sm",
+                          "rounded-md transition-all duration-200 text-left group relative",
                           selectedCategory === child.id 
-                            ? "text-primary font-medium bg-primary/10" 
-                            : "text-muted-foreground"
+                            ? "text-primary font-medium bg-primary/10 border-l-2 border-primary shadow-sm" 
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
                         )}
                         onClick={() => handleCategorySelect(child.id)}
                         disabled={isLoading}
+                        style={{ 
+                          animationDelay: `${index * 50}ms`,
+                          animationFillMode: 'both'
+                        }}
                       >
-                        {child.name}
+                        {/* 连接线效果 */}
+                        <div className={cn(
+                          "w-3 h-px bg-border transition-colors duration-200",
+                          selectedCategory === child.id ? "bg-primary/30" : "group-hover:bg-border"
+                        )} />
+                        <span className="flex-1">{child.name}</span>
+                        {/* 项目计数 - 可选 */}
+                        {selectedCategory === child.id && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                        )}
                       </button>
                     ))}
                   </div>

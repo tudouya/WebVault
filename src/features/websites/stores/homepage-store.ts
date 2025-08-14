@@ -145,8 +145,8 @@ export interface HomepageState extends FilterState {
 const DEFAULT_PAGINATION: PaginationState = {
   currentPage: 1,
   itemsPerPage: 12,
-  totalItems: 0,
-  totalPages: 0,
+  totalItems: 24, // 模拟总数据量，支持多页显示
+  totalPages: 2,  // 计算得出的总页数 (24/12 = 2)
 };
 
 /**
