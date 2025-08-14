@@ -56,7 +56,7 @@ export function WebsiteCard({ website, className, style, onVisit, onTagClick }: 
 
       <CardContent className="p-6">
         {/* 头部区域 - 图标和标题 */}
-        <div className="flex items-start gap-4 mb-4">
+        <div className="flex items-center gap-4 mb-4">
           {/* 网站图标 */}
           <div 
             className={cn(
@@ -90,7 +90,7 @@ export function WebsiteCard({ website, className, style, onVisit, onTagClick }: 
               {website.title}
             </h3>
             {website.description && (
-              <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
+              <p className="text-sm text-muted-foreground line-clamp-3">
                 {website.description}
               </p>
             )}
