@@ -124,14 +124,14 @@ export function Footer({ className = '' }: FooterProps) {
             {/* Logo */}
             <div className="flex items-center space-x-2">
               <div className="flex h-8 w-8 items-center justify-center rounded bg-foreground">
-                <span className="text-sm font-bold text-background">DIR</span>
+                <span className="text-sm font-bold text-background">WV</span>
               </div>
-              <span className="text-xl font-bold text-foreground">Directory</span>
+              <span className="text-xl font-bold text-foreground">WebVault</span>
             </div>
 
             {/* 平台描述 */}
             <p className="text-base text-muted-foreground leading-6 max-w-md">
-              This is a demo site for Midirs, the best directory website template
+              链接美好，收藏未来。发现、收藏、分类优质网站，构建属于你的数字资源库
             </p>
 
             {/* 社交媒体链接 */}
@@ -152,15 +152,6 @@ export function Footer({ className = '' }: FooterProps) {
                   />
                 </a>
               ))}
-            </div>
-
-            {/* Built with Midirs */}
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <span>Built with</span>
-              <span className="inline-flex items-center space-x-1 font-medium">
-                <span className="inline-block h-4 w-4 rounded bg-primary"></span>
-                <span>Midirs</span>
-              </span>
             </div>
           </div>
 

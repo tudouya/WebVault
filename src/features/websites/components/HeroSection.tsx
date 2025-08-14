@@ -146,9 +146,8 @@ export function HeroSection({
         <div className="mb-8">
           <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl leading-tight overflow-hidden">
             <div className="whitespace-nowrap overflow-x-auto sm:overflow-visible text-center">
-              <span className="inline-block">The Best</span>{' '}
-              <span className="text-primary inline-block">Directory</span>{' '}
-              <span className="inline-block">Website Template</span>
+              <span className="inline-block">链接美好</span>
+              <span className="text-primary inline-block">收藏未来</span>
             </div>
           </h1>
           

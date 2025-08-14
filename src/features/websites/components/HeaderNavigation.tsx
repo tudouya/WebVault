@@ -10,9 +10,9 @@ import { cn } from "@/lib/utils"
 const Logo = () => (
   <Link href="/" className="flex items-center space-x-2">
     <div className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg">
-      <span className="text-primary-foreground font-bold text-sm">DIR</span>
+      <span className="text-primary-foreground font-bold text-sm">WV</span>
     </div>
-    <span className="text-xl font-bold text-foreground">Directory</span>
+    <span className="text-xl font-bold text-foreground">WebVault</span>
   </Link>
 )
 
