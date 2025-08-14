@@ -1,47 +1,45 @@
-// Website type definitions
+// Website type definitions - centralized exports
 
-export interface Website {
-  id: string
-  title: string
-  url: string
-  description?: string
-  favicon_url?: string
-  screenshot_url?: string
-  category_id?: string
-  tags: string[]
-  is_featured: boolean
-  is_public: boolean
-  status: 'active' | 'inactive' | 'pending'
-  visit_count: number
-  created_at: string
-  updated_at: string
-}
+// Export all types from the main website types file
+export * from './website'
+export * from './category'
+export * from './filters'
 
-export interface WebsiteCreateInput {
-  title: string
-  url: string
-  description?: string
-  category_id?: string
-  tags?: string[]
-  is_featured?: boolean
-  is_public?: boolean
-}
+// For backward compatibility, re-export common interfaces
+export type {
+  Website,
+  WebsiteCreateInput,
+  WebsiteUpdateInput,
+  WebsiteFilters,
+  WebsitePagination,
+  WebsiteStatus,
+  AdType,
+  WebsiteCardData,
+  WebsiteListResponse
+} from './website'
 
-export interface WebsiteUpdateInput extends Partial<WebsiteCreateInput> {
-  id: string
-}
+export type {
+  Category,
+  CategoryCreateInput,
+  CategoryUpdateInput,
+  CategoryStatus,
+  CategoryTreeNode,
+  CategoryNavigation,
+  CategoryBreadcrumb,
+  CategoryStats
+} from './category'
 
-export interface WebsiteFilters {
-  category?: string
-  tags?: string[]
-  status?: string
-  search?: string
-  featured?: boolean
-}
-
-export interface WebsitePagination {
-  page: number
-  limit: number
-  total: number
-  totalPages: number
-}
+export type {
+  FilterState,
+  FilterOptions,
+  FilterPreset,
+  ActiveFilter,
+  FilterValidation,
+  SearchSuggestion,
+  FilterAnalytics,
+  SortField,
+  SortOrder,
+  FilterOperation,
+  DEFAULT_FILTER_STATE,
+  DEFAULT_SORT_OPTIONS
+} from './filters'

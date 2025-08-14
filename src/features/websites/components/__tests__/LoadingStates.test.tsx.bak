@@ -1,0 +1,242 @@
+/**
+ * LoadingStates组件测试用例
+ * 
+ * 测试范围:
+ * - 所有组件的正确渲染
+ * - Props传递和条件渲染
+ * - 可访问性属性
+ * - CSS类名应用
+ * 
+ * 使用Jest + React Testing Library进行测试
+ */
+
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
+
+import {
+  LoadingSpinner,
+  WebsiteCardSkeleton,
+  SearchLoadingIndicator,
+  FilterLoadingIndicator,
+  WebsiteGridLoadingOverlay,
+  EmptyStateWithLoading,
+} from '../LoadingStates';
+
+// Mock Lucide React icons
+jest.mock('lucide-react', () => ({
+  Loader2: ({ className }: { className?: string }) => (
+    <div data-testid="loader2-icon" className={className}>Loading Icon</div>
+  ),
+  Search: ({ className }: { className?: string }) => (
+    <div data-testid="search-icon" className={className}>Search Icon</div>
+  ),
+  Globe: ({ className }: { className?: string }) => (
+    <div data-testid="globe-icon" className={className}>Globe Icon</div>
+  ),
+}));
+
+describe('LoadingStates Components', () => {
+  describe('LoadingSpinner', () => {
+    it('renders with default props', () => {
+      render(<LoadingSpinner />);
+      
+      expect(screen.getByTestId('loader2-icon')).toBeInTheDocument();
+    });
+
+    it('renders with custom text', () => {
+      render(<LoadingSpinner text="Custom Loading..." />);
+      
+      expect(screen.getByText('Custom Loading...')).toBeInTheDocument();
+    });
+
+    it('applies size classes correctly', () => {
+      const { rerender } = render(<LoadingSpinner size="sm" />);
+      expect(screen.getByTestId('loader2-icon')).toHaveClass('w-4 h-4');
+      
+      rerender(<LoadingSpinner size="md" />);
+      expect(screen.getByTestId('loader2-icon')).toHaveClass('w-6 h-6');
+      
+      rerender(<LoadingSpinner size="lg" />);
+      expect(screen.getByTestId('loader2-icon')).toHaveClass('w-8 h-8');
+    });
+
+    it('applies custom className', () => {
+      render(<LoadingSpinner className="custom-class" />);
+      
+      expect(screen.getByTestId('loader2-icon').closest('div')).toHaveClass('custom-class');
+    });
+  });
+
+  describe('WebsiteCardSkeleton', () => {
+    it('renders single skeleton by default', () => {
+      render(<WebsiteCardSkeleton />);
+      
+      const skeletons = screen.getAllByTestId('globe-icon');
+      expect(skeletons).toHaveLength(1);
+    });
+
+    it('renders multiple skeletons when count is specified', () => {
+      render(<WebsiteCardSkeleton count={3} />);
+      
+      const skeletons = screen.getAllByTestId('globe-icon');
+      expect(skeletons).toHaveLength(3);
+    });
+
+    it('applies custom className and style', () => {
+      render(
+        <WebsiteCardSkeleton 
+          className="custom-skeleton" 
+          style={{ backgroundColor: 'red' }}
+        />
+      );
+      
+      const container = screen.getByTestId('globe-icon').closest('.custom-skeleton');
+      expect(container).toHaveClass('custom-skeleton');
+      expect(container).toHaveStyle('background-color: red');
+    });
+  });
+
+  describe('SearchLoadingIndicator', () => {
+    it('renders when isLoading is true', () => {
+      render(<SearchLoadingIndicator isLoading={true} />);
+      
+      expect(screen.getByText('Searching websites...')).toBeInTheDocument();
+      expect(screen.getByTestId('search-icon')).toBeInTheDocument();
+    });
+
+    it('does not render when isLoading is false', () => {
+      render(<SearchLoadingIndicator isLoading={false} />);
+      
+      expect(screen.queryByText('Searching websites...')).not.toBeInTheDocument();
+    });
+
+    it('applies custom className when loading', () => {
+      render(<SearchLoadingIndicator isLoading={true} className="custom-search" />);
+      
+      expect(screen.getByText('Searching websites...').closest('div')).toHaveClass('custom-search');
+    });
+  });
+
+  describe('FilterLoadingIndicator', () => {
+    it('renders when isLoading is true', () => {
+      render(<FilterLoadingIndicator isLoading={true} />);
+      
+      expect(screen.getByText('Applying filters...')).toBeInTheDocument();
+      expect(screen.getByTestId('loader2-icon')).toBeInTheDocument();
+    });
+
+    it('does not render when isLoading is false', () => {
+      render(<FilterLoadingIndicator isLoading={false} />);
+      
+      expect(screen.queryByText('Applying filters...')).not.toBeInTheDocument();
+    });
+
+    it('renders custom text', () => {
+      render(<FilterLoadingIndicator isLoading={true} text="Custom filter text..." />);
+      
+      expect(screen.getByText('Custom filter text...')).toBeInTheDocument();
+    });
+  });
+
+  describe('WebsiteGridLoadingOverlay', () => {
+    it('renders when isLoading is true', () => {
+      render(<WebsiteGridLoadingOverlay isLoading={true} />);
+      
+      expect(screen.getByText('Loading websites...')).toBeInTheDocument();
+    });
+
+    it('does not render when isLoading is false', () => {
+      render(<WebsiteGridLoadingOverlay isLoading={false} />);
+      
+      expect(screen.queryByText('Loading websites...')).not.toBeInTheDocument();
+    });
+
+    it('applies overlay positioning classes', () => {
+      render(<WebsiteGridLoadingOverlay isLoading={true} />);
+      
+      const overlay = screen.getByText('Loading websites...').closest('div');
+      expect(overlay).toHaveClass('absolute', 'inset-0');
+    });
+  });
+
+  describe('EmptyStateWithLoading', () => {
+    it('renders when isLoading is true', () => {
+      render(<EmptyStateWithLoading isLoading={true} />);
+      
+      expect(screen.getByText('Loading websites...')).toBeInTheDocument();
+      expect(screen.getByText('Please wait while we fetch the latest website data.')).toBeInTheDocument();
+    });
+
+    it('does not render when isLoading is false', () => {
+      render(<EmptyStateWithLoading isLoading={false} />);
+      
+      expect(screen.queryByText('Loading websites...')).not.toBeInTheDocument();
+    });
+
+    it('renders custom title and description', () => {
+      render(
+        <EmptyStateWithLoading 
+          isLoading={true}
+          title="Custom Title"
+          description="Custom Description"
+        />
+      );
+      
+      expect(screen.getByText('Custom Title')).toBeInTheDocument();
+      expect(screen.getByText('Custom Description')).toBeInTheDocument();
+    });
+
+    it('applies custom className', () => {
+      render(<EmptyStateWithLoading isLoading={true} className="custom-empty" />);
+      
+      expect(screen.getByText('Loading websites...').closest('div')).toHaveClass('custom-empty');
+    });
+  });
+
+  describe('Accessibility', () => {
+    it('LoadingSpinner has proper ARIA attributes', () => {
+      render(<LoadingSpinner />);
+      
+      const spinner = screen.getByTestId('loader2-icon');
+      expect(spinner).toHaveClass('animate-spin');
+    });
+
+    it('SearchLoadingIndicator shows proper loading state', () => {
+      render(<SearchLoadingIndicator isLoading={true} />);
+      
+      const searchIcon = screen.getByTestId('search-icon');
+      expect(searchIcon).toHaveClass('animate-pulse');
+    });
+
+    it('EmptyStateWithLoading has proper heading hierarchy', () => {
+      render(<EmptyStateWithLoading isLoading={true} />);
+      
+      const heading = screen.getByText('Loading websites...');
+      expect(heading.tagName).toBe('H3');
+    });
+  });
+
+  describe('Animation Classes', () => {
+    it('applies skeleton animation classes', () => {
+      render(<WebsiteCardSkeleton />);
+      
+      const skeletonElements = screen.getByTestId('globe-icon').closest('.website-card-skeleton');
+      expect(skeletonElements).toHaveClass('website-card-skeleton');
+    });
+
+    it('applies fade-in animation classes', () => {
+      render(<SearchLoadingIndicator isLoading={true} />);
+      
+      const indicator = screen.getByText('Searching websites...').closest('div');
+      expect(indicator).toHaveClass('search-loading-fade-in');
+    });
+
+    it('applies filter loading animation classes', () => {
+      render(<FilterLoadingIndicator isLoading={true} />);
+      
+      const indicator = screen.getByText('Applying filters...').closest('div');
+      expect(indicator).toHaveClass('filter-loading-fade-in');
+    });
+  });
+});

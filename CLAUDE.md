@@ -50,11 +50,13 @@
 
 ### 📊 **状态管理 & 数据层**
 
-- **全局状态**: Zustand (轻量级状态管理)
-- **URL状态同步**: Nuqs (Type-safe search params)
-- **服务端状态**: Tanstack Query (异步数据获取和缓存)
-- **表单管理**: React Hook Form + Zod (表单验证)
-- **表格组件**: Tanstack Data Tables (服务端分页、搜索、过滤)
+- **全局状态**: Zustand (轻量级状态管理) ✅
+- **URL状态同步**: Nuqs (Type-safe search params) ✅
+- **表单管理**: React Hook Form + Zod (表单验证) ✅
+- **UI增强组件**: @radix-ui/react-select, @radix-ui/react-collapsible ✅
+- **图标系统**: Lucide React ✅
+- **服务端状态**: 待添加 (Tanstack Query) ❌
+- **表格组件**: 待添加 (Tanstack Data Tables) ❌
 
 ### 🎯 **核心业务库**
 

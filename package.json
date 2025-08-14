@@ -19,9 +19,21 @@
   "license": "ISC",
   "description": "个人网站目录管理平台，用于收藏、分类和管理工作生活中发现的优质网站资源",
   "dependencies": {
+    "@hookform/resolvers": "^5.2.1",
+    "@radix-ui/react-collapsible": "^1.1.12",
+    "@radix-ui/react-select": "^2.2.6",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.539.0",
     "next": "^15.4.6",
+    "nuqs": "^2.4.3",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "react-hook-form": "^7.62.0",
+    "tailwind-merge": "^3.3.1",
+    "use-debounce": "^10.0.5",
+    "zod": "^4.0.17",
+    "zustand": "^5.0.7"
   },
   "devDependencies": {
     "@types/node": "^24.2.1",

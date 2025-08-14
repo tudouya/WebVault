@@ -1,2 +1,11 @@
 // Website Hooks
-// 暂时为空，后续添加hooks时再导出
+
+// 搜索相关Hooks
+export { 
+  useWebsiteSearch, 
+  useSimpleSearch,
+  type SearchConfig,
+  type SearchState,
+  type SearchActions,
+  type SearchValidation,
+} from './useWebsiteSearch';

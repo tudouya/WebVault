@@ -12,30 +12,33 @@
 - **shadcn/ui**: 基于Radix UI的现代组件库
 - **Radix UI**: 无样式的可访问组件库
 - **Magic UI**: 动效组件库（AnimatedShinyText, BorderBeam, NumberTicker, RetroGrid）
-- **Lucide React**: 主要图标库
+- **Lucide React**: ✅ v0.539.0 已安装
 - **next-themes**: 主题系统，支持亮暗模式切换
 - **class-variance-authority (CVA)**: 组件变体管理
 
 ### 数据库和后端服务
-- **Supabase**: 
+- **Supabase**: ❌ 待集成
   - PostgreSQL数据库
   - 实时订阅功能
   - 内置认证系统
   - 行级安全策略（RLS）
-- **@supabase/supabase-js**: Supabase JavaScript客户端
-- **@supabase/auth-helpers-nextjs**: Next.js认证集成
+- **@supabase/supabase-js**: ❌ 待添加
+- **@supabase/auth-helpers-nextjs**: ❌ 待添加
 
 ### 状态管理和数据获取
-- **Zustand**: 轻量级全局状态管理
-- **Nuqs**: 类型安全的URL状态同步
-- **Tanstack Query**: 异步数据获取和缓存管理
-- **React Hook Form**: 表单状态管理
-- **Zod**: 运行时类型验证和表单验证
+- **Zustand**: ✅ v5.0.7 已安装
+- **Nuqs**: ✅ v2.4.3 已安装
+- **React Hook Form**: ✅ v7.62.0 已安装
+- **Zod**: ✅ v4.0.17 已安装
+- **@hookform/resolvers**: ✅ v5.2.1 已安装
+- **Tanstack Query**: ❌ 待添加
 
 ### 数据展示和交互
-- **Tanstack Data Tables**: 高性能数据表格，支持服务端分页、搜索、过滤
-- **Recharts**: 图表和数据可视化
-- **react-day-picker**: 日期选择器组件
+- **@radix-ui/react-select**: ✅ v2.2.6 已安装
+- **@radix-ui/react-collapsible**: ✅ v1.1.12 已安装
+- **Tanstack Data Tables**: ❌ 待添加
+- **Recharts**: ❌ 待添加
+- **react-day-picker**: ❌ 待添加
 
 ### 开发工具和质量保证
 - **ESLint**: 静态代码分析，Next.js配置

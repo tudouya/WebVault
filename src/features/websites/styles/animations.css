@@ -1,0 +1,476 @@
+/**
+ * WebVault 动画效果样式
+ * 为网站目录管理平台提供现代化的交互动效
+ * 
+ * 包含:
+ * 1. 卡片悬停效果 (阴影变化 + 位移)
+ * 2. 页面加载动画
+ * 3. 内容切换过渡
+ * 4. 筛选操作动画
+ * 5. 导航栏固定定位
+ * 
+ * 性能优化:
+ * - 使用 CSS transforms 避免重排
+ * - 启用硬件加速 (transform3d)
+ * - 防抖处理用户交互
+ */
+
+/* ========================================
+   卡片悬停效果 - WebsiteCard 动画
+   ======================================== */
+
+/**
+ * 网站卡片基础过渡效果
+ * 使用 transform 和 box-shadow 创建流畅的悬停反馈
+ */
+.website-card {
+  @apply transition-all duration-300 ease-out;
+  transform: translateZ(0); /* 启用硬件加速 */
+  will-change: transform, box-shadow;
+}
+
+/**
+ * 卡片悬停状态
+ * - 轻微上移 2px (translateY(-2px))
+ * - 阴影加深提供视觉层次
+ * - 使用设计系统的边框颜色
+ */
+.website-card:hover {
+  transform: translateY(-2px) translateZ(0);
+  box-shadow: 
+    0 4px 12px -2px rgba(0, 0, 0, 0.08),
+    0 2px 8px -2px rgba(0, 0, 0, 0.04),
+    0 0 0 1px hsl(var(--border));
+}
+
+/**
+ * 暗色主题下的卡片悬停效果
+ * 调整阴影颜色适配暗色背景
+ */
+.dark .website-card:hover {
+  box-shadow: 
+    0 4px 12px -2px rgba(0, 0, 0, 0.25),
+    0 2px 8px -2px rgba(0, 0, 0, 0.12),
+    0 0 0 1px hsl(var(--border));
+}
+
+/**
+ * 卡片点击状态
+ * 轻微缩放提供点击反馈
+ */
+.website-card:active {
+  transform: translateY(-1px) scale(0.98) translateZ(0);
+  transition-duration: 150ms;
+}
+
+/* ========================================
+   标签 Pill 悬停效果增强
+   ======================================== */
+
+/**
+ * 标签悬停时的缩放效果增强
+ * 在 TagPill 现有效果基础上添加阴影
+ */
+.tag-pill {
+  @apply transition-all duration-200 ease-out;
+  will-change: transform, box-shadow;
+}
+
+.tag-pill:hover {
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+}
+
+.dark .tag-pill:hover {
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+}
+
+/* ========================================
+   页面加载和内容切换动画
+   ======================================== */
+
+/**
+ * 页面内容淡入效果
+ * 避免页面加载时的空白闪烁感
+ */
+.page-fade-in {
+  animation: fadeInUp 0.6s ease-out forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * 网站网格加载动画
+ * 分阶段展示卡片创建视觉层次
+ */
+.website-grid-enter {
+  animation: staggerFadeIn 0.8s ease-out forwards;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.website-grid-enter:nth-child(1) { animation-delay: 0ms; }
+.website-grid-enter:nth-child(2) { animation-delay: 100ms; }
+.website-grid-enter:nth-child(3) { animation-delay: 200ms; }
+.website-grid-enter:nth-child(4) { animation-delay: 300ms; }
+.website-grid-enter:nth-child(5) { animation-delay: 400ms; }
+.website-grid-enter:nth-child(6) { animation-delay: 500ms; }
+
+@keyframes staggerFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   分页和筛选操作动画
+   ======================================== */
+
+/**
+ * 分页切换时的内容过渡效果
+ * 平滑的淡入淡出避免突兀的内容变化
+ */
+.pagination-transition {
+  @apply transition-opacity duration-300 ease-in-out;
+}
+
+.pagination-transition.loading {
+  opacity: 0.6;
+}
+
+/**
+ * 筛选结果更新动画
+ * 防抖后的结果展示使用淡入效果
+ */
+.filter-results-enter {
+  animation: filterFadeIn 0.4s ease-out;
+}
+
+@keyframes filterFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   导航栏固定定位和滚动效果
+   ======================================== */
+
+/**
+ * 固定导航栏
+ * 根据设计图要求保持导航栏固定位置
+ */
+.navbar-fixed {
+  @apply sticky top-0 z-50;
+  backdrop-filter: blur(12px);
+  background: hsla(var(--background), 0.8);
+  border-bottom: 1px solid hsl(var(--border));
+  transition: all 0.3s ease-in-out;
+}
+
+/**
+ * 滚动时导航栏样式变化
+ * 增加阴影提供视觉深度
+ */
+.navbar-scrolled {
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.08);
+}
+
+.dark .navbar-scrolled {
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.25);
+}
+
+/* ========================================
+   按钮和交互元素动画
+   ======================================== */
+
+/**
+ * 主要按钮悬停效果
+ * 紧跟设计系统的紫色主题
+ */
+.btn-primary-animated {
+  @apply transition-all duration-200 ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary-animated::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.btn-primary-animated:hover::before {
+  left: 100%;
+}
+
+/**
+ * 次要按钮 (Visit Website) 悬停效果
+ * 使用设计系统的蓝色次要强调色
+ */
+.btn-secondary-animated {
+  @apply transition-all duration-200 ease-out;
+  transform: translateZ(0);
+}
+
+.btn-secondary-animated:hover {
+  transform: translateY(-1px) translateZ(0);
+  box-shadow: 0 2px 8px -2px hsl(var(--secondary) / 0.3);
+}
+
+.btn-secondary-animated:active {
+  transform: translateY(0) translateZ(0);
+}
+
+/* ========================================
+   加载状态动画
+   ======================================== */
+
+/**
+ * 内容加载时的脉冲效果
+ * 替代突兀的空白状态
+ */
+.loading-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/**
+ * 骨架屏动画
+ * 模拟内容加载的占位效果
+ */
+.skeleton {
+  @apply bg-muted;
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.skeleton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* ========================================
+   加载状态动画 - LoadingStates 组件
+   ======================================== */
+
+/**
+ * 网站卡片骨架屏动画
+ * 模拟WebsiteCard的shimmer加载效果
+ */
+.website-card-skeleton {
+  @apply transition-all duration-300 ease-out;
+  transform: translateZ(0);
+}
+
+.website-card-skeleton .skeleton {
+  @apply bg-muted relative overflow-hidden;
+}
+
+.website-card-skeleton .skeleton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: skeletonShimmer 2s ease-in-out infinite;
+}
+
+.dark .website-card-skeleton .skeleton::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+}
+
+@keyframes skeletonShimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/**
+ * 搜索加载指示器淡入动画
+ */
+.search-loading-fade-in {
+  animation: searchLoadingFadeIn 0.3s ease-out;
+}
+
+@keyframes searchLoadingFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * 筛选加载指示器淡入动画
+ */
+.filter-loading-fade-in {
+  animation: filterLoadingFadeIn 0.4s ease-out;
+}
+
+@keyframes filterLoadingFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/**
+ * 分页加载遮罩淡入动画
+ */
+.pagination-loading-fade-in {
+  animation: paginationLoadingFadeIn 0.2s ease-out;
+}
+
+@keyframes paginationLoadingFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(2px);
+  }
+}
+
+/**
+ * 空状态加载组件淡入动画
+ */
+.empty-state-loading-fade-in {
+  animation: emptyStateLoadingFadeIn 0.5s ease-out;
+}
+
+@keyframes emptyStateLoadingFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   响应式动画适配
+   ======================================== */
+
+/**
+ * 移动设备动画优化
+ * 在小屏设备上简化动画以提升性能
+ */
+@media (max-width: 768px) {
+  .website-card:hover {
+    transform: none; /* 禁用移动设备上的悬停位移 */
+  }
+  
+  .website-grid-enter:nth-child(n+7) {
+    animation-delay: 0ms; /* 移动设备上减少延迟时间 */
+  }
+
+  /* 移动设备上简化骨架屏动画 */
+  .website-card-skeleton .skeleton::before {
+    animation-duration: 1.5s; /* 加快动画速度 */
+  }
+}
+
+/**
+ * 用户偏好：减少动画
+ * 尊重系统设置中的动画偏好
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .website-card:hover {
+    transform: none;
+  }
+
+  /* 减少动画偏好时禁用所有加载状态动画 */
+  .website-card-skeleton .skeleton::before {
+    animation: none;
+  }
+
+  .search-loading-fade-in,
+  .filter-loading-fade-in,
+  .pagination-loading-fade-in,
+  .empty-state-loading-fade-in {
+    animation: none;
+  }
+}
