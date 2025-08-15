@@ -727,6 +727,7 @@ export const useCollectionStore = create<CollectionPageState>()(
             
             set(
               (state) => ({
+                ...state,
                 searchQuery: search,
                 pagination: {
                   ...state.pagination,
@@ -747,6 +748,10 @@ export const useCollectionStore = create<CollectionPageState>()(
                   viewMode: view as NonNullable<CollectionState['viewSettings']>['viewMode'],
                   groupBy: groupBy as NonNullable<CollectionState['viewSettings']>['groupBy'],
                   showPreview: Boolean(showPreview),
+                },
+                ui: {
+                  ...state.ui,
+                  isInitialized: true, // 标记为已初始化，防止无限循环
                 },
               }),
               false,

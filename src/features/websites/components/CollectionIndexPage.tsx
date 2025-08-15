@@ -117,7 +117,7 @@ export function CollectionIndexPage({
       // 然后加载数据
       loadCollections();
     }
-  }, [isInitialized, syncStoreFromUrl, loadCollections]);
+  }, [isInitialized]); // 只依赖isInitialized，避免无限循环
   
   // 处理集合卡片点击
   const handleCollectionClick = (collection: CollectionCardData) => {

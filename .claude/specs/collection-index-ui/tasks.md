@@ -229,7 +229,7 @@
   - _Requirements: 4.5 (布局切换动画), 8.5 (移动端间距优化)_
   - _Leverage: Tailwind CSS断点和响应式设计模式_
 
-- [ ] 20. 创建单元测试用例
+- [x] 20. 创建单元测试用例
   - 文件: `src/features/websites/components/__tests__/CollectionCard.test.tsx`, `src/features/websites/stores/__tests__/collection-store.test.ts`
   - 实现CollectionCard组件的props渲染和交互测试
   - 实现collection-store状态管理逻辑测试
