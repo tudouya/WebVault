@@ -110,11 +110,16 @@ export interface WebsiteCardData {
   description?: string;
   url: string;
   favicon_url?: string;
+  image_url?: string;
   tags: string[];
-  isAd: boolean;
+  category?: string;
+  isAd?: boolean;
   adType?: AdType;
   rating?: number;
-  visitCount: number;
+  visit_count?: number;
+  is_featured?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 /**
@@ -148,4 +153,126 @@ export interface WebsiteListResponse {
   websites: Website[];
   pagination: WebsitePagination;
   filters: WebsiteFilters;
+}
+
+// ==================== Search Page Type Extensions ====================
+
+/**
+ * Extended Website Filter Model for Search Page
+ * 
+ * Extends the base WebsiteFilters interface with search-specific functionality
+ * including search scope and sorting options for the dedicated search page.
+ */
+export interface SearchPageFilters extends WebsiteFilters {
+  // Basic query
+  query?: string;
+  
+  // Search scope specification
+  searchScope?: 'title' | 'description' | 'url' | 'content' | 'tags' | 'all';
+  
+  // Enhanced sorting options for search relevance
+  sortBy?: 'relevance' | 'created_at' | 'visit_count' | 'rating' | 'updated_at' | 'title' | 'featured';
+  sortOrder?: 'asc' | 'desc';
+  
+  // Basic filters
+  featured?: boolean;
+  includeAds?: boolean;
+  minRating?: number;
+  
+  // Advanced search options
+  searchType?: 'websites' | 'categories' | 'tags' | 'all';
+  searchMode?: 'simple' | 'advanced' | 'fuzzy';
+  exactMatch?: boolean;
+  excludeTerms?: string[];
+  requiredTerms?: string[];
+  
+  // Date range filter
+  dateRange?: {
+    from: string | null;
+    to: string | null;
+  };
+  
+  // Additional filters
+  language?: string | null;
+}
+
+/**
+ * Pagination State Interface
+ * 
+ * Defines pagination structure used throughout the application.
+ * Reuses the pattern from existing stores for consistency.
+ */
+export interface PaginationState {
+  currentPage: number;
+  itemsPerPage: number;
+  totalItems: number;
+  totalPages: number;
+}
+
+/**
+ * Search Page State Model
+ * 
+ * Complete state interface for the search page including query state,
+ * filters, results, pagination, and UI state management.
+ */
+export interface SearchPageState {
+  // Search state
+  query: string;
+  filters: SearchPageFilters;
+  
+  // Result state
+  results: WebsiteCardData[];
+  totalResults: number;
+  isLoading: boolean;
+  error?: string;
+  
+  // Pagination state (reuse existing PaginationState pattern)
+  pagination: PaginationState;
+  
+  // UI state
+  ui: {
+    resultsViewMode: 'grid' | 'list';
+    filtersCollapsed: boolean;
+  };
+}
+
+/**
+ * URL Parameters Model for Search Page
+ * 
+ * Defines the structure of URL parameters used for search page
+ * state synchronization and bookmarking support.
+ */
+export interface SearchURLParams {
+  /** Search keywords */
+  q?: string;
+  
+  /** Category filter */
+  category?: string;
+  
+  /** Tag filter (comma-separated for URL) */
+  tags?: string;
+  
+  /** Featured filter */
+  featured?: string;
+  
+  /** Search scope */
+  scope?: string;
+  
+  /** Sort method */
+  sort?: string;
+  
+  /** Sort order */
+  order?: string;
+  
+  /** Current page */
+  page?: string;
+  
+  /** Items per page */
+  limit?: string;
+  
+  /** Minimum rating filter */
+  rating?: string;
+  
+  /** Advertisement inclusion */
+  ads?: string;
 }

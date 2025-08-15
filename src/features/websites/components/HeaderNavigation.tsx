@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -34,9 +35,10 @@ const navigationItems = [
 interface MobileMenuProps {
   isOpen: boolean
   onClose: () => void
+  currentPath: string
 }
 
-const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
+const MobileMenu = ({ isOpen, onClose, currentPath }: MobileMenuProps) => {
   if (!isOpen) return null
 
   return (
@@ -55,16 +57,24 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
           </Button>
         </div>
         <nav className="mt-6 space-y-4">
-          {navigationItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onClose}
-              className="block text-foreground hover:text-primary transition-colors"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {navigationItems.map((item) => {
+            const isActive = currentPath === item.href
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onClose}
+                className={cn(
+                  "block transition-colors",
+                  isActive 
+                    ? "text-primary font-medium" 
+                    : "text-foreground hover:text-primary"
+                )}
+              >
+                {item.label}
+              </Link>
+            )
+          })}
           <div className="pt-4 border-t border-border">
             <Button variant="default" className="w-full">
               Sign In
@@ -77,23 +87,36 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
 }
 
 // 桌面端导航组件
-const DesktopNavigation = () => (
+interface DesktopNavigationProps {
+  currentPath: string
+}
+
+const DesktopNavigation = ({ currentPath }: DesktopNavigationProps) => (
   <nav className="hidden md:flex items-center space-x-8">
-    {navigationItems.map((item) => (
-      <Link
-        key={item.href}
-        href={item.href}
-        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-      >
-        {item.label}
-      </Link>
-    ))}
+    {navigationItems.map((item) => {
+      const isActive = currentPath === item.href
+      return (
+        <Link
+          key={item.href}
+          href={item.href}
+          className={cn(
+            "text-sm transition-colors",
+            isActive 
+              ? "text-primary font-medium" 
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          {item.label}
+        </Link>
+      )
+    })}
   </nav>
 )
 
 // 主要的HeaderNavigation组件
 export const HeaderNavigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
+  const pathname = usePathname()
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
@@ -125,7 +148,7 @@ export const HeaderNavigation = () => {
             <Logo />
 
             {/* 桌面端导航 */}
-            <DesktopNavigation />
+            <DesktopNavigation currentPath={pathname} />
 
             {/* 右侧按钮区域 */}
             <div className="flex items-center space-x-4">
@@ -154,7 +177,7 @@ export const HeaderNavigation = () => {
       </header>
 
       {/* 移动端菜单 */}
-      <MobileMenu isOpen={isMobileMenuOpen} onClose={closeMobileMenu} />
+      <MobileMenu isOpen={isMobileMenuOpen} onClose={closeMobileMenu} currentPath={pathname} />
     </>
   )
 }

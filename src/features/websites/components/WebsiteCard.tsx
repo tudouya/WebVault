@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { ExternalLink, Globe } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,12 +36,12 @@ const getIconColor = (title: string): string => {
   return colors[hash % colors.length];
 };
 
-export function WebsiteCard({ website, className, style, onVisit, onTagClick }: WebsiteCardProps) {
-  const handleVisit = () => {
+const WebsiteCard = React.memo(function WebsiteCard({ website, className, style, onVisit, onTagClick }: WebsiteCardProps) {
+  const handleVisit = useCallback(() => {
     onVisit?.(website);
     // 在新窗口打开网站
     window.open(website.url, '_blank', 'noopener,noreferrer');
-  };
+  }, [onVisit, website]);
 
   return (
     <Card className={cn("relative overflow-hidden group website-card", className)} style={style}>
@@ -122,7 +122,7 @@ export function WebsiteCard({ website, className, style, onVisit, onTagClick }: 
         <div className="flex items-center justify-between pt-4 border-t border-border">
           {/* 访问统计 */}
           <div className="text-sm text-muted-foreground">
-            {website.visitCount.toLocaleString()} visits
+            {(website.visit_count || 0).toLocaleString()} visits
           </div>
 
           {/* 访问网站按钮 - 使用次要强调色 */}
@@ -139,6 +139,7 @@ export function WebsiteCard({ website, className, style, onVisit, onTagClick }: 
       </CardContent>
     </Card>
   );
-}
+});
 
+export { WebsiteCard };
 export default WebsiteCard;

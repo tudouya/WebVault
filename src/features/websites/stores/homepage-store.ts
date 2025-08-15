@@ -38,7 +38,7 @@ export interface PaginationState {
 
 /**
  * URL搜索参数解析器配置
- * 临时简化实现以修复构建问题
+ * 支持首页和搜索页面的完整URL状态管理
  */
 export const searchParamsParsers = {
   // 搜索查询
@@ -64,7 +64,76 @@ export const searchParamsParsers = {
   featured: parseAsBoolean,
   includeAds: parseAsBoolean,
   minRating: parseAsInteger,
+  
+  // 搜索页面特定参数
+  searchType: parseAsString,        // 搜索类型: 'websites' | 'categories' | 'tags' | 'all'
+  searchScope: parseAsString,       // 搜索范围: 'title' | 'description' | 'url' | 'content' | 'all'
+  searchMode: parseAsString,        // 搜索模式: 'simple' | 'advanced' | 'fuzzy'
+  dateFrom: parseAsString,          // 日期范围开始
+  dateTo: parseAsString,            // 日期范围结束
+  language: parseAsString,          // 语言筛选
+  status: parseAsString,            // 状态筛选 (多个值用逗号分隔)
+  
+  // 视图和显示选项
+  view: parseAsString,              // 视图模式: 'grid' | 'list' | 'compact'
+  groupBy: parseAsString,           // 分组方式: 'none' | 'category' | 'tag' | 'date'
+  showPreview: parseAsBoolean,      // 是否显示预览
+  
+  // 搜索结果排序选项
+  relevance: parseAsBoolean,        // 按相关性排序
+  
+  // 高级搜索选项
+  exactMatch: parseAsBoolean,       // 精确匹配
+  excludeTerms: parseAsString,      // 排除词汇 (用逗号分隔)
+  requiredTerms: parseAsString,     // 必需词汇 (用逗号分隔)
 } as const;
+
+/**
+ * 搜索页面特定状态接口
+ */
+export interface SearchPageState {
+  // 搜索类型和范围
+  searchType: 'websites' | 'categories' | 'tags' | 'all';
+  searchScope: 'title' | 'description' | 'url' | 'content' | 'all';
+  searchMode: 'simple' | 'advanced' | 'fuzzy';
+  
+  // 高级搜索选项
+  exactMatch: boolean;
+  excludeTerms: string[];
+  requiredTerms: string[];
+  
+  // 日期范围筛选
+  dateRange: {
+    from: string | null;
+    to: string | null;
+  };
+  
+  // 语言和状态筛选
+  language: string | null;
+  status: string[];
+  
+  // 视图和显示选项
+  viewMode: 'grid' | 'list' | 'compact';
+  groupBy: 'none' | 'category' | 'tag' | 'date';
+  showPreview: boolean;
+  relevanceSort: boolean;
+  
+  // 搜索历史和建议
+  searchHistory: string[];
+  recentSearches: Array<{
+    query: string;
+    timestamp: string;
+    resultCount: number;
+  }>;
+  
+  // 搜索统计
+  searchStats: {
+    totalResults: number;
+    searchTime: number;
+    lastSearchQuery: string;
+    lastSearchTime: string | null;
+  };
+}
 
 /**
  * 首页状态接口
@@ -85,6 +154,9 @@ export interface HomepageState extends FilterState {
     isLoading: boolean;
     suggestions: string[];
   };
+  
+  // 搜索页面状态 (支持搜索页面功能)
+  searchPage: SearchPageState;
   
   // UI状态
   ui: {
@@ -136,8 +208,87 @@ export interface HomepageState extends FilterState {
     
     // URL状态同步 (由组件调用)
     syncFromURL: (params: Record<string, any>) => void;
+    
+    // 搜索页面特定操作方法
+    searchPage: {
+      // 搜索类型和范围设置
+      setSearchType: (type: SearchPageState['searchType']) => void;
+      setSearchScope: (scope: SearchPageState['searchScope']) => void;
+      setSearchMode: (mode: SearchPageState['searchMode']) => void;
+      
+      // 高级搜索选项
+      setExactMatch: (exactMatch: boolean) => void;
+      setExcludeTerms: (terms: string[]) => void;
+      setRequiredTerms: (terms: string[]) => void;
+      addExcludeTerm: (term: string) => void;
+      removeExcludeTerm: (term: string) => void;
+      addRequiredTerm: (term: string) => void;
+      removeRequiredTerm: (term: string) => void;
+      
+      // 日期范围设置
+      setDateRange: (from: string | null, to: string | null) => void;
+      clearDateRange: () => void;
+      
+      // 语言和状态筛选
+      setLanguage: (language: string | null) => void;
+      setStatus: (status: string[]) => void;
+      addStatus: (status: string) => void;
+      removeStatus: (status: string) => void;
+      
+      // 视图和显示选项
+      setViewMode: (mode: SearchPageState['viewMode']) => void;
+      setGroupBy: (groupBy: SearchPageState['groupBy']) => void;
+      setShowPreview: (show: boolean) => void;
+      setRelevanceSort: (enabled: boolean) => void;
+      
+      // 搜索历史管理
+      addToSearchHistory: (query: string) => void;
+      clearSearchHistory: () => void;
+      addRecentSearch: (query: string, resultCount: number) => void;
+      clearRecentSearches: () => void;
+      
+      // 搜索统计更新
+      updateSearchStats: (stats: Partial<SearchPageState['searchStats']>) => void;
+      
+      // 搜索页面重置操作
+      resetSearchPageFilters: () => void;
+      resetAdvancedSearch: () => void;
+      
+      // 搜索页面URL同步
+      syncSearchPageFromURL: (params: Record<string, any>) => void;
+    };
   };
 }
+
+/**
+ * 默认搜索页面状态
+ */
+const DEFAULT_SEARCH_PAGE_STATE: SearchPageState = {
+  searchType: 'all',
+  searchScope: 'all',
+  searchMode: 'simple',
+  exactMatch: false,
+  excludeTerms: [],
+  requiredTerms: [],
+  dateRange: {
+    from: null,
+    to: null,
+  },
+  language: null,
+  status: [],
+  viewMode: 'grid',
+  groupBy: 'none',
+  showPreview: true,
+  relevanceSort: false,
+  searchHistory: [],
+  recentSearches: [],
+  searchStats: {
+    totalResults: 0,
+    searchTime: 0,
+    lastSearchQuery: '',
+    lastSearchTime: null,
+  },
+};
 
 /**
  * 默认分页状态
@@ -174,6 +325,9 @@ export const useHomepageStore = create<HomepageState>()(
           isLoading: false,
           suggestions: [],
         },
+        
+        // 搜索页面状态
+        searchPage: DEFAULT_SEARCH_PAGE_STATE,
         
         // UI状态
         ui: {
@@ -480,12 +634,460 @@ export const useHomepageStore = create<HomepageState>()(
               'syncFromURL'
             );
           },
+          
+          // 搜索页面特定操作方法实现
+          searchPage: {
+            // 搜索类型和范围设置
+            setSearchType: (type: SearchPageState['searchType']) => {
+              set(
+                (state) => ({
+                  searchPage: { ...state.searchPage, searchType: type },
+                  pagination: { ...state.pagination, currentPage: 1 },
+                }),
+                false,
+                'searchPage.setSearchType'
+              );
+            },
+            
+            setSearchScope: (scope: SearchPageState['searchScope']) => {
+              set(
+                (state) => ({
+                  searchPage: { ...state.searchPage, searchScope: scope },
+                  pagination: { ...state.pagination, currentPage: 1 },
+                }),
+                false,
+                'searchPage.setSearchScope'
+              );
+            },
+            
+            setSearchMode: (mode: SearchPageState['searchMode']) => {
+              set(
+                (state) => ({
+                  searchPage: { ...state.searchPage, searchMode: mode },
+                  pagination: { ...state.pagination, currentPage: 1 },
+                }),
+                false,
+                'searchPage.setSearchMode'
+              );
+            },
+            
+            // 高级搜索选项
+            setExactMatch: (exactMatch: boolean) => {
+              set(
+                (state) => ({
+                  searchPage: { ...state.searchPage, exactMatch },
+                  pagination: { ...state.pagination, currentPage: 1 },
+                }),
+                false,
+                'searchPage.setExactMatch'
+              );
+            },
+            
+            setExcludeTerms: (terms: string[]) => {
+              set(
+                (state) => ({
+                  searchPage: { ...state.searchPage, excludeTerms: terms },
+                  pagination: { ...state.pagination, currentPage: 1 },
+                }),
+                false,
+                'searchPage.setExcludeTerms'
+              );
+            },
+            
+            setRequiredTerms: (terms: string[]) => {
+              set(
+                (state) => ({
+                  searchPage: { ...state.searchPage, requiredTerms: terms },
+                  pagination: { ...state.pagination, currentPage: 1 },
+                }),
+                false,
+                'searchPage.setRequiredTerms'
+              );
+            },
+            
+            addExcludeTerm: (term: string) => {
+              set(
+                (state) => {
+                  const newTerms = [...state.searchPage.excludeTerms];
+                  if (!newTerms.includes(term)) {
+                    newTerms.push(term);
+                  }
+                  return {
+                    searchPage: { ...state.searchPage, excludeTerms: newTerms },
+                    pagination: { ...state.pagination, currentPage: 1 },
+                  };
+                },
+                false,
+                'searchPage.addExcludeTerm'
+              );
+            },
+            
+            removeExcludeTerm: (term: string) => {
+              set(
+                (state) => ({
+                  searchPage: {
+                    ...state.searchPage,
+                    excludeTerms: state.searchPage.excludeTerms.filter(t => t !== term),
+                  },
+                  pagination: { ...state.pagination, currentPage: 1 },
+                }),
+                false,
+                'searchPage.removeExcludeTerm'
+              );
+            },
+            
+            addRequiredTerm: (term: string) => {
+              set(
+                (state) => {
+                  const newTerms = [...state.searchPage.requiredTerms];
+                  if (!newTerms.includes(term)) {
+                    newTerms.push(term);
+                  }
+                  return {
+                    searchPage: { ...state.searchPage, requiredTerms: newTerms },
+                    pagination: { ...state.pagination, currentPage: 1 },
+                  };
+                },
+                false,
+                'searchPage.addRequiredTerm'
+              );
+            },
+            
+            removeRequiredTerm: (term: string) => {
+              set(
+                (state) => ({
+                  searchPage: {
+                    ...state.searchPage,
+                    requiredTerms: state.searchPage.requiredTerms.filter(t => t !== term),
+                  },
+                  pagination: { ...state.pagination, currentPage: 1 },
+                }),
+                false,
+                'searchPage.removeRequiredTerm'
+              );
+            },
+            
+            // 日期范围设置
+            setDateRange: (from: string | null, to: string | null) => {
+              set(
+                (state) => ({
+                  searchPage: {
+                    ...state.searchPage,
+                    dateRange: { from, to },
+                  },
+                  pagination: { ...state.pagination, currentPage: 1 },
+                }),
+                false,
+                'searchPage.setDateRange'
+              );
+            },
+            
+            clearDateRange: () => {
+              set(
+                (state) => ({
+                  searchPage: {
+                    ...state.searchPage,
+                    dateRange: { from: null, to: null },
+                  },
+                  pagination: { ...state.pagination, currentPage: 1 },
+                }),
+                false,
+                'searchPage.clearDateRange'
+              );
+            },
+            
+            // 语言和状态筛选
+            setLanguage: (language: string | null) => {
+              set(
+                (state) => ({
+                  searchPage: { ...state.searchPage, language },
+                  pagination: { ...state.pagination, currentPage: 1 },
+                }),
+                false,
+                'searchPage.setLanguage'
+              );
+            },
+            
+            setStatus: (status: string[]) => {
+              set(
+                (state) => ({
+                  searchPage: { ...state.searchPage, status },
+                  pagination: { ...state.pagination, currentPage: 1 },
+                }),
+                false,
+                'searchPage.setStatus'
+              );
+            },
+            
+            addStatus: (status: string) => {
+              set(
+                (state) => {
+                  const newStatus = [...state.searchPage.status];
+                  if (!newStatus.includes(status)) {
+                    newStatus.push(status);
+                  }
+                  return {
+                    searchPage: { ...state.searchPage, status: newStatus },
+                    pagination: { ...state.pagination, currentPage: 1 },
+                  };
+                },
+                false,
+                'searchPage.addStatus'
+              );
+            },
+            
+            removeStatus: (status: string) => {
+              set(
+                (state) => ({
+                  searchPage: {
+                    ...state.searchPage,
+                    status: state.searchPage.status.filter(s => s !== status),
+                  },
+                  pagination: { ...state.pagination, currentPage: 1 },
+                }),
+                false,
+                'searchPage.removeStatus'
+              );
+            },
+            
+            // 视图和显示选项
+            setViewMode: (mode: SearchPageState['viewMode']) => {
+              set(
+                (state) => ({
+                  searchPage: { ...state.searchPage, viewMode: mode },
+                }),
+                false,
+                'searchPage.setViewMode'
+              );
+            },
+            
+            setGroupBy: (groupBy: SearchPageState['groupBy']) => {
+              set(
+                (state) => ({
+                  searchPage: { ...state.searchPage, groupBy },
+                  pagination: { ...state.pagination, currentPage: 1 },
+                }),
+                false,
+                'searchPage.setGroupBy'
+              );
+            },
+            
+            setShowPreview: (show: boolean) => {
+              set(
+                (state) => ({
+                  searchPage: { ...state.searchPage, showPreview: show },
+                }),
+                false,
+                'searchPage.setShowPreview'
+              );
+            },
+            
+            setRelevanceSort: (enabled: boolean) => {
+              set(
+                (state) => ({
+                  searchPage: { ...state.searchPage, relevanceSort: enabled },
+                  pagination: { ...state.pagination, currentPage: 1 },
+                }),
+                false,
+                'searchPage.setRelevanceSort'
+              );
+            },
+            
+            // 搜索历史管理
+            addToSearchHistory: (query: string) => {
+              set(
+                (state) => {
+                  const history = [...state.searchPage.searchHistory];
+                  // 移除已存在的相同查询
+                  const existingIndex = history.indexOf(query);
+                  if (existingIndex > -1) {
+                    history.splice(existingIndex, 1);
+                  }
+                  // 添加到开头
+                  history.unshift(query);
+                  // 保持最大50条历史记录
+                  if (history.length > 50) {
+                    history.pop();
+                  }
+                  return {
+                    searchPage: { ...state.searchPage, searchHistory: history },
+                  };
+                },
+                false,
+                'searchPage.addToSearchHistory'
+              );
+            },
+            
+            clearSearchHistory: () => {
+              set(
+                (state) => ({
+                  searchPage: { ...state.searchPage, searchHistory: [] },
+                }),
+                false,
+                'searchPage.clearSearchHistory'
+              );
+            },
+            
+            addRecentSearch: (query: string, resultCount: number) => {
+              set(
+                (state) => {
+                  const recentSearches = [...state.searchPage.recentSearches];
+                  const newSearch = {
+                    query,
+                    timestamp: new Date().toISOString(),
+                    resultCount,
+                  };
+                  
+                  // 移除已存在的相同查询
+                  const existingIndex = recentSearches.findIndex(s => s.query === query);
+                  if (existingIndex > -1) {
+                    recentSearches.splice(existingIndex, 1);
+                  }
+                  
+                  // 添加到开头
+                  recentSearches.unshift(newSearch);
+                  
+                  // 保持最大20条最近搜索
+                  if (recentSearches.length > 20) {
+                    recentSearches.pop();
+                  }
+                  
+                  return {
+                    searchPage: { ...state.searchPage, recentSearches },
+                  };
+                },
+                false,
+                'searchPage.addRecentSearch'
+              );
+            },
+            
+            clearRecentSearches: () => {
+              set(
+                (state) => ({
+                  searchPage: { ...state.searchPage, recentSearches: [] },
+                }),
+                false,
+                'searchPage.clearRecentSearches'
+              );
+            },
+            
+            // 搜索统计更新
+            updateSearchStats: (stats: Partial<SearchPageState['searchStats']>) => {
+              set(
+                (state) => ({
+                  searchPage: {
+                    ...state.searchPage,
+                    searchStats: { ...state.searchPage.searchStats, ...stats },
+                  },
+                }),
+                false,
+                'searchPage.updateSearchStats'
+              );
+            },
+            
+            // 搜索页面重置操作
+            resetSearchPageFilters: () => {
+              set(
+                (state) => ({
+                  searchPage: {
+                    ...DEFAULT_SEARCH_PAGE_STATE,
+                    // 保留搜索历史和统计
+                    searchHistory: state.searchPage.searchHistory,
+                    recentSearches: state.searchPage.recentSearches,
+                    searchStats: state.searchPage.searchStats,
+                  },
+                  pagination: { ...state.pagination, currentPage: 1 },
+                }),
+                false,
+                'searchPage.resetSearchPageFilters'
+              );
+            },
+            
+            resetAdvancedSearch: () => {
+              set(
+                (state) => ({
+                  searchPage: {
+                    ...state.searchPage,
+                    searchMode: 'simple',
+                    exactMatch: false,
+                    excludeTerms: [],
+                    requiredTerms: [],
+                    dateRange: { from: null, to: null },
+                    language: null,
+                    status: [],
+                  },
+                  pagination: { ...state.pagination, currentPage: 1 },
+                }),
+                false,
+                'searchPage.resetAdvancedSearch'
+              );
+            },
+            
+            // 搜索页面URL同步
+            syncSearchPageFromURL: (params: Record<string, any>) => {
+              const {
+                searchType = 'all',
+                searchScope = 'all',
+                searchMode = 'simple',
+                exactMatch = false,
+                excludeTerms = '',
+                requiredTerms = '',
+                dateFrom = null,
+                dateTo = null,
+                language = null,
+                status = '',
+                view = 'grid',
+                groupBy = 'none',
+                showPreview = true,
+                relevance = false,
+              } = params;
+              
+              // 处理逗号分隔的字符串参数
+              const excludeTermsArray = typeof excludeTerms === 'string' && excludeTerms.trim()
+                ? excludeTerms.split(',').map(term => term.trim()).filter(Boolean)
+                : [];
+              
+              const requiredTermsArray = typeof requiredTerms === 'string' && requiredTerms.trim()
+                ? requiredTerms.split(',').map(term => term.trim()).filter(Boolean)
+                : [];
+              
+              const statusArray = typeof status === 'string' && status.trim()
+                ? status.split(',').map(s => s.trim()).filter(Boolean)
+                : [];
+              
+              set(
+                (state) => ({
+                  searchPage: {
+                    ...state.searchPage,
+                    searchType: searchType as SearchPageState['searchType'],
+                    searchScope: searchScope as SearchPageState['searchScope'],
+                    searchMode: searchMode as SearchPageState['searchMode'],
+                    exactMatch: Boolean(exactMatch),
+                    excludeTerms: excludeTermsArray,
+                    requiredTerms: requiredTermsArray,
+                    dateRange: {
+                      from: dateFrom,
+                      to: dateTo,
+                    },
+                    language,
+                    status: statusArray,
+                    viewMode: view as SearchPageState['viewMode'],
+                    groupBy: groupBy as SearchPageState['groupBy'],
+                    showPreview: Boolean(showPreview),
+                    relevanceSort: Boolean(relevance),
+                  },
+                }),
+                false,
+                'searchPage.syncSearchPageFromURL'
+              );
+            },
+          },
         },
       }),
       {
         name: 'homepage-store',
         storage: createJSONStorage(() => sessionStorage),
-        // 只持久化UI偏好设置，URL参数通过nuqs管理
+        // 只持久化UI偏好设置和搜索历史，URL参数通过nuqs管理
         partialize: (state) => ({
           ui: {
             isSidebarCollapsed: state.ui.isSidebarCollapsed,
@@ -493,6 +1095,17 @@ export const useHomepageStore = create<HomepageState>()(
           },
           categoryNavigation: {
             expandedCategories: state.categoryNavigation.expandedCategories,
+          },
+          searchPage: {
+            // 持久化搜索历史和用户偏好
+            searchHistory: state.searchPage.searchHistory,
+            recentSearches: state.searchPage.recentSearches,
+            viewMode: state.searchPage.viewMode,
+            showPreview: state.searchPage.showPreview,
+            groupBy: state.searchPage.groupBy,
+            searchMode: state.searchPage.searchMode,
+            // 保留搜索统计信息
+            searchStats: state.searchPage.searchStats,
           },
         }),
       }
@@ -521,9 +1134,9 @@ export function useHomepageUrlSync() {
     actions.syncFromURL(urlState);
   };
   
-  // 从store更新URL状态
-  const syncUrlFromStore = () => {
-    setUrlState({
+  // 从store更新URL状态 (支持搜索页面参数)
+  const syncUrlFromStore = (includeSearchPageParams = false) => {
+    const baseUrlState = {
       search: store.search || undefined,
       category: store.categoryId || undefined,
       tags: store.selectedTags.length > 0 ? store.selectedTags.join(',') : undefined,
@@ -534,7 +1147,31 @@ export function useHomepageUrlSync() {
       featured: store.featuredOnly || undefined,
       includeAds: !store.includeAds ? store.includeAds : undefined,
       minRating: store.minRating && store.minRating > 0 ? store.minRating : undefined,
-    });
+    };
+
+    // 如果需要包含搜索页面参数
+    if (includeSearchPageParams) {
+      const searchPageUrlState = {
+        searchType: store.searchPage.searchType !== 'all' ? store.searchPage.searchType : undefined,
+        searchScope: store.searchPage.searchScope !== 'all' ? store.searchPage.searchScope : undefined,
+        searchMode: store.searchPage.searchMode !== 'simple' ? store.searchPage.searchMode : undefined,
+        exactMatch: store.searchPage.exactMatch || undefined,
+        excludeTerms: store.searchPage.excludeTerms.length > 0 ? store.searchPage.excludeTerms.join(',') : undefined,
+        requiredTerms: store.searchPage.requiredTerms.length > 0 ? store.searchPage.requiredTerms.join(',') : undefined,
+        dateFrom: store.searchPage.dateRange.from || undefined,
+        dateTo: store.searchPage.dateRange.to || undefined,
+        language: store.searchPage.language || undefined,
+        status: store.searchPage.status.length > 0 ? store.searchPage.status.join(',') : undefined,
+        view: store.searchPage.viewMode !== 'grid' ? store.searchPage.viewMode : undefined,
+        groupBy: store.searchPage.groupBy !== 'none' ? store.searchPage.groupBy : undefined,
+        showPreview: !store.searchPage.showPreview ? store.searchPage.showPreview : undefined,
+        relevance: store.searchPage.relevanceSort || undefined,
+      };
+      
+      setUrlState({ ...baseUrlState, ...searchPageUrlState });
+    } else {
+      setUrlState(baseUrlState);
+    }
   };
   
   return {
@@ -542,6 +1179,69 @@ export function useHomepageUrlSync() {
     setUrlState,
     syncStoreFromUrl,
     syncUrlFromStore,
+  };
+}
+
+/**
+ * 搜索页面URL状态同步Hook
+ * 
+ * 专门用于搜索页面的URL参数管理，包含所有搜索页面特定参数
+ */
+export function useSearchPageUrlSync() {
+  const store = useHomepageStore();
+  const { actions } = store;
+  
+  // 使用nuqs管理所有URL参数（包含搜索页面特定参数）
+  const [urlState, setUrlState] = useQueryStates(searchParamsParsers);
+  
+  // 从URL更新搜索页面状态
+  const syncSearchPageFromUrl = () => {
+    // 先同步基础过滤状态
+    actions.syncFromURL(urlState);
+    // 再同步搜索页面特定状态
+    actions.searchPage.syncSearchPageFromURL(urlState);
+  };
+  
+  // 从搜索页面状态更新URL
+  const syncUrlFromSearchPage = () => {
+    const searchPageUrlState = {
+      // 基础参数
+      search: store.search || undefined,
+      category: store.categoryId || undefined,
+      tags: store.selectedTags.length > 0 ? store.selectedTags.join(',') : undefined,
+      sortBy: store.sortBy !== 'created_at' ? store.sortBy : undefined,
+      sortOrder: store.sortOrder !== 'desc' ? store.sortOrder : undefined,
+      page: store.pagination.currentPage > 1 ? store.pagination.currentPage : undefined,
+      limit: store.pagination.itemsPerPage !== 12 ? store.pagination.itemsPerPage : undefined,
+      featured: store.featuredOnly || undefined,
+      includeAds: !store.includeAds ? store.includeAds : undefined,
+      minRating: store.minRating && store.minRating > 0 ? store.minRating : undefined,
+      
+      // 搜索页面特定参数
+      searchType: store.searchPage.searchType !== 'all' ? store.searchPage.searchType : undefined,
+      searchScope: store.searchPage.searchScope !== 'all' ? store.searchPage.searchScope : undefined,
+      searchMode: store.searchPage.searchMode !== 'simple' ? store.searchPage.searchMode : undefined,
+      exactMatch: store.searchPage.exactMatch || undefined,
+      excludeTerms: store.searchPage.excludeTerms.length > 0 ? store.searchPage.excludeTerms.join(',') : undefined,
+      requiredTerms: store.searchPage.requiredTerms.length > 0 ? store.searchPage.requiredTerms.join(',') : undefined,
+      dateFrom: store.searchPage.dateRange.from || undefined,
+      dateTo: store.searchPage.dateRange.to || undefined,
+      language: store.searchPage.language || undefined,
+      status: store.searchPage.status.length > 0 ? store.searchPage.status.join(',') : undefined,
+      view: store.searchPage.viewMode !== 'grid' ? store.searchPage.viewMode : undefined,
+      groupBy: store.searchPage.groupBy !== 'none' ? store.searchPage.groupBy : undefined,
+      showPreview: !store.searchPage.showPreview ? store.searchPage.showPreview : undefined,
+      relevance: store.searchPage.relevanceSort || undefined,
+    };
+    
+    setUrlState(searchPageUrlState);
+  };
+  
+  return {
+    urlState,
+    setUrlState,
+    syncSearchPageFromUrl,
+    syncUrlFromSearchPage,
   };
 }
 
@@ -648,6 +1348,101 @@ export function useHomepageCategories() {
     toggleExpanded: actions.toggleCategoryExpanded,
     updateCategories: actions.updateCategories,
     setCategory: actions.setCategory,
+  };
+}
+
+/**
+ * 搜索页面状态Hook
+ * 
+ * 提供搜索页面特定的状态和操作方法
+ */
+export function useSearchPageState() {
+  const { searchPage, actions } = useHomepageStore();
+  
+  return {
+    // 搜索页面状态
+    ...searchPage,
+    
+    // 操作方法
+    setSearchType: actions.searchPage.setSearchType,
+    setSearchScope: actions.searchPage.setSearchScope,
+    setSearchMode: actions.searchPage.setSearchMode,
+    
+    // 高级搜索选项
+    setExactMatch: actions.searchPage.setExactMatch,
+    setExcludeTerms: actions.searchPage.setExcludeTerms,
+    setRequiredTerms: actions.searchPage.setRequiredTerms,
+    addExcludeTerm: actions.searchPage.addExcludeTerm,
+    removeExcludeTerm: actions.searchPage.removeExcludeTerm,
+    addRequiredTerm: actions.searchPage.addRequiredTerm,
+    removeRequiredTerm: actions.searchPage.removeRequiredTerm,
+    
+    // 日期范围
+    setDateRange: actions.searchPage.setDateRange,
+    clearDateRange: actions.searchPage.clearDateRange,
+    
+    // 语言和状态筛选
+    setLanguage: actions.searchPage.setLanguage,
+    setStatus: actions.searchPage.setStatus,
+    addStatus: actions.searchPage.addStatus,
+    removeStatus: actions.searchPage.removeStatus,
+    
+    // 视图和显示选项
+    setViewMode: actions.searchPage.setViewMode,
+    setGroupBy: actions.searchPage.setGroupBy,
+    setShowPreview: actions.searchPage.setShowPreview,
+    setRelevanceSort: actions.searchPage.setRelevanceSort,
+    
+    // 搜索历史管理
+    addToSearchHistory: actions.searchPage.addToSearchHistory,
+    clearSearchHistory: actions.searchPage.clearSearchHistory,
+    addRecentSearch: actions.searchPage.addRecentSearch,
+    clearRecentSearches: actions.searchPage.clearRecentSearches,
+    
+    // 搜索统计
+    updateSearchStats: actions.searchPage.updateSearchStats,
+    
+    // 重置操作
+    resetSearchPageFilters: actions.searchPage.resetSearchPageFilters,
+    resetAdvancedSearch: actions.searchPage.resetAdvancedSearch,
+  };
+}
+
+/**
+ * 搜索历史Hook
+ * 
+ * 专门管理搜索历史和最近搜索
+ */
+export function useSearchHistory() {
+  const { searchPage, actions } = useHomepageStore();
+  
+  return {
+    // 搜索历史数据
+    searchHistory: searchPage.searchHistory,
+    recentSearches: searchPage.recentSearches,
+    
+    // 历史管理方法
+    addToHistory: actions.searchPage.addToSearchHistory,
+    clearHistory: actions.searchPage.clearSearchHistory,
+    addRecentSearch: actions.searchPage.addRecentSearch,
+    clearRecentSearches: actions.searchPage.clearRecentSearches,
+  };
+}
+
+/**
+ * 搜索统计Hook
+ * 
+ * 提供搜索性能和结果统计
+ */
+export function useSearchStats() {
+  const { searchPage, actions } = useHomepageStore();
+  
+  return {
+    // 统计数据
+    ...searchPage.searchStats,
+    
+    // 更新方法
+    updateStats: actions.searchPage.updateSearchStats,
   };
 }
 

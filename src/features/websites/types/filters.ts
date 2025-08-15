@@ -19,7 +19,8 @@ export type SortField =
   | 'title'             // Alphabetical
   | 'rating'            // Rating
   | 'visit_count'       // Popularity
-  | 'featured';         // Featured first
+  | 'featured'          // Featured first
+  | 'relevance';        // Search relevance (for search pages)
 
 /**
  * Filter operation types

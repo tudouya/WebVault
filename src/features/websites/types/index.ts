@@ -4,6 +4,7 @@
 export * from './website'
 export * from './category'
 export * from './filters'
+export * from './search'
 
 // For backward compatibility, re-export common interfaces
 export type {
@@ -15,7 +16,12 @@ export type {
   WebsiteStatus,
   AdType,
   WebsiteCardData,
-  WebsiteListResponse
+  WebsiteListResponse,
+  // Search page specific types
+  SearchPageFilters,
+  SearchPageState,
+  SearchURLParams,
+  PaginationState
 } from './website'
 
 export type {
@@ -43,3 +49,19 @@ export type {
   DEFAULT_FILTER_STATE,
   DEFAULT_SORT_OPTIONS
 } from './filters'
+
+export type {
+  SearchPageStatus,
+  SearchHeaderProps,
+  SearchFiltersProps,
+  SearchResultsProps,
+  SearchResultItem,
+  SearchAnalytics,
+  SearchSuggestions
+} from './search'
+
+// Export constants as values, not types
+export {
+  DEFAULT_SEARCH_HEADER_PROPS,
+  DEFAULT_SEARCH_GRID_CONFIG
+} from './search'
