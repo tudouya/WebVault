@@ -16,7 +16,7 @@
  */
 
 /* ========================================
-   卡片悬停效果 - WebsiteCard 动画
+   卡片悬停效果 - WebsiteCard 和 CollectionCard 动画
    ======================================== */
 
 /**
@@ -25,6 +25,16 @@
  */
 .website-card {
   @apply transition-all duration-300 ease-out;
+  transform: translateZ(0); /* 启用硬件加速 */
+  will-change: transform, box-shadow;
+}
+
+/**
+ * 集合卡片基础过渡效果
+ * 与网站卡片保持一致的动画风格，但调整了悬停效果
+ */
+.collection-card {
+  @apply transition-all duration-200 ease-out;
   transform: translateZ(0); /* 启用硬件加速 */
   will-change: transform, box-shadow;
 }
@@ -44,10 +54,31 @@
 }
 
 /**
+ * 集合卡片悬停状态
+ * - 轻微上移 2px (translateY(-2px))，与网站卡片一致
+ * - 阴影加深提供视觉层次
+ * - 使用设计系统的边框颜色
+ */
+.collection-card:hover {
+  transform: translateY(-2px) translateZ(0);
+  box-shadow: 
+    0 4px 12px -2px rgba(0, 0, 0, 0.08),
+    0 2px 8px -2px rgba(0, 0, 0, 0.04),
+    0 0 0 1px hsl(var(--border));
+}
+
+/**
  * 暗色主题下的卡片悬停效果
  * 调整阴影颜色适配暗色背景
  */
 .dark .website-card:hover {
+  box-shadow: 
+    0 4px 12px -2px rgba(0, 0, 0, 0.25),
+    0 2px 8px -2px rgba(0, 0, 0, 0.12),
+    0 0 0 1px hsl(var(--border));
+}
+
+.dark .collection-card:hover {
   box-shadow: 
     0 4px 12px -2px rgba(0, 0, 0, 0.25),
     0 2px 8px -2px rgba(0, 0, 0, 0.12),
@@ -59,6 +90,11 @@
  * 轻微缩放提供点击反馈
  */
 .website-card:active {
+  transform: translateY(-1px) scale(0.98) translateZ(0);
+  transition-duration: 150ms;
+}
+
+.collection-card:active {
   transform: translateY(-1px) scale(0.98) translateZ(0);
   transition-duration: 150ms;
 }
@@ -121,6 +157,23 @@
 .website-grid-enter:nth-child(4) { animation-delay: 300ms; }
 .website-grid-enter:nth-child(5) { animation-delay: 400ms; }
 .website-grid-enter:nth-child(6) { animation-delay: 500ms; }
+
+/**
+ * 集合网格加载动画
+ * 与网站网格保持一致的分阶段展示效果
+ */
+.collection-grid-enter {
+  animation: staggerFadeIn 0.8s ease-out forwards;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.collection-grid-enter:nth-child(1) { animation-delay: 0ms; }
+.collection-grid-enter:nth-child(2) { animation-delay: 100ms; }
+.collection-grid-enter:nth-child(3) { animation-delay: 200ms; }
+.collection-grid-enter:nth-child(4) { animation-delay: 300ms; }
+.collection-grid-enter:nth-child(5) { animation-delay: 400ms; }
+.collection-grid-enter:nth-child(6) { animation-delay: 500ms; }
 
 @keyframes staggerFadeIn {
   to {
@@ -428,20 +481,110 @@
 
 /**
  * 移动设备动画优化
- * 在小屏设备上简化动画以提升性能
+ * 在小屏设备上简化动画以提升性能，优化触摸体验
  */
 @media (max-width: 768px) {
-  .website-card:hover {
+  .website-card:hover,
+  .collection-card:hover {
     transform: none; /* 禁用移动设备上的悬停位移 */
   }
   
-  .website-grid-enter:nth-child(n+7) {
+  /* 移动设备上简化网格加载动画 */
+  .website-grid-enter:nth-child(n+7),
+  .collection-grid-enter:nth-child(n+7) {
     animation-delay: 0ms; /* 移动设备上减少延迟时间 */
   }
 
   /* 移动设备上简化骨架屏动画 */
-  .website-card-skeleton .skeleton::before {
+  .website-card-skeleton .skeleton::before,
+  .collection-card-skeleton .skeleton::before {
     animation-duration: 1.5s; /* 加快动画速度 */
+  }
+
+  /* 移动设备上的触摸响应优化 */
+  .collection-card {
+    transition-duration: 150ms; /* 更快的触摸响应 */
+  }
+  
+  /* 移动端标签按钮触摸优化 */
+  .collection-card button {
+    min-height: 32px; /* 确保足够的触摸区域 */
+    touch-action: manipulation; /* 禁用双击缩放 */
+  }
+}
+
+/**
+ * 平板设备优化
+ * 在平板设备上提供适中的动画效果
+ */
+@media (min-width: 769px) and (max-width: 1024px) {
+  /* 平板端集合卡片动画调整 */
+  .collection-card {
+    transition-duration: 200ms;
+  }
+  
+  .collection-card:hover {
+    transform: translateY(-1px) translateZ(0); /* 减少移动距离 */
+  }
+}
+
+/**
+ * 响应式网格布局切换动画
+ * 提供平滑的布局过渡效果
+ */
+.collection-grid-container {
+  transition: grid-template-columns 0.3s ease-out, gap 0.3s ease-out;
+}
+
+/* 网格间距动画优化 */
+@media (max-width: 640px) {
+  .collection-grid-container {
+    animation: mobileGridFadeIn 0.4s ease-out;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  .collection-grid-container {
+    animation: tabletGridFadeIn 0.4s ease-out;
+  }
+}
+
+@media (min-width: 769px) {
+  .collection-grid-container {
+    animation: desktopGridFadeIn 0.4s ease-out;
+  }
+}
+
+@keyframes mobileGridFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tabletGridFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes desktopGridFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -458,19 +601,158 @@
     transition-duration: 0.01ms !important;
   }
   
-  .website-card:hover {
+  .website-card:hover,
+  .collection-card:hover {
     transform: none;
   }
 
   /* 减少动画偏好时禁用所有加载状态动画 */
-  .website-card-skeleton .skeleton::before {
+  .website-card-skeleton .skeleton::before,
+  .collection-card-skeleton .skeleton::before {
     animation: none;
   }
 
   .search-loading-fade-in,
   .filter-loading-fade-in,
   .pagination-loading-fade-in,
-  .empty-state-loading-fade-in {
+  .empty-state-loading-fade-in,
+  .collection-loading-fade-in,
+  .collection-pagination-loading-fade-in,
+  .collection-empty-fade-in,
+  .collection-error-fade-in,
+  .collection-empty-loading-fade-in {
     animation: none;
+  }
+}
+
+/* ========================================
+   集合加载状态动画 - CollectionLoadingStates 组件
+   ======================================== */
+
+/**
+ * 集合卡片骨架屏动画
+ * 模拟CollectionCard的shimmer加载效果
+ */
+.collection-card-skeleton {
+  @apply transition-all duration-300 ease-out;
+  transform: translateZ(0);
+}
+
+.collection-card-skeleton .skeleton {
+  @apply bg-muted relative overflow-hidden;
+}
+
+.collection-card-skeleton .skeleton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: skeletonShimmer 2s ease-in-out infinite;
+}
+
+.dark .collection-card-skeleton .skeleton::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+}
+
+/**
+ * 集合加载指示器淡入动画
+ */
+.collection-loading-fade-in {
+  animation: collectionLoadingFadeIn 0.3s ease-out;
+}
+
+@keyframes collectionLoadingFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * 集合分页加载遮罩淡入动画
+ */
+.collection-pagination-loading-fade-in {
+  animation: collectionPaginationLoadingFadeIn 0.2s ease-out;
+}
+
+@keyframes collectionPaginationLoadingFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(2px);
+  }
+}
+
+/**
+ * 集合错误状态淡入动画
+ */
+.collection-error-fade-in {
+  animation: collectionErrorFadeIn 0.4s ease-out;
+}
+
+@keyframes collectionErrorFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/**
+ * 集合空状态淡入动画
+ */
+.collection-empty-fade-in {
+  animation: collectionEmptyFadeIn 0.4s ease-out;
+}
+
+@keyframes collectionEmptyFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * 集合空状态加载组件淡入动画
+ */
+.collection-empty-loading-fade-in {
+  animation: collectionEmptyLoadingFadeIn 0.5s ease-out;
+}
+
+@keyframes collectionEmptyLoadingFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

@@ -3,6 +3,7 @@
 // Export all types from the main website types file
 export * from './website'
 export * from './category'
+export * from './collection'
 export * from './filters'
 export * from './search'
 
@@ -51,6 +52,23 @@ export type {
 } from './filters'
 
 export type {
+  Collection,
+  CollectionCreateInput,
+  CollectionUpdateInput,
+  CollectionStatus,
+  CollectionIcon,
+  CollectionCardData,
+  CollectionFilters,
+  CollectionPagination,
+  CollectionListResponse,
+  CollectionStats,
+  CollectionNavigation,
+  CollectionBreadcrumb,
+  CollectionState,
+  CollectionSearchParams
+} from './collection'
+
+export type {
   SearchPageStatus,
   SearchHeaderProps,
   SearchFiltersProps,
@@ -65,3 +83,8 @@ export {
   DEFAULT_SEARCH_HEADER_PROPS,
   DEFAULT_SEARCH_GRID_CONFIG
 } from './search'
+
+export {
+  DEFAULT_COLLECTION_STATE,
+  DEFAULT_COLLECTION_SEARCH_PARAMS
+} from './collection'

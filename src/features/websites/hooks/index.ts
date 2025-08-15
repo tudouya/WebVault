@@ -22,3 +22,11 @@ export {
   type SearchResultsState,
   type SearchResultsActions,
 } from './useSearchPage';
+
+// 集合导航Hooks
+export {
+  useCollectionNavigation,
+  CollectionNavigationUtils,
+  type CollectionNavigationConfig,
+  type CollectionNavigationReturn,
+} from './useCollectionNavigation';
