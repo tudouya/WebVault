@@ -17,6 +17,7 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 // 导入已存在的组件
@@ -91,6 +92,9 @@ export function CollectionIndexPage({
   showContentSection = true,
   showFooter = true,
 }: CollectionIndexPageProps) {
+  // Next.js路由
+  const router = useRouter();
+  
   // 集合数据状态管理
   const { 
     collections,
@@ -119,10 +123,29 @@ export function CollectionIndexPage({
     }
   }, [isInitialized]); // 只依赖isInitialized，避免无限循环
   
-  // 处理集合卡片点击
+  // 处理集合卡片点击 - 导航到集合详情页面
   const handleCollectionClick = (collection: CollectionCardData) => {
-    // TODO: 后续任务实现 - 导航到集合详情页面
-    console.log('Collection clicked:', collection.title);
+    try {
+      // 构建集合详情页面的URL
+      const detailUrl = `/collection/${collection.slug || collection.id}`;
+      
+      // 开发环境调试信息
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Navigating to collection detail:', {
+          title: collection.title,
+          slug: collection.slug,
+          id: collection.id,
+          url: detailUrl
+        });
+      }
+      
+      // 导航到集合详情页面
+      router.push(detailUrl);
+    } catch (error) {
+      console.error('Failed to navigate to collection detail:', error);
+      // 如果导航失败，可以显示错误提示
+      // 这里暂时只记录错误，不中断用户体验
+    }
   };
   
   // 处理标签点击

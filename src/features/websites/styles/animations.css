@@ -620,7 +620,11 @@
   .collection-pagination-loading-fade-in,
   .collection-empty-fade-in,
   .collection-error-fade-in,
-  .collection-empty-loading-fade-in {
+  .collection-empty-loading-fade-in,
+  .browsable-filter-loading-fade-in,
+  .browsable-refresh-loading-fade-in,
+  .browsable-page-loading-fade-in,
+  .browsable-empty-loading-fade-in {
     animation: none;
   }
 }
@@ -754,5 +758,121 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* ========================================
+   浏览页面加载状态动画 - BrowsablePageLoadingStates 组件
+   ======================================== */
+
+/**
+ * 浏览页面卡片骨架屏动画
+ * 模拟浏览页面卡片的shimmer加载效果
+ */
+.browsable-page-card-skeleton {
+  @apply transition-all duration-300 ease-out;
+  transform: translateZ(0);
+}
+
+.browsable-page-card-skeleton .skeleton {
+  @apply bg-muted relative overflow-hidden;
+}
+
+.browsable-page-card-skeleton .skeleton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: skeletonShimmer 2s ease-in-out infinite;
+}
+
+.dark .browsable-page-card-skeleton .skeleton::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+}
+
+/**
+ * 浏览页面筛选加载指示器淡入动画
+ */
+.browsable-filter-loading-fade-in {
+  animation: browsableFilterLoadingFadeIn 0.4s ease-out;
+}
+
+@keyframes browsableFilterLoadingFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/**
+ * 浏览页面数据刷新指示器淡入动画
+ */
+.browsable-refresh-loading-fade-in {
+  animation: browsableRefreshLoadingFadeIn 0.3s ease-out;
+}
+
+@keyframes browsableRefreshLoadingFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * 浏览页面加载遮罩淡入动画
+ */
+.browsable-page-loading-fade-in {
+  animation: browsablePageLoadingFadeIn 0.3s ease-out;
+}
+
+@keyframes browsablePageLoadingFadeIn {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(3px);
+    transform: scale(1);
+  }
+}
+
+/**
+ * 浏览页面空状态加载组件淡入动画
+ */
+.browsable-empty-loading-fade-in {
+  animation: browsableEmptyLoadingFadeIn 0.5s ease-out;
+}
+
+@keyframes browsableEmptyLoadingFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(25px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
