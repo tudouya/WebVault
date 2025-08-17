@@ -127,13 +127,12 @@ export function CollectionIndexPage({
   const handleCollectionClick = (collection: CollectionCardData) => {
     try {
       // 构建集合详情页面的URL
-      const detailUrl = `/collection/${collection.slug || collection.id}`;
+      const detailUrl = `/collection/${collection.id}`;
       
       // 开发环境调试信息
       if (process.env.NODE_ENV === 'development') {
         console.log('Navigating to collection detail:', {
           title: collection.title,
-          slug: collection.slug,
           id: collection.id,
           url: detailUrl
         });

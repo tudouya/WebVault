@@ -4,6 +4,7 @@
 
 /* WebVault 动画效果样式 */
 @import '../features/websites/styles/animations.css';
+@import '../features/blog/styles/animations.css';
 
 @layer base {
   :root {

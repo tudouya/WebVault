@@ -1,0 +1,315 @@
+/**
+ * BlogCategoryFilter 动画效果样式
+ * 为博客分类筛选器提供现代化的交互动效
+ * 
+ * 任务21实现要求:
+ * - Requirements 13.2: 分类切换fade-in动画，持续300ms
+ * - Requirements 13.5: 图片加载placeholder背景色渐变动画
+ * - 标签悬停平滑过渡: transition: all 0.2s ease
+ * - 移动端触摸反馈动画优化（快速响应150ms）
+ * - 无障碍性: 支持prefers-reduced-motion媒体查询
+ * 
+ * 性能优化:
+ * - 使用 CSS transforms 避免重排
+ * - 启用硬件加速 (transform3d)
+ * - GPU加速的opacity和transform属性
+ */
+
+/* ========================================
+   CategoryFilter 分类切换动画 - Requirements 13.2
+   ======================================== */
+
+/**
+ * 分类筛选器容器fade-in动画
+ * 当分类切换时为新内容提供流畅的淡入效果，持续300ms
+ */
+.blog-category-filter-fade-in {
+  animation: blogCategoryFadeIn 0.3s ease-in-out forwards;
+  opacity: 0;
+  transform: translateY(5px);
+}
+
+@keyframes blogCategoryFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * 分类标签切换状态动画
+ * 激活状态的标签提供特殊的淡入效果
+ */
+.blog-category-tag-active {
+  animation: blogCategoryTagActivate 0.3s ease-in-out forwards;
+}
+
+@keyframes blogCategoryTagActivate {
+  from {
+    opacity: 0.7;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/**
+ * 分类标签悬停效果 - transition: all 0.2s ease
+ * 为标签提供平滑的颜色、大小和位置过渡
+ */
+.blog-category-tag {
+  transition: all 0.2s ease;
+  transform: translateZ(0); /* 启用硬件加速 */
+  will-change: transform, background-color, box-shadow;
+}
+
+/**
+ * 分类标签悬停状态增强
+ * 轻微上移和阴影效果提供视觉反馈
+ */
+.blog-category-tag:hover {
+  transform: translateY(-2px) translateZ(0);
+  box-shadow: 
+    0 4px 12px -2px rgba(139, 92, 246, 0.15),
+    0 2px 8px -2px rgba(139, 92, 246, 0.08);
+}
+
+/**
+ * 暗色主题下的分类标签悬停效果
+ * 调整阴影颜色适配暗色背景
+ */
+.dark .blog-category-tag:hover {
+  box-shadow: 
+    0 4px 12px -2px rgba(139, 92, 246, 0.25),
+    0 2px 8px -2px rgba(139, 92, 246, 0.12);
+}
+
+/**
+ * 分类标签点击状态 - 移动端触摸优化
+ * 快速响应的点击反馈，提升触摸体验
+ */
+.blog-category-tag:active {
+  transform: translateY(0) scale(0.98) translateZ(0);
+  transition-duration: 150ms; /* 移动端快速响应 */
+}
+
+/* ========================================
+   博客内容切换动画 - Requirements 13.2扩展
+   ======================================== */
+
+/**
+ * 博客内容区域fade-in动画
+ * 当分类切换后，博客列表的淡入效果
+ */
+.blog-content-fade-in {
+  animation: blogContentFadeIn 0.3s ease-in-out forwards;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+@keyframes blogContentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * 博客卡片逐个展示动画
+ * 分阶段淡入创建视觉层次感
+ */
+.blog-card-stagger-fade-in {
+  animation: blogCardStaggerFadeIn 0.4s ease-out forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.blog-card-stagger-fade-in:nth-child(1) { animation-delay: 0ms; }
+.blog-card-stagger-fade-in:nth-child(2) { animation-delay: 100ms; }
+.blog-card-stagger-fade-in:nth-child(3) { animation-delay: 200ms; }
+.blog-card-stagger-fade-in:nth-child(4) { animation-delay: 300ms; }
+.blog-card-stagger-fade-in:nth-child(5) { animation-delay: 400ms; }
+.blog-card-stagger-fade-in:nth-child(6) { animation-delay: 500ms; }
+
+@keyframes blogCardStaggerFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   图片加载placeholder动画 - Requirements 13.5
+   ======================================== */
+
+/**
+ * 博客卡片图片placeholder背景色渐变动画
+ * 在图片加载期间显示平滑的渐变效果
+ */
+.blog-image-placeholder {
+  animation: blogImagePlaceholder 2s ease-in-out infinite;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 0%,
+    hsl(var(--muted-foreground) / 0.1) 50%,
+    hsl(var(--muted)) 100%
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes blogImagePlaceholder {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/**
+ * 暗色主题下的图片placeholder
+ * 适配暗色背景的渐变动画
+ */
+.dark .blog-image-placeholder {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 0%,
+    hsl(var(--muted-foreground) / 0.2) 50%,
+    hsl(var(--muted)) 100%
+  );
+}
+
+/**
+ * 图片加载完成淡入动画
+ * 图片加载完成后的平滑显示效果
+ */
+.blog-image-fade-in {
+  animation: blogImageFadeIn 0.3s ease-in-out forwards;
+  opacity: 0;
+}
+
+@keyframes blogImageFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ========================================
+   移动端触摸优化动画
+   ======================================== */
+
+/**
+ * 移动设备动画优化
+ * 在小屏设备上优化性能，提供更快的触摸反馈
+ */
+@media (max-width: 768px) {
+  .blog-category-tag {
+    transition-duration: 150ms; /* 移动端更快的过渡 */
+  }
+  
+  .blog-category-tag:hover {
+    /* 移动设备上禁用悬停位移效果 */
+    transform: translateY(0) translateZ(0);
+  }
+  
+  /* 移动设备上简化动画效果，提升性能 */
+  .blog-card-stagger-fade-in:nth-child(n+7) {
+    animation-delay: 0ms; /* 减少延迟时间 */
+  }
+  
+  /* 移动端图片placeholder动画优化 */
+  .blog-image-placeholder {
+    animation-duration: 1.5s; /* 加快动画速度 */
+  }
+}
+
+/**
+ * 平板设备优化
+ * 在平板设备上提供适中的动画效果
+ */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .blog-category-tag {
+    transition-duration: 180ms;
+  }
+  
+  .blog-category-tag:hover {
+    transform: translateY(-1px) translateZ(0); /* 减少移动距离 */
+  }
+}
+
+/* ========================================
+   无障碍性支持 - prefers-reduced-motion
+   ======================================== */
+
+/**
+ * 用户偏好：减少动画
+ * 尊重系统设置中的动画偏好，确保无障碍性
+ */
+@media (prefers-reduced-motion: reduce) {
+  .blog-category-filter-fade-in,
+  .blog-category-tag-active,
+  .blog-content-fade-in,
+  .blog-card-stagger-fade-in,
+  .blog-image-fade-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  
+  .blog-category-tag {
+    transition: none;
+  }
+  
+  .blog-category-tag:hover,
+  .blog-category-tag:active {
+    transform: none;
+  }
+  
+  .blog-image-placeholder {
+    animation: none;
+    background: hsl(var(--muted));
+  }
+}
+
+/* ========================================
+   焦点状态和键盘导航动画
+   ======================================== */
+
+/**
+ * 键盘导航焦点状态动画
+ * 为键盘用户提供清晰的焦点指示
+ */
+.blog-category-tag:focus-visible {
+  animation: blogCategoryFocusRing 0.2s ease-in-out;
+}
+
+@keyframes blogCategoryFocusRing {
+  0% {
+    box-shadow: 0 0 0 0 hsl(var(--ring) / 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 2px hsl(var(--ring));
+  }
+}
+
+/**
+ * 焦点环动画在减少动画偏好下的处理
+ */
+@media (prefers-reduced-motion: reduce) {
+  .blog-category-tag:focus-visible {
+    animation: none;
+  }
+}

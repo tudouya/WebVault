@@ -348,15 +348,15 @@ export const useBrowsablePageStore = create<BrowsablePageStoreState>()(
                   const order = state.filters.sortOrder === 'desc' ? -1 : 1;
                   switch (state.filters.sortBy) {
                     case 'created_at':
-                      return order * (new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+                      return order * (new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime());
                     case 'updated_at':
-                      return order * (new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime());
+                      return order * (new Date(a.updated_at || 0).getTime() - new Date(b.updated_at || 0).getTime());
                     case 'title':
                       return order * a.title.localeCompare(b.title);
                     case 'rating':
                       return order * ((a.rating || 0) - (b.rating || 0));
                     case 'visit_count':
-                      return order * (a.visit_count - b.visit_count);
+                      return order * ((a.visit_count || 0) - (b.visit_count || 0));
                     default:
                       return 0;
                   }
@@ -388,13 +388,15 @@ export const useBrowsablePageStore = create<BrowsablePageStoreState>()(
                 },
                 filterOptions: {
                   categories: allCategories.map(cat => ({
-                    id: cat,
-                    name: cat,
+                    id: cat || '',
+                    name: cat || '',
+                    slug: cat?.toLowerCase().replace(/\s+/g, '-') || '',
                     websiteCount: mockWebsites.filter(site => site.category === cat).length,
                   })),
                   tags: allTags.map(tag => ({
                     id: tag,
                     name: tag,
+                    slug: tag.toLowerCase().replace(/\s+/g, '-'),
                     websiteCount: mockWebsites.filter(site => site.tags.includes(tag)).length,
                   })),
                 },
