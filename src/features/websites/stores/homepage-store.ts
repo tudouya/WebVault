@@ -22,19 +22,10 @@ import {
   SortField,
   SortOrder,
   WebsitePagination,
-  Category 
+  Category,
+  PaginationState
 } from '../types';
 import { DEFAULT_FILTER_STATE } from '../types/filters';
-
-/**
- * 分页状态接口
- */
-export interface PaginationState {
-  currentPage: number;
-  itemsPerPage: number;
-  totalItems: number;
-  totalPages: number;
-}
 
 /**
  * URL搜索参数解析器配置

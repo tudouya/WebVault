@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * BlogIndexPage 组件
  * 

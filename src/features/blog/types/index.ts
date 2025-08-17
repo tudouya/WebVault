@@ -2,7 +2,7 @@
  * Blog data type definitions
  * 
  * Defines the blog interfaces for the blog page UI implementation
- * including blog card data and category filtering functionality.
+ * including blog card data, category filtering, and detail page functionality.
  */
 
 // 导入分类常量和类型
@@ -13,6 +13,16 @@ export {
   BLOG_CATEGORY_CONSTANTS
 } from '../constants/categories';
 export type { BlogCategoryType } from '../constants/categories';
+
+// 导出博客详情相关类型
+export type {
+  BlogDetailData,
+  BlogAuthorDetail,
+  TableOfContentsItem,
+  BlogDetailPageState,
+  BlogDetailActions
+} from './detail';
+export { BlogDetailDataUtils } from './detail';
 
 /**
  * Author information interface

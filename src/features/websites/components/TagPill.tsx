@@ -155,7 +155,10 @@ export function TagPill({
   // 自动判断颜色变体，优先使用手动指定的variant
   const colorVariant = variant || getTagVariant(tag);
   
-  const handleClick = () => {
+  const handleClick = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation(); // 阻止事件冒泡
+    }
     onClick?.(tag);
   };
 
@@ -172,12 +175,13 @@ export function TagPill({
         },
         className
       )}
-      onClick={handleClick}
+      onClick={onClick ? handleClick : undefined}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={onClick ? (e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
+          e.stopPropagation(); // 阻止事件冒泡
           handleClick();
         }
       } : undefined}

@@ -188,6 +188,48 @@ export const BlogCategoryUtils = {
   ): boolean => {
     return category1 === category2;
   },
+
+  /**
+   * 获取相关分类列表
+   * 用于相关文章推荐时的分类关联度计算
+   * @param category - 当前分类
+   * @returns 相关分类数组
+   */
+  getRelatedCategories: (category: BlogCategoryType): BlogCategoryType[] => {
+    // 定义分类之间的关联关系
+    const categoryRelations: Record<BlogCategoryType, BlogCategoryType[]> = {
+      'All': [],
+      'Lifestyle': ['Growth', 'Design'], // 生活方式与成长、设计相关
+      'Technologies': ['Design', 'Growth'], // 技术与设计、成长相关
+      'Design': ['Technologies', 'Lifestyle'], // 设计与技术、生活方式相关
+      'Travel': ['Lifestyle', 'Growth'], // 旅行与生活方式、成长相关
+      'Growth': ['Lifestyle', 'Technologies'], // 成长与生活方式、技术相关
+    };
+
+    return categoryRelations[category] || [];
+  },
+
+  /**
+   * 计算分类相似度分数
+   * @param category1 - 分类1
+   * @param category2 - 分类2
+   * @returns 相似度分数 (0-1)
+   */
+  calculateCategorySimilarity: (
+    category1: BlogCategoryType,
+    category2: BlogCategoryType
+  ): number => {
+    if (category1 === category2) {
+      return 1.0; // 完全相同
+    }
+
+    const relatedCategories = BlogCategoryUtils.getRelatedCategories(category1);
+    if (relatedCategories.includes(category2)) {
+      return 0.6; // 相关分类
+    }
+
+    return 0.1; // 无关分类
+  },
 } as const;
 
 /**

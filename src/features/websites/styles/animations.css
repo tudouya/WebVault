@@ -994,6 +994,81 @@
 }
 
 /* ========================================
+   网站详情页面动画 - WebsiteDetailPage 组件
+   ======================================== */
+
+/**
+ * 网站详情页面整体淡入动画
+ * 页面加载时提供平滑的视觉过渡
+ */
+.website-detail-fade-in {
+  animation: websiteDetailFadeIn 0.6s ease-out forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+@keyframes websiteDetailFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * 网站详情内容区域动画
+ * 分段加载增强用户体验
+ */
+.website-detail-content-enter {
+  animation: websiteDetailContentEnter 0.8s ease-out forwards;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+@keyframes websiteDetailContentEnter {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * 网站详情信息栏动画
+ * 与主内容区域略有延迟，创建层次感
+ */
+.website-detail-info-enter {
+  animation: websiteDetailInfoEnter 0.8s ease-out forwards;
+  animation-delay: 0.2s;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+@keyframes websiteDetailInfoEnter {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * 访问统计更新指示器动画
+ * 提供访问操作的视觉反馈
+ */
+.visit-tracking-loading {
+  animation: visitTrackingPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes visitTrackingPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(0.98);
+  }
+}
+
+/* ========================================
    博客加载状态动画 - BlogLoadingStates 组件
    ======================================== */
 

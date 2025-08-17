@@ -2,6 +2,7 @@
 
 import React, { useCallback, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
@@ -66,16 +67,20 @@ const BlogCard = React.memo(function BlogCard({
   const [coverImageError, setCoverImageError] = useState(false);
   const [authorAvatarError, setAuthorAvatarError] = useState(false);
 
+  // Next.js 路由导航
+  const router = useRouter();
+
   // 懒加载监听 - 视窗底部200px触发
   const { ref: intersectionRef, isIntersecting } = useIntersectionObserver<HTMLDivElement>({
     rootMargin: '0px 0px 200px 0px', // 视窗底部200px触发
     threshold: 0.1,
     freezeOnceVisible: true,
   });
+
   const handleClick = useCallback(() => {
-    // 导航到博客详情页面 - 此处可以添加导航逻辑
-    console.log(`Navigate to blog: ${blog.slug}`);
-  }, [blog.slug]);
+    // 导航到博客详情页面
+    router.push(`/blog/${blog.slug}`);
+  }, [router, blog.slug]);
 
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {

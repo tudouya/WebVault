@@ -2,9 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-/* WebVault 动画效果样式 */
+/* WebVault 样式文件导入 */
 @import '../features/websites/styles/animations.css';
+@import '../features/websites/styles/websiteDetail.css';
 @import '../features/blog/styles/animations.css';
+@import '../features/blog/styles/blogDetail.css';
 
 @layer base {
   :root {

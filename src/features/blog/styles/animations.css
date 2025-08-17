@@ -285,6 +285,556 @@
 }
 
 /* ========================================
+   相关文章推荐组件动画 - Task 11
+   ======================================== */
+
+/**
+ * 相关文章推荐区域淡入动画
+ * 组件首次加载时的入场动画效果
+ */
+.related-posts-fade-in {
+  animation: relatedPostsFadeIn 0.4s ease-out forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+@keyframes relatedPostsFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * 相关文章卡片stagger动画
+ * 文章卡片逐个显示，创建层次感
+ */
+.related-post-item {
+  animation: relatedPostStagger 0.5s ease-out forwards;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+@keyframes relatedPostStagger {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * 相关文章标题进入动画
+ * 标题区域的淡入效果
+ */
+.related-posts-title-enter {
+  animation: relatedPostsTitleEnter 0.3s ease-out forwards;
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+@keyframes relatedPostsTitleEnter {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/**
+ * 相关文章卡片悬停增强动画
+ * 提供更丰富的交互反馈
+ */
+.related-post-item .blog-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateZ(0); /* 启用硬件加速 */
+}
+
+.related-post-item .blog-card:hover {
+  transform: translateY(-8px) translateZ(0);
+  box-shadow: 
+    0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+/**
+ * 暗色主题下的相关文章卡片悬停效果
+ */
+.dark .related-post-item .blog-card:hover {
+  box-shadow: 
+    0 10px 25px -5px rgba(0, 0, 0, 0.3),
+    0 8px 10px -6px rgba(0, 0, 0, 0.2);
+}
+
+/**
+ * 相关文章加载骨架动画
+ * 增强加载体验的脉冲效果
+ */
+.related-posts-skeleton {
+  animation: relatedPostsSkeleton 1.5s ease-in-out infinite;
+}
+
+@keyframes relatedPostsSkeleton {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/**
+ * 相关文章错误状态摇摆动画
+ * 为错误状态提供轻微的注意力吸引效果
+ */
+.related-posts-error {
+  animation: relatedPostsErrorShake 0.6s ease-in-out;
+}
+
+@keyframes relatedPostsErrorShake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-2px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(2px);
+  }
+}
+
+/**
+ * 相关文章空状态淡入动画
+ * 优雅地显示空状态提示
+ */
+.related-posts-empty {
+  animation: relatedPostsEmpty 0.4s ease-out forwards;
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+@keyframes relatedPostsEmpty {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ========================================
+   博客详情页面动画 - Task 15 Requirements 11.1, 11.3, 11.6
+   ======================================== */
+
+/**
+ * 文章内容渐入动画 - Requirements 11.3
+ * 页面加载时使用渐入动画显示文章内容，避免突兀感
+ */
+.blog-detail-content-fade-in {
+  animation: blogDetailContentFadeIn 0.6s ease-out forwards;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+@keyframes blogDetailContentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * 文章标题动画
+ * 独立的标题进入动画，创建阅读引导
+ */
+.blog-detail-title-fade-in {
+  animation: blogDetailTitleFadeIn 0.5s ease-out forwards;
+  opacity: 0;
+  transform: translateY(20px);
+  animation-delay: 0.1s;
+}
+
+@keyframes blogDetailTitleFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * 文章元信息动画
+ * 作者、日期等元信息的淡入效果
+ */
+.blog-detail-meta-fade-in {
+  animation: blogDetailMetaFadeIn 0.4s ease-out forwards;
+  opacity: 0;
+  transform: translateY(15px);
+  animation-delay: 0.2s;
+}
+
+@keyframes blogDetailMetaFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * 文章正文内容滚动触发动画 - Requirements 11.3
+ * 段落内容在滚动到视图时逐步显示
+ */
+.blog-detail-paragraph-scroll-in {
+  animation: blogDetailParagraphScrollIn 0.8s ease-out forwards;
+  opacity: 0;
+  transform: translateY(40px);
+}
+
+@keyframes blogDetailParagraphScrollIn {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * 文章图片加载动画
+ * 图片在滚动到视图时的淡入效果
+ */
+.blog-detail-image-scroll-in {
+  animation: blogDetailImageScrollIn 0.7s ease-out forwards;
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+@keyframes blogDetailImageScrollIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ========================================
+   分享按钮交互动画 - Requirements 11.1
+   ======================================== */
+
+/**
+ * 社交分享容器淡入动画
+ * 分享区域的初始加载动画
+ */
+.blog-detail-share-container-fade-in {
+  animation: blogDetailShareContainerFadeIn 0.5s ease-out forwards;
+  opacity: 0;
+  transform: translateX(-20px);
+  animation-delay: 0.3s;
+}
+
+@keyframes blogDetailShareContainerFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/**
+ * 分享按钮悬停动画 - Requirements 11.1
+ * 用户悬停可点击元素时提供smooth的transition动画效果
+ */
+.blog-detail-share-button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateZ(0); /* 启用硬件加速 */
+  will-change: transform, box-shadow, background-color;
+}
+
+.blog-detail-share-button:hover {
+  transform: translateY(-3px) scale(1.05) translateZ(0);
+  box-shadow: 
+    0 8px 20px -4px rgba(0, 0, 0, 0.12),
+    0 4px 12px -2px rgba(0, 0, 0, 0.08);
+}
+
+/**
+ * 分享按钮点击动画
+ * 提供点击反馈的缩放效果
+ */
+.blog-detail-share-button:active {
+  transform: translateY(-1px) scale(0.98) translateZ(0);
+  transition-duration: 150ms;
+}
+
+/**
+ * 特定社交平台按钮悬停效果
+ * 基于平台品牌色的增强悬停效果
+ */
+.blog-detail-share-button.twitter:hover {
+  background-color: rgba(29, 155, 240, 0.1);
+  box-shadow: 
+    0 8px 20px -4px rgba(29, 155, 240, 0.3),
+    0 4px 12px -2px rgba(29, 155, 240, 0.15);
+}
+
+.blog-detail-share-button.facebook:hover {
+  background-color: rgba(24, 119, 242, 0.1);
+  box-shadow: 
+    0 8px 20px -4px rgba(24, 119, 242, 0.3),
+    0 4px 12px -2px rgba(24, 119, 242, 0.15);
+}
+
+.blog-detail-share-button.linkedin:hover {
+  background-color: rgba(10, 102, 194, 0.1);
+  box-shadow: 
+    0 8px 20px -4px rgba(10, 102, 194, 0.3),
+    0 4px 12px -2px rgba(10, 102, 194, 0.15);
+}
+
+.blog-detail-share-button.copy:hover {
+  background-color: hsl(var(--muted));
+  box-shadow: 
+    0 8px 20px -4px hsl(var(--muted-foreground) / 0.3),
+    0 4px 12px -2px hsl(var(--muted-foreground) / 0.15);
+}
+
+/**
+ * 分享成功反馈动画
+ * 点击分享后的成功指示动画
+ */
+.blog-detail-share-success {
+  animation: blogDetailShareSuccess 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes blogDetailShareSuccess {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/**
+ * 暗色主题下的分享按钮动画
+ * 调整暗色主题下的阴影和颜色
+ */
+.dark .blog-detail-share-button:hover {
+  box-shadow: 
+    0 8px 20px -4px rgba(0, 0, 0, 0.4),
+    0 4px 12px -2px rgba(0, 0, 0, 0.25);
+}
+
+.dark .blog-detail-share-button.twitter:hover {
+  background-color: rgba(29, 155, 240, 0.15);
+}
+
+.dark .blog-detail-share-button.facebook:hover {
+  background-color: rgba(24, 119, 242, 0.15);
+}
+
+.dark .blog-detail-share-button.linkedin:hover {
+  background-color: rgba(10, 102, 194, 0.15);
+}
+
+/* ========================================
+   相关文章动画增强 - Requirements 11.6
+   ======================================== */
+
+/**
+ * 相关文章容器淡入动画 - Requirements 11.6
+ * 相关文章加载时使用fade-in动画逐个显示文章卡片
+ */
+.blog-detail-related-posts-fade-in {
+  animation: blogDetailRelatedPostsFadeIn 0.5s ease-out forwards;
+  opacity: 0;
+  transform: translateY(40px);
+  animation-delay: 0.4s;
+}
+
+@keyframes blogDetailRelatedPostsFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * 相关文章标题动画
+ * 独立的标题动画效果
+ */
+.blog-detail-related-title-fade-in {
+  animation: blogDetailRelatedTitleFadeIn 0.4s ease-out forwards;
+  opacity: 0;
+  transform: translateX(-15px);
+  animation-delay: 0.5s;
+}
+
+@keyframes blogDetailRelatedTitleFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/**
+ * 相关文章卡片stagger动画 - Requirements 11.6
+ * 逐个显示文章卡片，创建流畅的视觉体验
+ */
+.blog-detail-related-card {
+  animation: blogDetailRelatedCardStagger 0.6s ease-out forwards;
+  opacity: 0;
+  transform: translateY(50px) scale(0.95);
+}
+
+.blog-detail-related-card:nth-child(1) { animation-delay: 0.6s; }
+.blog-detail-related-card:nth-child(2) { animation-delay: 0.75s; }
+.blog-detail-related-card:nth-child(3) { animation-delay: 0.9s; }
+.blog-detail-related-card:nth-child(4) { animation-delay: 1.05s; }
+
+@keyframes blogDetailRelatedCardStagger {
+  from {
+    opacity: 0;
+    transform: translateY(50px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/**
+ * 相关文章卡片悬停增强
+ * 为博客详情页面的相关文章提供特殊的悬停效果
+ */
+.blog-detail-related-card:hover {
+  transform: translateY(-6px) scale(1.02) translateZ(0);
+  box-shadow: 
+    0 12px 30px -6px rgba(0, 0, 0, 0.15),
+    0 6px 20px -4px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark .blog-detail-related-card:hover {
+  box-shadow: 
+    0 12px 30px -6px rgba(0, 0, 0, 0.4),
+    0 6px 20px -4px rgba(0, 0, 0, 0.3);
+}
+
+/* ========================================
+   滚动触发动画工具类 - Requirements 11.3
+   ======================================== */
+
+/**
+ * 滚动观察者交互动画
+ * 为滚动到视图的元素提供通用动画类
+ */
+.blog-detail-scroll-trigger {
+  opacity: 0;
+  transform: translateY(60px);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.blog-detail-scroll-trigger.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/**
+ * 滚动触发的段落延迟动画
+ * 不同段落的不同延迟时间，创建阅读节奏
+ */
+.blog-detail-scroll-trigger.delay-1 {
+  transition-delay: 0.1s;
+}
+
+.blog-detail-scroll-trigger.delay-2 {
+  transition-delay: 0.2s;
+}
+
+.blog-detail-scroll-trigger.delay-3 {
+  transition-delay: 0.3s;
+}
+
+.blog-detail-scroll-trigger.delay-4 {
+  transition-delay: 0.4s;
+}
+
+/* ========================================
+   阅读进度条动画
+   ======================================== */
+
+/**
+ * 阅读进度条平滑动画
+ * 提供流畅的进度更新效果
+ */
+.blog-detail-reading-progress {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: width;
+}
+
+/**
+ * 进度条容器淡入动画
+ * 阅读进度条的初始显示动画
+ */
+.blog-detail-reading-progress-container {
+  animation: blogDetailReadingProgressFadeIn 0.4s ease-out forwards;
+  opacity: 0;
+  animation-delay: 1s;
+}
+
+@keyframes blogDetailReadingProgressFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ========================================
    焦点状态和键盘导航动画
    ======================================== */
 
@@ -306,10 +856,132 @@
 }
 
 /**
+ * 分享按钮焦点状态动画
+ * 键盘导航时的分享按钮焦点指示
+ */
+.blog-detail-share-button:focus-visible {
+  animation: blogDetailShareButtonFocus 0.3s ease-in-out;
+}
+
+@keyframes blogDetailShareButtonFocus {
+  0% {
+    box-shadow: 0 0 0 0 hsl(var(--ring) / 0.3);
+  }
+  100% {
+    box-shadow: 
+      0 0 0 2px hsl(var(--ring)),
+      0 8px 20px -4px rgba(0, 0, 0, 0.12);
+  }
+}
+
+/* ========================================
+   移动端优化动画
+   ======================================== */
+
+/**
+ * 移动设备动画优化
+ * 在小屏设备上简化动画以提升性能和触摸体验
+ */
+@media (max-width: 768px) {
+  .blog-detail-share-button:hover {
+    /* 移动设备上禁用悬停效果 */
+    transform: none;
+    box-shadow: none;
+    background-color: transparent;
+  }
+  
+  .blog-detail-related-card:hover {
+    /* 移动设备上简化悬停效果 */
+    transform: none;
+    box-shadow: none;
+  }
+  
+  /* 移动端相关文章动画延迟优化 */
+  .blog-detail-related-card:nth-child(n+4) {
+    animation-delay: 0.6s; /* 减少延迟时间 */
+  }
+  
+  /* 移动端滚动触发动画优化 */
+  .blog-detail-scroll-trigger {
+    transform: translateY(30px); /* 减少移动距离 */
+    transition-duration: 0.6s; /* 加快动画速度 */
+  }
+}
+
+/**
+ * 平板设备优化
+ * 在平板设备上提供适中的动画效果
+ */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .blog-detail-share-button:hover {
+    transform: translateY(-2px) scale(1.03) translateZ(0);
+  }
+  
+  .blog-detail-related-card:hover {
+    transform: translateY(-4px) scale(1.01) translateZ(0);
+  }
+}
+
+/**
  * 焦点环动画在减少动画偏好下的处理
  */
 @media (prefers-reduced-motion: reduce) {
-  .blog-category-tag:focus-visible {
+  .blog-category-tag:focus-visible,
+  .blog-detail-share-button:focus-visible {
     animation: none;
+  }
+  
+  /* 博客详情页面动画的无障碍性支持 */
+  .blog-detail-content-fade-in,
+  .blog-detail-title-fade-in,
+  .blog-detail-meta-fade-in,
+  .blog-detail-paragraph-scroll-in,
+  .blog-detail-image-scroll-in,
+  .blog-detail-share-container-fade-in,
+  .blog-detail-related-posts-fade-in,
+  .blog-detail-related-title-fade-in,
+  .blog-detail-related-card,
+  .blog-detail-reading-progress-container {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    animation-delay: 0s;
+  }
+  
+  .blog-detail-share-button,
+  .blog-detail-related-card,
+  .blog-detail-reading-progress,
+  .blog-detail-scroll-trigger {
+    transition: none;
+  }
+  
+  .blog-detail-share-button:hover,
+  .blog-detail-related-card:hover {
+    transform: none;
+  }
+  
+  .blog-detail-scroll-trigger {
+    opacity: 1;
+    transform: none;
+  }
+  
+  /* 相关文章推荐动画的无障碍性支持 */
+  .related-posts-fade-in,
+  .related-post-item,
+  .related-posts-title-enter,
+  .related-posts-skeleton,
+  .related-posts-error,
+  .related-posts-empty {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  
+  .related-post-item .blog-card {
+    transition: none;
+  }
+  
+  .related-post-item .blog-card:hover {
+    transform: none;
   }
 }

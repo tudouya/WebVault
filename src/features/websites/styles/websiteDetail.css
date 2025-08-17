@@ -1,0 +1,887 @@
+/**
+ * 网站详情页面专用样式
+ * Website Detail Page Specific Styles
+ * 
+ * 为网站详情页面提供完整的排版、布局和交互样式
+ * 遵循 NFR-3.2.1, NFR-3.2.2, NFR-3.3.1, NFR-3.3.2 的精确规格
+ * 
+ * 特性：
+ * - 精确的配色系统，基于 globals.css 的 WebVault 主题配色
+ * - 完整的网站详情排版样式，遵循现有字体规范
+ * - 响应式布局适配，优化移动端和桌面端浏览体验
+ * - 访问按钮和交互元素的专业样式
+ * - 无障碍性支持和性能优化
+ * - 复用博客系统的 blog-content-fade-in 动画模式
+ * 
+ * 需求引用：
+ * - NFR-3.2.1: 页面支持移动端（320px-768px）单列布局
+ * - NFR-3.2.2: 页面支持桌面端（1024px+）双列布局，最大宽度1200px
+ * - NFR-3.3.1: 页面支持键盘导航操作
+ * - NFR-3.3.2: 页面提供合适的ARIA标签和语义化HTML结构
+ */
+
+/* ========================================
+   页面容器和布局 - NFR-3.2.1, NFR-3.2.2
+   ======================================== */
+
+/**
+ * 网站详情页面主容器
+ * 应用精确的背景色和基础布局结构
+ */
+.website-detail-page {
+  background-color: hsl(var(--background)); /* WebVault 页面主背景 */
+  min-height: 100vh;
+  padding: 0;
+  margin: 0;
+}
+
+/**
+ * 网站详情内容容器
+ * NFR-3.2.2: 桌面端最大宽度1200px，居中对齐
+ */
+.website-detail-container {
+  max-width: 1200px; /* NFR-3.2.2: 桌面端最大宽度限制 */
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  background-color: transparent;
+}
+
+/**
+ * 网站详情主体区域
+ * 复用博客系统的布局模式，适配网站详情内容
+ */
+.website-detail-main {
+  background-color: hsl(var(--card)); /* WebVault 卡片背景色 */
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* 基于设计系统的卡片阴影 */
+  padding: 3rem 2.5rem;
+  margin: 0 auto;
+  transition: box-shadow 0.3s ease;
+  border: 1px solid hsl(var(--border));
+}
+
+/**
+ * 主体容器悬停效果
+ * 提供轻微的阴影增强
+ */
+.website-detail-main:hover {
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 12px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* ========================================
+   网站头部区域样式 - NFR-3.2.1, NFR-3.2.2
+   ======================================== */
+
+/**
+ * 网站标题样式
+ * 遵循 WebVault 设计系统的大号标题规范
+ */
+.website-detail-title {
+  font-size: 2.5rem; /* 40px = 2.5rem */
+  font-weight: 700; /* 粗体 */
+  line-height: 1.2;
+  color: hsl(var(--foreground)); /* WebVault 主标题颜色 */
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em; /* 大标题紧凑字间距 */
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", "PingFang SC", sans-serif;
+}
+
+/**
+ * 网站副标题/描述样式
+ * 为网站描述提供合适的视觉层次
+ */
+.website-detail-description {
+  font-size: 1.25rem;
+  font-weight: 400;
+  line-height: 1.6;
+  color: hsl(var(--muted-foreground)); /* WebVault 辅助文本颜色 */
+  margin-bottom: 2rem;
+  max-width: 60ch;
+}
+
+/**
+ * 网站元信息容器
+ * 包含分类、标签、访问次数等信息
+ */
+.website-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid hsl(var(--border)); /* WebVault 边框颜色 */
+}
+
+/**
+ * 访问次数样式
+ * 基于 WebVault 设计系统的统计信息规范
+ */
+.website-detail-visits {
+  font-size: 0.875rem; /* 14px = 0.875rem */
+  font-weight: 500;
+  color: hsl(var(--muted-foreground)); /* 统计信息颜色 */
+  line-height: 1.5;
+}
+
+/**
+ * 发布时间样式
+ * 基于设计系统的时间戳规范
+ */
+.website-detail-date {
+  font-size: 0.875rem; /* 14px = 0.875rem */
+  font-weight: 400;
+  color: hsl(var(--muted-foreground)); /* 时间戳颜色 */
+  line-height: 1.5;
+}
+
+/**
+ * 分类标签样式
+ * 基于 WebVault 设计系统的标签配色方案
+ */
+.website-detail-category {
+  font-size: 0.875rem; /* 14px = 0.875rem */
+  font-weight: 500;
+  color: hsl(var(--accent-foreground)); /* 标签文字颜色 */
+  background-color: hsl(var(--accent)); /* 标签背景色 */
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+/**
+ * 分类标签悬停效果
+ */
+.website-detail-category:hover {
+  background-color: hsl(var(--muted)); /* 悬停背景色 */
+  color: hsl(var(--foreground)); /* 悬停文字颜色 */
+  transform: translateY(-1px);
+}
+
+/**
+ * 标签容器样式
+ * 包含多个标签的横向排列
+ */
+.website-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/**
+ * 单个标签样式
+ * 基于 WebVault 设计系统的标签组件
+ */
+.website-detail-tag {
+  font-size: 0.75rem; /* 12px = 0.75rem */
+  font-weight: 400;
+  color: hsl(var(--muted-foreground)); /* 标签文字颜色 */
+  background-color: hsl(var(--muted)); /* 标签背景色 */
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+/**
+ * 标签悬停效果
+ */
+.website-detail-tag:hover {
+  background-color: hsl(var(--accent)); /* 悬停背景色 */
+  color: hsl(var(--accent-foreground)); /* 悬停文字颜色 */
+  transform: translateY(-1px);
+}
+
+/* ========================================
+   网站图片和媒体内容样式
+   ======================================== */
+
+/**
+ * 网站截图容器
+ * 支持响应式图片展示
+ */
+.website-detail-screenshot {
+  width: 100%;
+  aspect-ratio: 16 / 10; /* 网站截图推荐比例 */
+  margin-bottom: 2rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background-color: hsl(var(--muted)); /* 图片加载时的占位背景 */
+  position: relative;
+  border: 1px solid hsl(var(--border));
+}
+
+/**
+ * 截图图片样式
+ * 确保图片完全填充容器且保持比例
+ */
+.website-detail-screenshot-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top; /* 网站截图通常从顶部开始展示 */
+  transition: transform 0.3s ease;
+}
+
+/**
+ * 截图图片悬停效果
+ * 轻微的缩放增强视觉吸引力
+ */
+.website-detail-screenshot:hover .website-detail-screenshot-image {
+  transform: scale(1.02);
+}
+
+/**
+ * 截图加载占位符
+ * 复用现有动画系统的图片占位符样式
+ */
+.website-detail-screenshot-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 0%,
+    hsl(var(--muted-foreground) / 0.1) 50%,
+    hsl(var(--muted)) 100%
+  );
+  background-size: 200% 100%;
+  animation: websiteImagePlaceholder 2s ease-in-out infinite;
+}
+
+/* ========================================
+   网站详情信息内容样式
+   ======================================== */
+
+/**
+ * 网站详情内容容器
+ * 遵循易读的文本排版规范
+ */
+.website-detail-content {
+  font-size: 1.125rem; /* 18px = 1.125rem */
+  line-height: 1.7; /* 舒适的行高 */
+  color: hsl(var(--card-foreground)); /* WebVault 正文颜色 */
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", "PingFang SC", sans-serif;
+}
+
+/**
+ * 内容段落样式
+ * 合适的段落间距
+ */
+.website-detail-content p {
+  margin-bottom: 1.5rem; /* 段落间距 */
+  text-align: justify; /* 两端对齐提升阅读体验 */
+  word-break: break-word; /* 处理长单词换行 */
+}
+
+/**
+ * 内容段落最后一个元素去除底部边距
+ */
+.website-detail-content p:last-child {
+  margin-bottom: 0;
+}
+
+/**
+ * 内容小标题样式（h3, h4）
+ * 基于设计系统的副标题规范
+ */
+.website-detail-content h3 {
+  font-size: 1.5rem; /* 24px = 1.5rem */
+  font-weight: 600;
+  line-height: 1.4;
+  color: hsl(var(--foreground));
+  margin-top: 2.5rem;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.005em;
+}
+
+.website-detail-content h4 {
+  font-size: 1.25rem; /* 20px = 1.25rem */
+  font-weight: 600;
+  line-height: 1.5;
+  color: hsl(var(--card-foreground));
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+/* ========================================
+   访问按钮和交互元素样式
+   ======================================== */
+
+/**
+ * 访问网站按钮容器
+ * 突出显示主要操作按钮
+ */
+.website-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 2rem 0;
+  padding: 1.5rem 0;
+  border-top: 1px solid hsl(var(--border));
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+/**
+ * 主要访问按钮样式
+ * 使用 WebVault 设计系统的次要强调色（蓝色）
+ */
+.website-detail-visit-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: hsl(var(--secondary)); /* WebVault 次要强调色 */
+  color: hsl(var(--secondary-foreground));
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateZ(0); /* 启用硬件加速 */
+  will-change: transform, box-shadow, background-color;
+  border: none;
+  cursor: pointer;
+}
+
+/**
+ * 访问按钮悬停效果
+ * NFR-3.3.1: 支持键盘导航的悬停反馈
+ */
+.website-detail-visit-button:hover {
+  background-color: hsl(var(--secondary) / 0.9);
+  transform: translateY(-2px) translateZ(0);
+  box-shadow: 
+    0 8px 20px -4px hsl(var(--secondary) / 0.3),
+    0 4px 12px -2px hsl(var(--secondary) / 0.15);
+}
+
+/**
+ * 访问按钮点击状态
+ */
+.website-detail-visit-button:active {
+  transform: translateY(-1px) scale(0.98) translateZ(0);
+  transition-duration: 150ms;
+}
+
+/**
+ * 访问按钮焦点状态（键盘导航）
+ * NFR-3.3.1: 键盘导航操作支持
+ */
+.website-detail-visit-button:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 0.375rem;
+}
+
+/**
+ * 次要操作按钮样式
+ * 用于分享、收藏等辅助功能
+ */
+.website-detail-secondary-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: transparent;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.625rem 1rem;
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.375rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+/**
+ * 次要按钮悬停效果
+ */
+.website-detail-secondary-button:hover {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+  border-color: hsl(var(--accent));
+  transform: translateY(-1px);
+}
+
+/**
+ * 次要按钮焦点状态
+ */
+.website-detail-secondary-button:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* ========================================
+   相关网站推荐区域样式
+   ======================================== */
+
+/**
+ * 相关网站容器
+ * 为推荐内容提供独立的区域样式
+ */
+.website-detail-related {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 2px solid hsl(var(--border));
+}
+
+/**
+ * 相关网站标题样式
+ */
+.website-detail-related-title {
+  font-size: 1.875rem; /* 30px = 1.875rem */
+  font-weight: 600;
+  line-height: 1.3;
+  color: hsl(var(--foreground));
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.01em;
+}
+
+/**
+ * 相关网站网格容器
+ * 响应式网格布局
+ */
+.website-detail-related-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+/* ========================================
+   响应式断点优化 - NFR-3.2.1, NFR-3.2.2
+   ======================================== */
+
+/**
+ * 平板设备优化 (768px - 1024px)
+ * NFR-3.2.1: 移动端到桌面端的过渡适配
+ */
+@media (max-width: 1024px) and (min-width: 768px) {
+  .website-detail-container {
+    max-width: 768px;
+    padding: 1.5rem 1rem;
+  }
+  
+  .website-detail-main {
+    padding: 2.5rem 2rem;
+  }
+  
+  .website-detail-title {
+    font-size: 2.25rem; /* 36px = 2.25rem */
+  }
+  
+  .website-detail-content {
+    font-size: 1.0625rem; /* 17px = 1.0625rem */
+  }
+  
+  .website-detail-related-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.25rem;
+  }
+}
+
+/**
+ * 移动设备优化 (< 768px)
+ * NFR-3.2.1: 移动端（320px-768px）单列布局
+ */
+@media (max-width: 767px) {
+  .website-detail-container {
+    padding: 1rem 0.75rem;
+  }
+  
+  .website-detail-main {
+    padding: 2rem 1.5rem;
+    border-radius: 0.5rem;
+  }
+  
+  .website-detail-title {
+    font-size: 2rem; /* 32px = 2rem，移动端适配 */
+    line-height: 1.3;
+    margin-bottom: 1rem;
+  }
+  
+  .website-detail-description {
+    font-size: 1.125rem; /* 18px = 1.125rem */
+    margin-bottom: 1.5rem;
+  }
+  
+  .website-detail-content {
+    font-size: 1rem; /* 16px = 1rem，移动端标准大小 */
+    line-height: 1.6;
+  }
+  
+  .website-detail-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .website-detail-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .website-detail-visit-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .website-detail-secondary-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .website-detail-related-grid {
+    grid-template-columns: 1fr; /* NFR-3.2.1: 移动端单列布局 */
+    gap: 1rem;
+  }
+}
+
+/**
+ * 超小屏设备优化 (< 480px)
+ */
+@media (max-width: 479px) {
+  .website-detail-container {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .website-detail-main {
+    padding: 1.5rem 1rem;
+    border-radius: 0.375rem;
+  }
+  
+  .website-detail-title {
+    font-size: 1.75rem; /* 28px = 1.75rem */
+  }
+  
+  .website-detail-content {
+    font-size: 0.9375rem; /* 15px = 0.9375rem */
+  }
+}
+
+/**
+ * 桌面端优化 (> 1024px)
+ * NFR-3.2.2: 桌面端（1024px+）双列布局
+ */
+@media (min-width: 1025px) {
+  .website-detail-container {
+    padding: 3rem 2rem;
+  }
+  
+  .website-detail-main {
+    padding: 4rem 3rem;
+  }
+  
+  .website-detail-related-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+  }
+}
+
+/* ========================================
+   暗色主题支持
+   ======================================== */
+
+/**
+ * 暗色主题下的网站详情页面样式
+ * 基于 WebVault 设计系统的暗色主题配色
+ */
+.dark .website-detail-main:hover {
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.4), 0 4px 12px -2px rgba(0, 0, 0, 0.2);
+}
+
+.dark .website-detail-visit-button:hover {
+  box-shadow: 
+    0 8px 20px -4px hsl(var(--secondary) / 0.4),
+    0 4px 12px -2px hsl(var(--secondary) / 0.2);
+}
+
+.dark .website-detail-secondary-button:hover {
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.3);
+}
+
+/* ========================================
+   页面加载和内容动画
+   ======================================== */
+
+/**
+ * 复用博客系统的 blog-content-fade-in 动画
+ * 网站详情页面整体淡入效果
+ */
+.website-detail-content-fade-in {
+  animation: websiteDetailContentFadeIn 0.6s ease-out forwards;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+@keyframes websiteDetailContentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * 网站详情标题动画
+ * 独立的标题进入动画，创建浏览引导
+ */
+.website-detail-title-fade-in {
+  animation: websiteDetailTitleFadeIn 0.5s ease-out forwards;
+  opacity: 0;
+  transform: translateY(20px);
+  animation-delay: 0.1s;
+}
+
+@keyframes websiteDetailTitleFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * 网站详情元信息动画
+ * 分类、标签等元信息的淡入效果
+ */
+.website-detail-meta-fade-in {
+  animation: websiteDetailMetaFadeIn 0.4s ease-out forwards;
+  opacity: 0;
+  transform: translateY(15px);
+  animation-delay: 0.2s;
+}
+
+@keyframes websiteDetailMetaFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * 网站操作按钮动画
+ * 访问按钮等操作元素的淡入效果
+ */
+.website-detail-actions-fade-in {
+  animation: websiteDetailActionsFadeIn 0.5s ease-out forwards;
+  opacity: 0;
+  transform: translateY(20px);
+  animation-delay: 0.3s;
+}
+
+@keyframes websiteDetailActionsFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * 相关网站推荐动画
+ * 推荐内容的淡入效果
+ */
+.website-detail-related-fade-in {
+  animation: websiteDetailRelatedFadeIn 0.5s ease-out forwards;
+  opacity: 0;
+  transform: translateY(40px);
+  animation-delay: 0.4s;
+}
+
+@keyframes websiteDetailRelatedFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/**
+ * 网站截图加载动画
+ * 复用现有动画系统的图片占位符动画
+ */
+@keyframes websiteImagePlaceholder {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ========================================
+   无障碍性支持和性能优化 - NFR-3.3.1, NFR-3.3.2
+   ======================================== */
+
+/**
+ * 用户偏好：减少动画
+ * 尊重系统设置中的动画偏好，确保无障碍性
+ */
+@media (prefers-reduced-motion: reduce) {
+  .website-detail-content-fade-in,
+  .website-detail-title-fade-in,
+  .website-detail-meta-fade-in,
+  .website-detail-actions-fade-in,
+  .website-detail-related-fade-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    animation-delay: 0s;
+  }
+  
+  .website-detail-main,
+  .website-detail-screenshot-image,
+  .website-detail-visit-button,
+  .website-detail-secondary-button,
+  .website-detail-category,
+  .website-detail-tag {
+    transition: none;
+  }
+  
+  .website-detail-main:hover,
+  .website-detail-screenshot:hover .website-detail-screenshot-image,
+  .website-detail-visit-button:hover,
+  .website-detail-secondary-button:hover,
+  .website-detail-category:hover,
+  .website-detail-tag:hover {
+    transform: none;
+  }
+  
+  .website-detail-screenshot-placeholder {
+    animation: none;
+    background: hsl(var(--muted)); /* 静态占位符背景 */
+  }
+}
+
+/**
+ * 高对比度模式支持
+ * NFR-3.3.2: 确保在高对比度模式下的可读性
+ */
+@media (prefers-contrast: high) {
+  .website-detail-main {
+    border: 2px solid;
+  }
+  
+  .website-detail-visit-button {
+    border: 2px solid hsl(var(--secondary));
+  }
+  
+  .website-detail-secondary-button {
+    border-width: 2px;
+  }
+  
+  .website-detail-category,
+  .website-detail-tag {
+    border: 1px solid;
+  }
+}
+
+/**
+ * 打印样式优化
+ * 为打印提供优化的样式
+ */
+@media print {
+  .website-detail-page {
+    background-color: white;
+  }
+  
+  .website-detail-main {
+    background-color: white;
+    box-shadow: none;
+    border: 1px solid #ccc;
+    padding: 2rem;
+  }
+  
+  .website-detail-title {
+    color: black;
+    font-size: 24pt;
+  }
+  
+  .website-detail-content {
+    color: black;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+  
+  .website-detail-visit-button,
+  .website-detail-secondary-button {
+    display: none; /* 打印时隐藏交互按钮 */
+  }
+  
+  .website-detail-category,
+  .website-detail-tag {
+    background-color: #f5f5f5;
+    border: 1px solid #ccc;
+  }
+}
+
+/**
+ * 性能优化相关样式
+ * 启用硬件加速的元素，优化动画和过渡性能
+ */
+.website-detail-main,
+.website-detail-screenshot-image,
+.website-detail-visit-button,
+.website-detail-secondary-button {
+  transform: translateZ(0); /* 启用硬件加速 */
+  will-change: transform; /* 提示浏览器优化 */
+}
+
+/**
+ * 图片延迟加载优化
+ * 为延迟加载的图片提供占位样式
+ */
+.website-detail-screenshot-image[loading="lazy"] {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.website-detail-screenshot-image[loading="lazy"].loaded {
+  opacity: 1;
+}
+
+/**
+ * NFR-3.3.2: 语义化HTML和ARIA支持的样式增强
+ * 为屏幕阅读器提供更好的视觉指示
+ */
+.website-detail-main[role="main"] {
+  scroll-margin-top: 2rem; /* 改善跳转链接的用户体验 */
+}
+
+.website-detail-actions[role="group"] {
+  /* 为操作按钮组提供视觉分组 */
+}
+
+/**
+ * 键盘导航增强样式
+ * NFR-3.3.1: 键盘导航操作支持
+ */
+.website-detail-visit-button:focus,
+.website-detail-secondary-button:focus,
+.website-detail-category:focus,
+.website-detail-tag:focus {
+  z-index: 1; /* 确保焦点元素在最前面 */
+}

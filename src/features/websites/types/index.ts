@@ -6,77 +6,8 @@ export * from './category'
 export * from './collection'
 export * from './filters'
 export * from './search'
+export * from './detail'
 
-// For backward compatibility, re-export common interfaces
-export type {
-  Website,
-  WebsiteCreateInput,
-  WebsiteUpdateInput,
-  WebsiteFilters,
-  WebsitePagination,
-  WebsiteStatus,
-  AdType,
-  WebsiteCardData,
-  WebsiteListResponse,
-  // Search page specific types
-  SearchPageFilters,
-  SearchPageState,
-  SearchURLParams,
-  PaginationState
-} from './website'
-
-export type {
-  Category,
-  CategoryCreateInput,
-  CategoryUpdateInput,
-  CategoryStatus,
-  CategoryTreeNode,
-  CategoryNavigation,
-  CategoryBreadcrumb,
-  CategoryStats
-} from './category'
-
-export type {
-  FilterState,
-  FilterOptions,
-  FilterPreset,
-  ActiveFilter,
-  FilterValidation,
-  SearchSuggestion,
-  FilterAnalytics,
-  SortField,
-  SortOrder,
-  FilterOperation,
-  DEFAULT_FILTER_STATE,
-  DEFAULT_SORT_OPTIONS
-} from './filters'
-
-export type {
-  Collection,
-  CollectionCreateInput,
-  CollectionUpdateInput,
-  CollectionStatus,
-  CollectionIcon,
-  CollectionCardData,
-  CollectionFilters,
-  CollectionPagination,
-  CollectionListResponse,
-  CollectionStats,
-  CollectionNavigation,
-  CollectionBreadcrumb,
-  CollectionState,
-  CollectionSearchParams
-} from './collection'
-
-export type {
-  SearchPageStatus,
-  SearchHeaderProps,
-  SearchFiltersProps,
-  SearchResultsProps,
-  SearchResultItem,
-  SearchAnalytics,
-  SearchSuggestions
-} from './search'
 
 // Export constants as values, not types
 export {

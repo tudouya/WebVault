@@ -1,0 +1,864 @@
+/**
+ * 博客详情页面专用样式
+ * Blog Detail Page Specific Styles
+ * 
+ * 为博客详情页面提供完整的排版、布局和交互样式
+ * 遵循 Requirements 8.1, 9.1, 9.2, 12.1 的精确规格
+ * 
+ * 特性：
+ * - 精确的配色系统，基于 theme.ts 的博客主题配色
+ * - 完整的文章排版样式，遵循 typography.ts 的字体规范
+ * - 响应式布局适配，优化移动端和桌面端阅读体验
+ * - 代码块和引用内容的专业样式
+ * - 无障碍性支持和性能优化
+ * 
+ * 需求引用：
+ * - Requirements 8.1: 页面主背景色 #F9FAFB，内容区背景色 #FFFFFF
+ * - Requirements 9.1: 文章布局和视觉层次
+ * - Requirements 9.2: 封面图16:9宽高比，最大宽度限制65ch
+ * - Requirements 12.1: 字体和排版规范（2.5rem粗体标题，1.125rem正文）
+ */
+
+/* ========================================
+   页面容器和布局 - Requirements 8.1, 9.1
+   ======================================== */
+
+/**
+ * 博客详情页面主容器
+ * 应用精确的背景色和基础布局结构
+ */
+.blog-detail-page {
+  background-color: #F9FAFB; /* Requirements 8.1: 页面主背景色 */
+  min-height: 100vh;
+  padding: 0;
+  margin: 0;
+}
+
+/**
+ * 博客详情内容容器
+ * 提供合适的最大宽度和居中对齐
+ */
+.blog-detail-container {
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  background-color: transparent;
+}
+
+/**
+ * 博客详情文章主体区域
+ * Requirements 8.1: 内容区背景色 #FFFFFF
+ * Requirements 9.2: 最大宽度限制 65ch
+ */
+.blog-detail-article {
+  background-color: #FFFFFF; /* Requirements 8.1: 内容区背景色 */
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* 基于 theme.ts 的卡片阴影 */
+  padding: 3rem 2.5rem;
+  margin: 0 auto;
+  max-width: 65ch; /* Requirements 9.2: 最大宽度限制 */
+  transition: box-shadow 0.3s ease;
+}
+
+/**
+ * 文章容器悬停效果
+ * 提供轻微的阴影增强
+ */
+.blog-detail-article:hover {
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 12px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* ========================================
+   文章头部区域样式 - Requirements 9.1, 12.1
+   ======================================== */
+
+/**
+ * 文章标题样式
+ * Requirements 12.1: 大号粗体字体（2.5rem，font-weight: 700）
+ */
+.blog-detail-title {
+  font-size: 2.5rem; /* Requirements 12.1: 40px = 2.5rem */
+  font-weight: 700; /* Requirements 12.1: 粗体 */
+  line-height: 1.2;
+  color: #111827; /* 基于 theme.ts 的标题颜色 */
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em; /* 大标题紧凑字间距 */
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", "PingFang SC", sans-serif;
+}
+
+/**
+ * 文章副标题样式
+ * 为文章描述提供合适的视觉层次
+ */
+.blog-detail-subtitle {
+  font-size: 1.25rem;
+  font-weight: 400;
+  line-height: 1.6;
+  color: #6B7281; /* 基于 theme.ts 的辅助文本颜色 */
+  margin-bottom: 2rem;
+  max-width: 60ch;
+}
+
+/**
+ * 文章元信息容器
+ * 包含作者、发布时间、分类等信息
+ */
+.blog-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #E5E7EB; /* 基于 theme.ts 的边框颜色 */
+}
+
+/**
+ * 作者信息样式
+ * 基于 typography.ts 的作者名称规范
+ */
+.blog-detail-author {
+  font-size: 0.875rem; /* 14px = 0.875rem */
+  font-weight: 500;
+  color: #374151; /* Requirements 作者名称颜色 */
+  line-height: 1.5;
+}
+
+/**
+ * 发布时间样式
+ * 基于 typography.ts 的发布时间规范
+ */
+.blog-detail-date {
+  font-size: 0.875rem; /* 14px = 0.875rem */
+  font-weight: 400;
+  color: #6B7281; /* Requirements 发布时间颜色 */
+  line-height: 1.5;
+}
+
+/**
+ * 分类标签样式
+ * 基于 theme.ts 的标签配色方案
+ */
+.blog-detail-category {
+  font-size: 0.875rem; /* 14px = 0.875rem */
+  font-weight: 500;
+  color: #4B5563; /* 基于 typography.ts 的标签文字颜色 */
+  background-color: #F3F4F6; /* 基于 theme.ts 的标签背景色 */
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+}
+
+/**
+ * 分类标签悬停效果
+ */
+.blog-detail-category:hover {
+  background-color: #E5E7EB; /* 基于 theme.ts 的悬停背景色 */
+  color: #374151; /* 基于 theme.ts 的悬停文字颜色 */
+  transform: translateY(-1px);
+}
+
+/* ========================================
+   封面图片样式 - Requirements 9.2
+   ======================================== */
+
+/**
+ * 文章封面图片容器
+ * Requirements 9.2: 全宽度封面图16:9宽高比
+ */
+.blog-detail-cover {
+  width: 100%;
+  aspect-ratio: 16 / 9; /* Requirements 9.2: 16:9宽高比 */
+  margin-bottom: 2rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background-color: #F3F4F6; /* 图片加载时的占位背景 */
+  position: relative;
+}
+
+/**
+ * 封面图片样式
+ * 确保图片完全填充容器且保持比例
+ */
+.blog-detail-cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.3s ease;
+}
+
+/**
+ * 封面图片悬停效果
+ * 轻微的缩放增强视觉吸引力
+ */
+.blog-detail-cover:hover .blog-detail-cover-image {
+  transform: scale(1.02);
+}
+
+/**
+ * 封面图片加载占位符
+ * 基于 animations.css 的图片占位符样式
+ */
+.blog-detail-cover-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    #F3F4F6 0%,
+    rgba(75, 85, 99, 0.1) 50%,
+    #F3F4F6 100%
+  );
+  background-size: 200% 100%;
+  animation: blogImagePlaceholder 2s ease-in-out infinite;
+}
+
+/* ========================================
+   文章正文样式 - Requirements 12.1
+   ======================================== */
+
+/**
+ * 文章正文容器
+ * Requirements 12.1: 易读正文字体（1.125rem，行高1.7）
+ * Requirements 9.2: 合适的段落间距（1.5rem）
+ */
+.blog-detail-content {
+  font-size: 1.125rem; /* Requirements 12.1: 18px = 1.125rem */
+  line-height: 1.7; /* Requirements 12.1: 行高1.7 */
+  color: #374151; /* 基于 theme.ts 的正文颜色 */
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", "PingFang SC", sans-serif;
+}
+
+/**
+ * 文章段落样式
+ * Requirements 9.2: 段落间距1.5rem
+ */
+.blog-detail-content p {
+  margin-bottom: 1.5rem; /* Requirements 9.2: 段落间距 */
+  text-align: justify; /* 两端对齐提升阅读体验 */
+  word-break: break-word; /* 处理长单词换行 */
+}
+
+/**
+ * 文章段落最后一个元素去除底部边距
+ */
+.blog-detail-content p:last-child {
+  margin-bottom: 0;
+}
+
+/**
+ * 文章小标题样式（h2, h3, h4）
+ * 基于 typography.ts 的副标题规范
+ */
+.blog-detail-content h2 {
+  font-size: 1.875rem; /* 30px = 1.875rem */
+  font-weight: 600;
+  line-height: 1.3;
+  color: #1F2937; /* 基于 theme.ts 的标题颜色 */
+  margin-top: 3rem;
+  margin-bottom: 1rem;
+  letter-spacing: -0.01em;
+}
+
+.blog-detail-content h3 {
+  font-size: 1.5rem; /* 24px = 1.5rem */
+  font-weight: 600;
+  line-height: 1.4;
+  color: #1F2937;
+  margin-top: 2.5rem;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.005em;
+}
+
+.blog-detail-content h4 {
+  font-size: 1.25rem; /* 20px = 1.25rem */
+  font-weight: 600;
+  line-height: 1.5;
+  color: #374151;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+/**
+ * 文章列表样式
+ * 为有序和无序列表提供清晰的视觉层次
+ */
+.blog-detail-content ul,
+.blog-detail-content ol {
+  margin-bottom: 1.5rem;
+  padding-left: 1.5rem;
+}
+
+.blog-detail-content li {
+  margin-bottom: 0.5rem;
+  line-height: 1.7;
+}
+
+.blog-detail-content ul li {
+  list-style-type: disc;
+}
+
+.blog-detail-content ol li {
+  list-style-type: decimal;
+}
+
+/* ========================================
+   代码块样式 - Requirements 12.1
+   ======================================== */
+
+/**
+ * 行内代码样式
+ * Requirements 12.1: 等宽字体代码（'Fira Code', monospace）
+ */
+.blog-detail-content code {
+  font-family: 'Fira Code', 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; /* Requirements 12.1: 等宽字体 */
+  font-size: 0.875rem; /* 14px = 0.875rem */
+  background-color: #F3F4F6;
+  color: #8B5CF6; /* 基于 theme.ts 的主要强调色 */
+  padding: 0.25rem 0.375rem;
+  border-radius: 0.25rem;
+  font-weight: 500;
+}
+
+/**
+ * 代码块容器样式
+ * 为代码块提供完整的视觉包装
+ */
+.blog-detail-content pre {
+  background-color: #1F2937; /* 深色背景突出代码 */
+  color: #F9FAFB; /* 浅色文字形成对比 */
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  border: 1px solid #374151;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/**
+ * 代码块内代码样式
+ * 重置行内代码的样式以适配代码块
+ */
+.blog-detail-content pre code {
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+/* ========================================
+   引用内容样式
+   ======================================== */
+
+/**
+ * 块引用样式
+ * 为引用内容提供视觉区分
+ */
+.blog-detail-content blockquote {
+  border-left: 4px solid #8B5CF6; /* 基于 theme.ts 的主要强调色 */
+  background-color: #F9FAFB;
+  padding: 1.5rem 1.5rem 1.5rem 2rem;
+  margin: 2rem 0;
+  border-radius: 0 0.5rem 0.5rem 0;
+  position: relative;
+}
+
+/**
+ * 引用内容文字样式
+ */
+.blog-detail-content blockquote p {
+  font-style: italic;
+  color: #4B5563;
+  margin-bottom: 0.5rem;
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+
+/**
+ * 引用最后段落去除底部边距
+ */
+.blog-detail-content blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* ========================================
+   链接和交互元素样式
+   ======================================== */
+
+/**
+ * 文章内链接样式
+ * 基于 theme.ts 的主要强调色
+ */
+.blog-detail-content a {
+  color: #8B5CF6; /* 基于 theme.ts 的主要强调色 */
+  text-decoration: underline;
+  text-decoration-color: rgba(139, 92, 246, 0.3);
+  text-underline-offset: 0.25rem;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+/**
+ * 链接悬停效果
+ */
+.blog-detail-content a:hover {
+  color: #7C3AED; /* 悬停时的深紫色 */
+  text-decoration-color: rgba(124, 58, 237, 0.6);
+  transform: translateY(-1px);
+}
+
+/**
+ * 链接焦点状态（键盘导航）
+ */
+.blog-detail-content a:focus-visible {
+  outline: 2px solid #8B5CF6;
+  outline-offset: 2px;
+  border-radius: 0.125rem;
+}
+
+/* ========================================
+   图片和媒体内容样式
+   ======================================== */
+
+/**
+ * 文章内图片样式
+ * 确保图片响应式且具有合适的边距
+ */
+.blog-detail-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 1.5rem 0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+/**
+ * 图片悬停效果
+ */
+.blog-detail-content img:hover {
+  transform: scale(1.02);
+}
+
+/**
+ * 图片标题样式
+ */
+.blog-detail-content figcaption {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #6B7281;
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
+/* ========================================
+   表格样式
+   ======================================== */
+
+/**
+ * 表格容器样式
+ * 提供水平滚动支持
+ */
+.blog-detail-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+  display: block;
+  white-space: nowrap;
+}
+
+/**
+ * 表格单元格样式
+ */
+.blog-detail-content th,
+.blog-detail-content td {
+  border: 1px solid #E5E7EB;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  white-space: normal;
+}
+
+/**
+ * 表格头部样式
+ */
+.blog-detail-content th {
+  background-color: #F9FAFB;
+  font-weight: 600;
+  color: #374151;
+}
+
+/**
+ * 表格数据单元格样式
+ */
+.blog-detail-content td {
+  background-color: #FFFFFF;
+  color: #4B5563;
+}
+
+/**
+ * 表格行悬停效果
+ */
+.blog-detail-content tbody tr:hover {
+  background-color: #F9FAFB;
+}
+
+/* ========================================
+   响应式断点优化 - 移动端适配
+   ======================================== */
+
+/**
+ * 平板设备优化 (768px - 1024px)
+ */
+@media (max-width: 1024px) and (min-width: 768px) {
+  .blog-detail-container {
+    max-width: 768px;
+    padding: 1.5rem 1rem;
+  }
+  
+  .blog-detail-article {
+    padding: 2.5rem 2rem;
+    max-width: 60ch; /* 平板上稍微缩小最大宽度 */
+  }
+  
+  .blog-detail-title {
+    font-size: 2.25rem; /* 36px = 2.25rem */
+  }
+  
+  .blog-detail-content {
+    font-size: 1.0625rem; /* 17px = 1.0625rem */
+  }
+}
+
+/**
+ * 移动设备优化 (< 768px)
+ */
+@media (max-width: 767px) {
+  .blog-detail-container {
+    padding: 1rem 0.75rem;
+  }
+  
+  .blog-detail-article {
+    padding: 2rem 1.5rem;
+    border-radius: 0.5rem;
+    max-width: none; /* 移动端不限制最大宽度 */
+  }
+  
+  .blog-detail-title {
+    font-size: 2rem; /* 32px = 2rem，移动端适配 */
+    line-height: 1.3;
+    margin-bottom: 1rem;
+  }
+  
+  .blog-detail-subtitle {
+    font-size: 1.125rem; /* 18px = 1.125rem */
+    margin-bottom: 1.5rem;
+  }
+  
+  .blog-detail-content {
+    font-size: 1rem; /* 16px = 1rem，移动端标准大小 */
+    line-height: 1.6;
+  }
+  
+  .blog-detail-content h2 {
+    font-size: 1.5rem; /* 24px = 1.5rem */
+    margin-top: 2rem;
+  }
+  
+  .blog-detail-content h3 {
+    font-size: 1.25rem; /* 20px = 1.25rem */
+    margin-top: 1.5rem;
+  }
+  
+  .blog-detail-content h4 {
+    font-size: 1.125rem; /* 18px = 1.125rem */
+    margin-top: 1.25rem;
+  }
+  
+  .blog-detail-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .blog-detail-content pre {
+    padding: 1rem;
+    font-size: 0.8125rem; /* 13px = 0.8125rem */
+  }
+  
+  .blog-detail-content blockquote {
+    padding: 1rem 1rem 1rem 1.5rem;
+    margin: 1.5rem 0;
+  }
+  
+  /* 移动端表格水平滚动 */
+  .blog-detail-content table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  
+  .blog-detail-content th,
+  .blog-detail-content td {
+    padding: 0.5rem 0.75rem;
+    min-width: 120px;
+  }
+}
+
+/**
+ * 超小屏设备优化 (< 480px)
+ */
+@media (max-width: 479px) {
+  .blog-detail-container {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .blog-detail-article {
+    padding: 1.5rem 1rem;
+    border-radius: 0.375rem;
+  }
+  
+  .blog-detail-title {
+    font-size: 1.75rem; /* 28px = 1.75rem */
+  }
+  
+  .blog-detail-content {
+    font-size: 0.9375rem; /* 15px = 0.9375rem */
+  }
+  
+  .blog-detail-content pre {
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+  }
+  
+  .blog-detail-content blockquote {
+    padding: 0.75rem 0.75rem 0.75rem 1.25rem;
+  }
+}
+
+/* ========================================
+   暗色主题支持
+   ======================================== */
+
+/**
+ * 暗色主题下的博客详情页面样式
+ * 基于 theme.ts 的暗色主题配色
+ */
+.dark .blog-detail-page {
+  background-color: hsl(222.2, 84%, 4.9%); /* 基于 theme.ts 暗色主题背景 */
+}
+
+.dark .blog-detail-article {
+  background-color: hsl(222.2, 84%, 4.9%); /* 暗色主题内容区背景 */
+  border: 1px solid hsl(217.2, 32.6%, 17.5%); /* 暗色主题边框 */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); /* 暗色主题阴影 */
+}
+
+.dark .blog-detail-article:hover {
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.4), 0 4px 12px -2px rgba(0, 0, 0, 0.2);
+}
+
+.dark .blog-detail-title {
+  color: hsl(210, 40%, 98%); /* 暗色主题标题颜色 */
+}
+
+.dark .blog-detail-subtitle {
+  color: hsl(215, 20.2%, 65.1%); /* 暗色主题副标题颜色 */
+}
+
+.dark .blog-detail-content {
+  color: hsl(210, 40%, 85%); /* 暗色主题正文颜色 */
+}
+
+.dark .blog-detail-content h2,
+.dark .blog-detail-content h3 {
+  color: hsl(210, 40%, 95%); /* 暗色主题小标题颜色 */
+}
+
+.dark .blog-detail-content h4 {
+  color: hsl(210, 40%, 90%);
+}
+
+.dark .blog-detail-author {
+  color: hsl(215, 20.2%, 75%); /* 暗色主题作者颜色 */
+}
+
+.dark .blog-detail-date {
+  color: hsl(215, 20.2%, 65.1%); /* 暗色主题日期颜色 */
+}
+
+.dark .blog-detail-category {
+  background-color: hsl(217.2, 32.6%, 17.5%); /* 暗色主题标签背景 */
+  color: hsl(215, 20.2%, 75%); /* 暗色主题标签文字 */
+}
+
+.dark .blog-detail-category:hover {
+  background-color: hsl(217.2, 32.6%, 22%); /* 暗色主题标签悬停背景 */
+  color: hsl(210, 40%, 90%); /* 暗色主题标签悬停文字 */
+}
+
+.dark .blog-detail-meta {
+  border-bottom-color: hsl(217.2, 32.6%, 17.5%); /* 暗色主题边框 */
+}
+
+.dark .blog-detail-content code {
+  background-color: hsl(217.2, 32.6%, 17.5%); /* 暗色主题行内代码背景 */
+  color: #A78BFA; /* 暗色主题代码颜色 */
+}
+
+.dark .blog-detail-content blockquote {
+  background-color: hsl(217.2, 32.6%, 17.5%); /* 暗色主题引用背景 */
+  border-left-color: #8B5CF6; /* 保持主要强调色 */
+}
+
+.dark .blog-detail-content blockquote p {
+  color: hsl(215, 20.2%, 75%); /* 暗色主题引用文字 */
+}
+
+.dark .blog-detail-content th {
+  background-color: hsl(217.2, 32.6%, 17.5%); /* 暗色主题表头背景 */
+  color: hsl(210, 40%, 85%); /* 暗色主题表头文字 */
+  border-color: hsl(217.2, 32.6%, 22%);
+}
+
+.dark .blog-detail-content td {
+  background-color: hsl(222.2, 84%, 4.9%); /* 暗色主题表格单元格背景 */
+  color: hsl(215, 20.2%, 75%); /* 暗色主题表格文字 */
+  border-color: hsl(217.2, 32.6%, 17.5%);
+}
+
+.dark .blog-detail-content tbody tr:hover {
+  background-color: hsl(217.2, 32.6%, 17.5%); /* 暗色主题表格行悬停 */
+}
+
+/* ========================================
+   无障碍性支持和性能优化
+   ======================================== */
+
+/**
+ * 用户偏好：减少动画
+ * 尊重系统设置中的动画偏好，确保无障碍性
+ */
+@media (prefers-reduced-motion: reduce) {
+  .blog-detail-article,
+  .blog-detail-cover-image,
+  .blog-detail-category,
+  .blog-detail-content a,
+  .blog-detail-content img {
+    transition: none;
+  }
+  
+  .blog-detail-cover:hover .blog-detail-cover-image,
+  .blog-detail-content img:hover {
+    transform: none;
+  }
+  
+  .blog-detail-cover-placeholder {
+    animation: none;
+    background: #F3F4F6; /* 静态占位符背景 */
+  }
+}
+
+/**
+ * 高对比度模式支持
+ * 确保在高对比度模式下的可读性
+ */
+@media (prefers-contrast: high) {
+  .blog-detail-article {
+    border: 2px solid;
+  }
+  
+  .blog-detail-content a {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+  }
+  
+  .blog-detail-content code {
+    border: 1px solid;
+  }
+  
+  .blog-detail-content blockquote {
+    border-left-width: 6px;
+  }
+}
+
+/**
+ * 打印样式优化
+ * 为打印提供优化的样式
+ */
+@media print {
+  .blog-detail-page {
+    background-color: white;
+  }
+  
+  .blog-detail-article {
+    background-color: white;
+    box-shadow: none;
+    border: none;
+    padding: 0;
+  }
+  
+  .blog-detail-title {
+    color: black;
+    font-size: 24pt;
+  }
+  
+  .blog-detail-content {
+    color: black;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+  
+  .blog-detail-content a {
+    color: black;
+    text-decoration: underline;
+  }
+  
+  .blog-detail-content pre {
+    background-color: #f5f5f5;
+    color: black;
+    border: 1px solid #ccc;
+  }
+  
+  .blog-detail-content blockquote {
+    background-color: #f9f9f9;
+    border-left-color: #333;
+  }
+}
+
+/* ========================================
+   性能优化相关样式
+   ======================================== */
+
+/**
+ * 启用硬件加速的元素
+ * 优化动画和过渡性能
+ */
+.blog-detail-article,
+.blog-detail-cover-image,
+.blog-detail-content img {
+  transform: translateZ(0); /* 启用硬件加速 */
+  will-change: transform; /* 提示浏览器优化 */
+}
+
+/**
+ * 图片延迟加载优化
+ * 为延迟加载的图片提供占位样式
+ */
+.blog-detail-content img[loading="lazy"] {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.blog-detail-content img[loading="lazy"].loaded {
+  opacity: 1;
+}
