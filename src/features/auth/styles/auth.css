@@ -1,0 +1,811 @@
+/**
+ * WebVault 认证系统专用样式
+ * 
+ * 基于设计图 8_Login.png 实现精确的视觉规范
+ * 集成现有HSL主题系统，支持亮色/暗色模式切换
+ * 
+ * Requirements covered:
+ * - 6.1: 精确配色系统和品牌展示
+ * - 7.1: 表单设计和视觉层次
+ * - 8.1: 按钮设计和交互效果  
+ * - 9.1: 布局和间距系统
+ * - 10.1: 字体和排版规范
+ * - 11.1: 响应式设计和主题支持
+ * 
+ * @version 1.0.0
+ * @created 2025-08-17
+ */
+
+/* ============================================================================
+   WebVault 认证系统主题变量依赖
+   ============================================================================ */
+
+/*
+ * 注意: 认证页面的HSL主题变量现在统一在全局CSS中定义 (src/app/globals.css)
+ * 这确保了与现有主题系统的完美集成和一致性
+ * 
+ * 可用的认证专用变量:
+ * - --auth-brand-green: "dir" Logo绿色强调色
+ * - --auth-welcome-text: "Welcome back"标题颜色  
+ * - --auth-page-background: 页面主背景
+ * - --auth-card-background: 表单卡片背景
+ * - --auth-input-background: 输入框背景
+ * - --auth-placeholder: 占位符文字颜色
+ * - --auth-border: 表单边框、社交按钮边框
+ * - --auth-primary-button: Login按钮紫色
+ * - --auth-primary-hover: Login按钮悬停状态
+ * - --auth-secondary-link: "Forgot password"链接颜色
+ * - --auth-focus-ring: 聚焦环颜色
+ * - --auth-label-text: 表单标签文字
+ * - --auth-body-text: 辅助文本
+ * - --auth-icon-color: 社交图标颜色
+ */
+
+/* ============================================================================
+   认证布局基础样式
+   ============================================================================ */
+
+/* 登录页面容器 */
+.login-page {
+  /* 基础布局 */
+  min-height: 100vh;
+  background: hsl(var(--auth-page-background));
+  
+  /* 响应式网格布局 */
+  display: grid;
+  grid-template-columns: 1fr;
+  
+  /* 确保内容居中 */
+  place-items: center;
+}
+
+/* 大屏幕下的双列布局 */
+@media (min-width: 1024px) {
+  .login-page {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* 认证卡片容器 */
+.auth-card {
+  /* 基础样式 */
+  background: hsl(var(--auth-card-background));
+  border-radius: 12px;
+  box-shadow: 
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
+  
+  /* 尺寸控制 - 需求9.1: 最大宽度400px */
+  width: 100%;
+  max-width: 400px;
+  
+  /* 内边距 */
+  padding: 2rem;
+  
+  /* 响应式调整 */
+  margin: 1rem;
+}
+
+@media (min-width: 640px) {
+  .auth-card {
+    padding: 2.5rem;
+    margin: 1.5rem;
+  }
+}
+
+/* ============================================================================
+   认证品牌和标题样式
+   ============================================================================ */
+
+/* 品牌Logo容器 */
+.auth-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 3rem;
+  gap: 0.5rem;
+}
+
+/* "dir" Logo文字样式 - 需求6.1: 绿色强调 */
+.auth-brand-text {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: hsl(var(--auth-brand-green));
+  letter-spacing: -0.025em;
+}
+
+/* "Welcome back"主标题 - 需求6.1+10.1: 精确字体规范 */
+.auth-welcome-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: hsl(var(--auth-welcome-text));
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+@media (min-width: 640px) {
+  .auth-welcome-title {
+    font-size: 1.875rem;
+    text-align: left;
+  }
+}
+
+/* 副标题样式 */
+.auth-subtitle {
+  font-size: 0.875rem;
+  color: hsl(var(--auth-body-text));
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 640px) {
+  .auth-subtitle {
+    text-align: left;
+  }
+}
+
+/* ============================================================================
+   表单输入框样式 - 需求7.1: 表单设计和视觉层次
+   ============================================================================ */
+
+/* 表单字段容器 */
+.auth-form-field {
+  margin-bottom: 1rem;
+}
+
+/* 表单标签 - 需求10.1: 14px字号medium字重 */
+.auth-form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: hsl(var(--auth-label-text));
+  margin-bottom: 0.5rem;
+}
+
+/* 输入框基础样式 - 需求7.1: 圆角边框8px和背景色 */
+.auth-input {
+  /* 尺寸 - 44px高度匹配设计图 */
+  width: 100%;
+  height: 2.75rem;
+  
+  /* 背景和边框 */
+  background: hsl(var(--auth-input-background));
+  border: 1px solid hsl(var(--auth-border));
+  border-radius: 8px;
+  
+  /* 内边距 - 为图标留出空间 */
+  padding: 0 1rem;
+  padding-left: 2.5rem;
+  
+  /* 字体 - 需求10.1: 16px字号regular字重 */
+  font-size: 1rem;
+  font-weight: 400;
+  color: hsl(var(--foreground));
+  
+  /* 占位符样式 - 需求7.1: #9CA3AF颜色 */
+  &::placeholder {
+    color: hsl(var(--auth-placeholder));
+  }
+  
+  /* 聚焦状态 - 需求7.1: 紫色聚焦环 */
+  &:focus {
+    outline: none;
+    border-color: hsl(var(--auth-focus-ring));
+    box-shadow: 0 0 0 2px hsl(var(--auth-focus-ring) / 0.2);
+  }
+  
+  /* 禁用状态 */
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: hsl(var(--muted));
+  }
+  
+  /* 错误状态 */
+  &.error {
+    border-color: hsl(var(--destructive));
+    
+    &:focus {
+      border-color: hsl(var(--destructive));
+      box-shadow: 0 0 0 2px hsl(var(--destructive) / 0.2);
+    }
+  }
+  
+  /* 成功状态 */
+  &.success {
+    border-color: hsl(158 64% 52%);
+    
+    &:focus {
+      border-color: hsl(158 64% 52%);
+      box-shadow: 0 0 0 2px hsl(158 64% 52% / 0.2);
+    }
+  }
+}
+
+/* 密码输入框 - 为显示/隐藏按钮留出空间 */
+.auth-input[type="password"],
+.auth-input.password-field {
+  padding-right: 2.5rem;
+}
+
+/* 输入框图标容器 */
+.auth-input-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: hsl(var(--auth-icon-color));
+  pointer-events: none;
+}
+
+/* 输入框右侧按钮（密码显示/隐藏） */
+.auth-input-action {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: hsl(var(--auth-icon-color));
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 4px;
+  
+  &:hover {
+    background: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px hsl(var(--auth-focus-ring));
+  }
+}
+
+/* ============================================================================
+   认证按钮样式 - 需求8.1: 按钮设计和交互效果
+   ============================================================================ */
+
+/* 主登录按钮 - 需求8.1: 全宽紫色按钮 */
+.auth-primary-button {
+  /* 尺寸 */
+  width: 100%;
+  height: 2.75rem;
+  
+  /* 背景和颜色 */
+  background: hsl(var(--auth-primary-button));
+  color: hsl(var(--primary-foreground));
+  border: none;
+  border-radius: 8px;
+  
+  /* 字体 - 需求10.1: 16px字号medium字重 */
+  font-size: 1rem;
+  font-weight: 500;
+  
+  /* 阴影效果 */
+  box-shadow: 
+    0 4px 6px -1px hsl(var(--auth-primary-button) / 0.25),
+    0 2px 4px -2px hsl(var(--auth-primary-button) / 0.1);
+  
+  /* 过渡动画 */
+  transition: all 0.2s ease-in-out;
+  
+  /* 光标样式 */
+  cursor: pointer;
+  
+  /* 悬停效果 - 需求8.1: 颜色加深 */
+  &:hover:not(:disabled) {
+    background: hsl(var(--auth-primary-hover));
+    box-shadow: 
+      0 6px 8px -1px hsl(var(--auth-primary-button) / 0.3),
+      0 4px 6px -2px hsl(var(--auth-primary-button) / 0.15);
+    transform: translateY(-1px);
+  }
+  
+  /* 按下效果 */
+  &:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 
+      0 2px 4px -1px hsl(var(--auth-primary-button) / 0.2),
+      0 1px 2px -1px hsl(var(--auth-primary-button) / 0.1);
+  }
+  
+  /* 聚焦状态 */
+  &:focus {
+    outline: none;
+    box-shadow: 
+      0 0 0 2px hsl(var(--auth-focus-ring) / 0.5),
+      0 4px 6px -1px hsl(var(--auth-primary-button) / 0.25);
+  }
+  
+  /* 禁用状态 */
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+  
+  /* 加载状态 */
+  &.loading {
+    cursor: wait;
+    position: relative;
+    
+    .loading-spinner {
+      display: inline-block;
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: auth-spin 1s linear infinite;
+      margin-right: 0.5rem;
+    }
+  }
+}
+
+/* 社交登录按钮 - 需求8.1: 白色背景配合深色边框 */
+.auth-social-button {
+  /* 尺寸 */
+  height: 2.75rem;
+  
+  /* 背景和边框 */
+  background: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  border: 1px solid hsl(var(--auth-border));
+  border-radius: 8px;
+  
+  /* 字体 */
+  font-size: 0.875rem;
+  font-weight: 500;
+  
+  /* 布局 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  
+  /* 过渡动画 */
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  
+  /* 悬停效果 */
+  &:hover:not(:disabled) {
+    background: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+    border-color: hsl(var(--accent-foreground) / 0.2);
+    box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1);
+  }
+  
+  /* 聚焦状态 */
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px hsl(var(--ring));
+  }
+  
+  /* 禁用状态 */
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* 链接按钮 - "Forgot password"等 */
+.auth-link-button {
+  background: none;
+  border: none;
+  color: hsl(var(--auth-secondary-link));
+  font-size: 0.875rem;
+  font-weight: 400;
+  text-decoration: none;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  border-radius: 4px;
+  transition: color 0.2s ease-in-out;
+  
+  &:hover:not(:disabled) {
+    color: hsl(var(--auth-secondary-link) / 0.8);
+    text-decoration: underline;
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px hsl(var(--ring));
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* ============================================================================
+   认证表单布局和间距 - 需求9.1: 布局和间距系统
+   ============================================================================ */
+
+/* 表单主容器 */
+.auth-form {
+  /* 垂直间距 - 需求9.1: 一致的16px间距 */
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* 表单字段组 */
+.auth-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* 表单操作行（记住我 + 忘记密码） */
+.auth-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 1rem 0;
+  gap: 1rem;
+}
+
+/* 记住我复选框组 */
+.auth-checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  
+  input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    border-radius: 4px;
+    border: 1px solid hsl(var(--auth-border));
+    
+    &:checked {
+      background: hsl(var(--primary));
+      border-color: hsl(var(--primary));
+    }
+    
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px hsl(var(--ring));
+    }
+  }
+  
+  label {
+    font-size: 0.875rem;
+    color: hsl(var(--auth-body-text));
+    cursor: pointer;
+  }
+}
+
+/* 社交登录分割线 */
+.auth-divider {
+  position: relative;
+  margin: 2rem 0;
+  text-align: center;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: hsl(var(--border));
+  }
+  
+  span {
+    background: hsl(var(--auth-card-background));
+    padding: 0 1rem;
+    font-size: 0.75rem;
+    color: hsl(var(--auth-body-text));
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+/* 社交登录按钮网格 */
+.auth-social-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+/* 注册链接区域 */
+.auth-register-link {
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid hsl(var(--border));
+  
+  p {
+    font-size: 0.875rem;
+    color: hsl(var(--auth-body-text));
+    margin: 0;
+  }
+  
+  .auth-link-button {
+    color: hsl(var(--primary));
+    font-weight: 500;
+    margin-left: 0.25rem;
+    
+    &:hover {
+      color: hsl(var(--primary) / 0.8);
+    }
+  }
+}
+
+/* ============================================================================
+   错误和状态提示样式
+   ============================================================================ */
+
+/* 错误提示容器 */
+.auth-error-alert {
+  background: hsl(var(--destructive) / 0.1);
+  border: 1px solid hsl(var(--destructive) / 0.2);
+  color: hsl(var(--destructive));
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  
+  .error-icon {
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+  }
+  
+  .error-message {
+    flex: 1;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin: 0;
+  }
+  
+  .error-close {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: currentColor;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    line-height: 1;
+    
+    &:hover {
+      background: hsl(var(--destructive) / 0.1);
+    }
+  }
+}
+
+/* 成功提示容器 */
+.auth-success-alert {
+  background: hsl(158 64% 52% / 0.1);
+  border: 1px solid hsl(158 64% 52% / 0.2);
+  color: hsl(158 64% 42%);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  
+  .success-icon {
+    flex-shrink: 0;
+  }
+  
+  .success-message {
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin: 0;
+  }
+}
+
+/* 字段验证状态指示器 */
+.auth-field-validation {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  
+  &.valid {
+    color: hsl(158 64% 52%);
+  }
+  
+  &.invalid {
+    color: hsl(var(--destructive));
+  }
+}
+
+/* ============================================================================
+   响应式设计 - 需求11.1: 响应式设计和主题支持
+   ============================================================================ */
+
+/* 平板设备优化 */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .auth-card {
+    max-width: 420px;
+    padding: 3rem;
+  }
+  
+  .auth-welcome-title {
+    font-size: 2rem;
+  }
+  
+  /* 保持合适的布局比例 */
+  .auth-form {
+    gap: 1.25rem;
+  }
+}
+
+/* 移动设备优化 - 需求11.1: 调整外边距 */
+@media (max-width: 767px) {
+  .auth-card {
+    margin: 0.5rem;
+    padding: 1.5rem;
+    border-radius: 8px;
+  }
+  
+  .auth-brand {
+    margin-bottom: 2rem;
+  }
+  
+  .auth-welcome-title {
+    font-size: 1.25rem;
+    text-align: center;
+  }
+  
+  .auth-subtitle {
+    text-align: center;
+  }
+  
+  /* 移动端按钮优化 */
+  .auth-primary-button,
+  .auth-social-button {
+    height: 3rem;
+    font-size: 1rem;
+  }
+  
+  /* 社交按钮在小屏幕下堆叠 */
+  .auth-social-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  
+  /* 表单操作行在小屏幕下堆叠 */
+  .auth-form-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+}
+
+/* 极小屏幕优化 */
+@media (max-width: 360px) {
+  .auth-card {
+    margin: 0.25rem;
+    padding: 1rem;
+  }
+  
+  .auth-input {
+    height: 3rem;
+    font-size: 1rem;
+  }
+}
+
+/* ============================================================================
+   动画和过渡效果
+   ============================================================================ */
+
+/* 旋转动画 - 用于加载状态 */
+@keyframes auth-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 淡入动画 - 页面进入效果 */
+@keyframes auth-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 应用淡入动画到认证卡片 */
+.auth-card {
+  animation: auth-fade-in 0.3s ease-out;
+}
+
+/* 错误提示滑入动画 */
+@keyframes auth-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-error-alert,
+.auth-success-alert {
+  animation: auth-slide-down 0.2s ease-out;
+}
+
+/* ============================================================================
+   高对比度和无障碍增强
+   ============================================================================ */
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+  .auth-input {
+    border-width: 2px;
+  }
+  
+  .auth-primary-button {
+    border: 2px solid hsl(var(--auth-primary-button));
+  }
+  
+  .auth-social-button {
+    border-width: 2px;
+  }
+}
+
+/* 减少动画模式支持 */
+@media (prefers-reduced-motion: reduce) {
+  .auth-card,
+  .auth-error-alert,
+  .auth-success-alert {
+    animation: none;
+  }
+  
+  .auth-primary-button,
+  .auth-social-button,
+  .auth-link-button,
+  .auth-input {
+    transition: none;
+  }
+  
+  .loading-spinner {
+    animation: none;
+  }
+}
+
+/* 聚焦可见性增强 */
+@media (prefers-reduced-motion: no-preference) {
+  *:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+}
+
+/* ============================================================================
+   打印样式优化
+   ============================================================================ */
+
+@media print {
+  .auth-card {
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+  
+  .auth-primary-button,
+  .auth-social-button {
+    background: white !important;
+    color: black !important;
+    border: 1px solid black !important;
+  }
+}

@@ -30,7 +30,7 @@ const XSS_PATTERNS = [
  * @param value 要检测的字符串值
  * @returns 如果检测到恶意内容返回true
  */
-const detectMaliciousContent = (value: string): boolean => {
+export const detectMaliciousContent = (value: string): boolean => {
   if (!value || typeof value !== 'string') return false;
   
   // 检查XSS模式
@@ -41,7 +41,7 @@ const detectMaliciousContent = (value: string): boolean => {
  * 安全字符串验证
  * 通用的字符串验证，包含XSS防护
  */
-const safeStringValidator = (fieldName: string, maxLength: number = 500) => {
+export const safeStringValidator = (fieldName: string, maxLength: number = 500) => {
   return z
     .string()
     .trim()
