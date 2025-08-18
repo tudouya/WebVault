@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
+import { ThemeProvider } from 'next-themes'
+import { Toaster } from '@/components/ui/toaster'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -16,12 +18,20 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" suppressHydrationWarning>
       <body className={inter.className}>
         <div id="root">
-          <NuqsAdapter>
-            {children}
-          </NuqsAdapter>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <NuqsAdapter>
+              {children}
+            </NuqsAdapter>
+            <Toaster />
+          </ThemeProvider>
         </div>
       </body>
     </html>

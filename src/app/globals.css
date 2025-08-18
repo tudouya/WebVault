@@ -8,6 +8,7 @@
 @import '../features/websites/styles/websiteDetail.css';
 @import '../features/blog/styles/animations.css';
 @import '../features/blog/styles/blogDetail.css';
+@import '../features/submissions/styles/animations.css';
 
 @layer base {
   :root {
