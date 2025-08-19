@@ -1,39 +1,48 @@
 'use client';
 
 /**
- * AuthGuard Component
+ * AuthGuard Component (Admin-Only System Enhanced)
  * 
- * 路由级别的认证保护组件，提供完整的认证检查、重定向逻辑和用户体验优化。
- * 支持条件渲染、嵌套保护、权限检查和会话管理。
+ * 路由级别的认证保护组件，专为Admin-Only系统设计，提供完整的认证检查、
+ * 权限验证、重定向逻辑和用户体验优化。
  * 
  * Requirements:
+ * - 3.2: 路由保护中间件更新 - admin角色检查和重定向
  * - 5.1: 会话管理和路由保护
- * - 认证状态检查和验证
- * - 会话有效性和令牌刷新
- * - 未认证用户的重定向逻辑
- * - 原始URL保存和恢复
+ * - 6.3: 访客用户体验优化 - 管理员专用功能说明
+ * - Admin-Only: 增强的管理员权限验证和错误处理
  * 
- * Features:
+ * Admin-Only Features:
+ * - ✅ 增强的admin权限检查：利用auth-store的严格验证方法
+ * - ✅ 管理员专用错误提示：清晰说明Admin-Only系统限制
+ * - ✅ 智能重定向逻辑：区分未认证和权限不足用户
+ * - ✅ 会话有效性验证：集成hasValidAdminSession检查
+ * - ✅ 用户友好提示：提供获取管理员权限的指导信息
+ * 
+ * Core Features:
  * - 完整的认证状态检查
- * - 会话有效性验证
- * - 自动重定向到登录页
+ * - 严格的admin角色权限验证
+ * - 会话有效性和令牌刷新
+ * - 自动重定向到登录页面
  * - 原始URL保存和登录后恢复
- * - 权限级别检查（可选）
+ * - 分层权限检查（page/section/component）
  * - 加载状态和过渡动画
- * - 错误处理和回退UI
- * - 与AuthErrorBoundary集成
+ * - 专业的错误处理和回退UI
+ * - 与AuthErrorBoundary完整集成
  * 
- * @version 1.0.0
+ * @version 1.1.0 - Admin-Only System Enhanced
  * @created 2025-08-18
+ * @updated 2025-08-18 (Task 16: Enhanced admin permission checks)
  */
 
 import React, { useEffect, useMemo, ReactNode } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Loader2, Shield, Lock, User, AlertTriangle } from 'lucide-react';
+import { Loader2, Shield, Lock, User, AlertTriangle, Crown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useAuth, useAuthSession } from '../hooks/useAuth';
+import { useAuthStoreHook } from '../stores/auth-store';
 import { AuthErrorBoundary } from './AuthErrorBoundary';
 import { AuthUser } from '../types';
 
@@ -42,7 +51,7 @@ import { AuthUser } from '../types';
 // ============================================================================
 
 /**
- * AuthGuard 组件属性接口
+ * AuthGuard 组件属性接口 (Admin-Only System Enhanced)
  */
 export interface AuthGuardProps {
   /** 子组件内容 */
@@ -51,7 +60,12 @@ export interface AuthGuardProps {
   /** 是否需要认证（默认: true） */
   requireAuth?: boolean;
   
-  /** 需要的用户角色 */
+  /** 
+   * 需要的用户角色 (Admin-Only System Enhanced)
+   * - 'admin': 管理员权限，使用auth-store的严格验证
+   * - 'user': 普通用户权限（为未来扩展预留）
+   * - undefined: 仅需要认证，不限制角色
+   */
   requiredRole?: AuthUser['role'];
   
   /** 认证失败时的回退组件 */
@@ -60,7 +74,7 @@ export interface AuthGuardProps {
   /** 加载状态时的回退组件 */
   loadingFallback?: ReactNode;
   
-  /** 权限不足时的回退组件 */
+  /** 权限不足时的回退组件（支持Admin-Only专用提示） */
   permissionDeniedFallback?: ReactNode;
   
   /** 自定义重定向URL */
@@ -69,7 +83,7 @@ export interface AuthGuardProps {
   /** 是否保存当前路径用于登录后重定向 */
   saveReturnUrl?: boolean;
   
-  /** 保护级别 */
+  /** 保护级别（影响错误提示样式） */
   level?: 'page' | 'section' | 'component';
   
   /** 是否显示加载动画 */
@@ -78,7 +92,7 @@ export interface AuthGuardProps {
   /** 会话验证模式 */
   sessionMode?: 'strict' | 'lenient';
   
-  /** 调试模式 */
+  /** 调试模式（包含admin权限检查日志） */
   debug?: boolean;
 }
 
@@ -182,27 +196,65 @@ export function useAuthGuard(options: UseAuthGuardOptions = {}): UseAuthGuardRes
     refreshSession: refreshSessionFromHook,
   } = useAuthSession();
 
+  // Admin-Only系统：获取增强的admin权限检查功能
+  const {
+    isAdmin,
+    requireAdmin,
+    hasValidAdminSession,
+  } = useAuthStoreHook();
+
   // ========================================================================
   // 状态计算和权限检查
   // ========================================================================
 
   /**
-   * 权限检查逻辑
-   * 检查用户是否具有所需的角色权限
+   * 权限检查逻辑 - Admin-Only系统增强版本
+   * 利用auth-store的增强权限检查功能
    */
   const hasPermission = useMemo(() => {
-    if (!requireAuth || !requiredRole || !user) {
+    if (!requireAuth) {
       return true;
     }
     
-    // Admin 用户拥有所有权限
-    if (user.role === 'admin') {
+    // 如果没有指定角色要求，只需要认证即可
+    if (!requiredRole) {
+      return isAuthenticated;
+    }
+    
+    // Admin角色要求：使用auth-store的严格检查
+    if (requiredRole === 'admin') {
+      // 检查是否为有效的admin会话
+      const hasValidAdmin = hasValidAdminSession();
+      
+      if (debug) {
+        console.log('[AuthGuard] Admin permission check:', {
+          requiredRole,
+          isAuthenticated,
+          userRole: user?.role,
+          isAdmin: isAdmin(),
+          hasValidAdminSession: hasValidAdmin,
+          result: hasValidAdmin,
+        });
+      }
+      
+      return hasValidAdmin;
+    }
+    
+    // 其他角色检查（为未来扩展预留）
+    if (user && user.role === requiredRole) {
       return true;
     }
     
-    // 检查用户角色是否匹配
-    return user.role === requiredRole;
-  }, [requireAuth, requiredRole, user]);
+    return false;
+  }, [
+    requireAuth, 
+    requiredRole, 
+    isAuthenticated, 
+    user, 
+    isAdmin, 
+    hasValidAdminSession, 
+    debug
+  ]);
 
   /**
    * 会话有效性检查
@@ -498,7 +550,7 @@ function DefaultLoadingFallback({ level = 'component' }: { level?: 'page' | 'sec
 }
 
 /**
- * 权限不足回退组件
+ * 权限不足回退组件 - Admin-Only系统增强版本
  */
 function DefaultPermissionDeniedFallback({ 
   level = 'component',
@@ -521,42 +573,118 @@ function DefaultPermissionDeniedFallback({
     }
   };
 
+  // 管理员专用错误信息
+  const getAdminAccessMessage = () => {
+    if (!user) {
+      return {
+        title: '需要管理员身份验证',
+        description: '此功能仅限管理员使用，请使用管理员账户登录',
+        action: '管理员登录'
+      };
+    }
+    
+    if (user.role !== 'admin') {
+      return {
+        title: '管理员权限不足',
+        description: `您当前以"${user.role === 'user' ? '普通用户' : user.role}"身份登录，此功能仅限管理员使用`,
+        action: '切换管理员账户'
+      };
+    }
+    
+    return {
+      title: '会话权限验证失败',
+      description: '管理员会话可能已过期或无效，请重新登录验证身份',
+      action: '重新验证身份'
+    };
+  };
+
   if (level === 'page') {
+    const messageInfo = requiredRole === 'admin' ? getAdminAccessMessage() : {
+      title: '访问受限',
+      description: '您没有足够的权限访问此页面',
+      action: '返回首页'
+    };
+
     return (
       <div className="min-h-[60vh] flex items-center justify-center p-4">
         <Card className="w-full max-w-md mx-auto">
           <CardHeader className="text-center pb-4">
             <div className="mx-auto w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mb-4">
-              <Lock className="w-8 h-8 text-amber-500" />
+              {requiredRole === 'admin' ? (
+                <Crown className="w-8 h-8 text-amber-500" />
+              ) : (
+                <Lock className="w-8 h-8 text-amber-500" />
+              )}
             </div>
             <CardTitle className="text-xl text-foreground">
-              访问受限
+              {messageInfo.title}
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <p className="text-sm text-muted-foreground">
-              {requiredRole === 'admin' 
-                ? '此页面仅限管理员访问' 
-                : '您没有足够的权限访问此页面'
-              }
+              {messageInfo.description}
             </p>
             
-            {user && (
+            {requiredRole === 'admin' && (
+              <div className="text-xs text-muted-foreground bg-amber-50 dark:bg-amber-950/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <Crown className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                  <span className="font-medium text-amber-800 dark:text-amber-200">Admin-Only系统</span>
+                </div>
+                <div className="text-left space-y-1">
+                  <div>• 此平台仅允许管理员用户访问</div>
+                  <div>• 当前身份: {user ? (user.role === 'admin' ? '管理员 (会话无效)' : '普通用户') : '未认证用户'}</div>
+                  <div>• 如需访问权限，请联系系统管理员</div>
+                </div>
+              </div>
+            )}
+
+            {user && requiredRole !== 'admin' && (
               <div className="text-xs text-muted-foreground bg-muted p-3 rounded-lg">
-                当前角色: {user.role === 'admin' ? '管理员' : '普通用户'}
+                当前身份: {user.role === 'admin' ? '管理员' : '普通用户'}
                 {requiredRole && (
-                  <div>需要角色: {requiredRole === 'admin' ? '管理员' : '普通用户'}</div>
+                  <div>需要权限: {requiredRole === 'admin' ? '管理员' : '普通用户'}</div>
                 )}
               </div>
             )}
 
-            <Button 
-              variant="default"
-              onClick={handleBackToHome}
-              className="w-full"
-            >
-              返回首页
-            </Button>
+            <div className="space-y-2">
+              {requiredRole === 'admin' && user?.role !== 'admin' ? (
+                <Button 
+                  variant="default"
+                  onClick={() => router.push('/login')}
+                  className="w-full"
+                >
+                  <Crown className="w-4 h-4 mr-2" />
+                  {messageInfo.action}
+                </Button>
+              ) : requiredRole === 'admin' ? (
+                <Button 
+                  variant="default"
+                  onClick={() => router.push('/login')}
+                  className="w-full"
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  {messageInfo.action}
+                </Button>
+              ) : (
+                <Button 
+                  variant="default"
+                  onClick={handleBackToHome}
+                  className="w-full"
+                >
+                  返回首页
+                </Button>
+              )}
+              
+              <Button 
+                variant="outline"
+                onClick={handleBackToHome}
+                className="w-full"
+              >
+                返回首页
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -564,26 +692,52 @@ function DefaultPermissionDeniedFallback({
   }
 
   if (level === 'section') {
+    const sectionMessage = requiredRole === 'admin' 
+      ? getAdminAccessMessage() 
+      : { title: '访问受限', description: '权限不足，无法访问此内容' };
+
     return (
       <Card className="w-full border-amber-500/20 bg-amber-500/5">
         <CardContent className="p-6 text-center">
           <div className="flex flex-col items-center space-y-3">
             <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center">
-              <Lock className="w-6 h-6 text-amber-500" />
+              {requiredRole === 'admin' ? (
+                <Crown className="w-6 h-6 text-amber-500" />
+              ) : (
+                <Lock className="w-6 h-6 text-amber-500" />
+              )}
             </div>
             <div>
-              <h3 className="font-medium text-foreground mb-1">访问受限</h3>
+              <h3 className="font-medium text-foreground mb-1">{sectionMessage.title}</h3>
               <p className="text-sm text-muted-foreground">
-                权限不足，无法访问此内容
+                {sectionMessage.description}
               </p>
+              {requiredRole === 'admin' && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-2 font-medium">
+                  Admin-Only功能
+                </p>
+              )}
             </div>
-            <Button 
-              variant="outline"
-              size="sm"
-              onClick={handleBackToHome}
-            >
-              返回首页
-            </Button>
+            <div className="space-y-2">
+              {requiredRole === 'admin' ? (
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push('/login')}
+                >
+                  <Crown className="w-3 h-3 mr-1" />
+                  管理员登录
+                </Button>
+              ) : (
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  onClick={handleBackToHome}
+                >
+                  返回首页
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -593,16 +747,25 @@ function DefaultPermissionDeniedFallback({
   return (
     <div className="p-4 rounded-lg border border-amber-500/20 bg-amber-500/5 text-center">
       <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-2">
-        <Lock className="w-4 h-4 text-amber-500" />
-        权限不足
+        {requiredRole === 'admin' ? (
+          <>
+            <Crown className="w-4 h-4 text-amber-500" />
+            管理员权限不足
+          </>
+        ) : (
+          <>
+            <Lock className="w-4 h-4 text-amber-500" />
+            权限不足
+          </>
+        )}
       </div>
       <Button 
         variant="outline" 
         size="sm" 
-        onClick={handleBackToHome}
+        onClick={requiredRole === 'admin' ? () => router.push('/login') : handleBackToHome}
         className="text-xs"
       >
-        返回
+        {requiredRole === 'admin' ? '管理员登录' : '返回'}
       </Button>
     </div>
   );
@@ -869,8 +1032,15 @@ export function withAuthGuard<T extends object>(
 // ============================================================================
 
 /**
- * AdminOnly Component
- * 仅限管理员访问的专用组件
+ * AdminOnly Component (Admin-Only System Enhanced)
+ * 
+ * 专为Admin-Only系统设计的管理员专用访问组件
+ * 
+ * Features:
+ * - 使用auth-store的严格admin权限验证
+ * - 自动显示Admin-Only系统专用错误提示
+ * - 智能重定向到管理员登录页面
+ * - 默认section级别的专业错误展示
  */
 export function AdminOnly({ children, ...props }: Omit<AuthGuardProps, 'requiredRole'>) {
   return (

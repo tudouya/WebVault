@@ -4,9 +4,14 @@
  * Establishes the complete service layer contract for WebVault authentication system.
  * Provides dependency injection foundation for multiple authentication providers.
  * 
+ * ADMIN-ONLY AUTHENTICATION SYSTEM:
+ * This authentication system is designed for administrative access only.
+ * User registration is restricted to administrators through manual account creation.
+ * 
  * Requirements:
  * - 2.1: Social authentication (Google, GitHub OAuth)
  * - 5.1: Session management (30-day persistence, 15-minute lockout mechanism)
+ * - 4.4: Admin-only authentication (no public user registration)
  * 
  * @version 1.0.0
  * @created 2025-08-17
@@ -29,6 +34,11 @@ import {
  * 
  * Complete authentication service contract that abstracts authentication provider
  * implementation details. Enables easy testing and provider switching.
+ * 
+ * ADMIN-ONLY INTERFACE:
+ * This interface is designed for administrative authentication only.
+ * No public user registration methods are provided - accounts must be
+ * created manually by administrators through backend processes.
  */
 export interface AuthService {
   // ========================================================================
@@ -45,15 +55,6 @@ export interface AuthService {
    * Requirements: 1.1 (Email authentication)
    */
   signIn(credentials: AuthFormData): Promise<AuthSession>;
-  
-  /**
-   * Sign up new user with email and password
-   * 
-   * @param userData - Registration form data
-   * @returns Authentication session (may require email confirmation)
-   * @throws AuthError on validation errors or email conflicts
-   */
-  signUp(userData: AuthFormData): Promise<AuthSession>;
   
   // ========================================================================
   // Social Authentication (Requirements 2.1)

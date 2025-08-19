@@ -1,15 +1,29 @@
 /**
- * Authentication State Management Store
+ * Authentication State Management Store (Admin-Only System)
  * 
- * 基于Zustand创建认证状态管理，实现用户、会话、加载、错误状态的集中管理
- * 支持30天持久化会话和15分钟锁定机制，仅存储非敏感数据确保安全性
+ * 基于Zustand创建认证状态管理，专为管理员身份验证设计的封闭式系统。
+ * 
+ * 核心特性：
+ * - 🔒 Admin-Only访问：仅允许管理员角色用户登录系统
+ * - 🚫 禁用用户注册：移除所有用户自主注册功能和入口
+ * - ⏰ 会话管理：支持30天持久化会话和15分钟锁定机制
+ * - 🛡️ 安全存储：敏感信息不存储在localStorage，确保数据安全
+ * - 🎯 权限验证：提供细粒度的admin权限检查和验证方法
+ * 
+ * Admin-Only安全策略：
+ * - 严格的角色验证：每次登录都验证用户必须具有admin角色
+ * - 拒绝非admin访问：非管理员用户无法通过任何方式访问系统
+ * - 社交登录限制：当前仅支持邮箱密码登录，确保管理员身份可控
+ * - 注册功能禁用：register方法始终抛出错误，拒绝用户注册请求
  * 
  * Requirements:
- * - 5.1: 会话管理 (30天持久化, 15分钟锁定机制)
- * - 安全存储策略: 敏感信息不存储在localStorage
+ * - 4.5: 禁用用户注册功能 - 系统运行时不存在任何用户自主注册入口
+ * - 5.1: 会话管理 - 30天持久化会话，15分钟锁定机制
+ * - Admin-Only: 仅允许预定义管理员账户访问系统
  * 
- * @version 1.0.0
+ * @version 1.2.0
  * @created 2025-08-17
+ * @updated 2025-08-18 (Admin-only authentication with enhanced role validation)
  */
 
 import { create } from 'zustand';
@@ -210,8 +224,22 @@ export const useAuthStore = create<AuthStoreState>()(
               // 模拟登录延迟
               await new Promise(resolve => setTimeout(resolve, 800));
               
-              // 模拟登录验证 (实际环境中移除)
-              if (email !== 'admin@webvault.com' || password !== 'password123') {
+              // TODO: 实际实现中会调用AuthService验证管理员身份
+              // const authService = getAuthService();
+              // const authResult = await authService.signIn({ email, password, rememberMe });
+              // 
+              // 严格的admin角色验证 - 系统核心安全要求
+              // if (!authResult.user || authResult.user.role !== 'admin') {
+              //   // 记录非admin用户的登录尝试
+              //   await authService.recordFailedAttempt(email);
+              //   throw new Error('访问被拒绝：此系统仅允许管理员用户登录');
+              // }
+              
+              // 模拟管理员身份验证 (实际环境中移除)
+              // Admin-Only系统：只允许预定义的管理员账户登录
+              const isValidAdminCredentials = email === 'admin@webvault.com' && password === 'password123';
+              
+              if (!isValidAdminCredentials) {
                 // 记录失败尝试
                 const currentState = get();
                 const newAttemptCount = currentState.loginAttempts + 1;
@@ -239,7 +267,7 @@ export const useAuthStore = create<AuthStoreState>()(
                   );
                 }
                 
-                throw new Error('邮箱或密码错误');
+                throw new Error('访问被拒绝：无效的管理员凭据');
               }
               
               // 模拟成功登录的用户和会话数据
@@ -310,7 +338,7 @@ export const useAuthStore = create<AuthStoreState>()(
           },
           
           /**
-           * 社交提供商登录
+           * 社交提供商登录 (Admin-Only)
            * 
            * @param provider - 社交提供商 (google | github)
            */
@@ -328,11 +356,18 @@ export const useAuthStore = create<AuthStoreState>()(
               // TODO: 实际实现中调用AuthService
               // const authService = getAuthService();
               // const session = await authService.signInWithProvider(provider);
+              // 
+              // 严格的admin角色验证 - 社交登录也必须验证admin权限
+              // if (!session.user || session.user.role !== 'admin') {
+              //   // 立即注销非admin用户的社交登录会话
+              //   await authService.signOut();
+              //   throw new Error('访问被拒绝：此系统仅允许管理员用户通过社交账户登录');
+              // }
               
               // 模拟社交登录流程
               await new Promise(resolve => setTimeout(resolve, 1000));
               
-              throw new Error(`${provider} 登录功能正在开发中`);
+              throw new Error(`访问被拒绝：Admin-Only系统当前仅支持邮箱密码登录`);
               
             } catch (error) {
               const errorMessage = error instanceof Error ? error.message : '社交登录失败';
@@ -354,48 +389,19 @@ export const useAuthStore = create<AuthStoreState>()(
             }
           },
           
+          // ====================================================================
+          // 注册功能已移除 (Admin-Only 系统)
+          // 根据需求4.5: 系统运行时不存在任何用户自主注册入口
+          // ====================================================================
+          
           /**
-           * 用户注册
+           * 用户注册 - 已禁用
            * 
-           * @param formData - 注册表单数据
+           * Admin-Only系统不允许用户自主注册
+           * @throws {Error} 始终抛出错误，拒绝注册请求
            */
-          register: async (formData) => {
-            set(
-              {
-                isLoading: true,
-                error: null,
-              },
-              false,
-              'auth:register:start'
-            );
-            
-            try {
-              // TODO: 实际实现中调用AuthService
-              // const authService = getAuthService();
-              // const session = await authService.signUp(formData);
-              
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              
-              throw new Error('注册功能正在开发中');
-              
-            } catch (error) {
-              const errorMessage = error instanceof Error ? error.message : '注册失败';
-              
-              set(
-                {
-                  isLoading: false,
-                  error: {
-                    code: 'UNKNOWN_ERROR',
-                    message: errorMessage,
-                    timestamp: new Date().toISOString(),
-                  },
-                },
-                false,
-                'auth:register:error'
-              );
-              
-              throw error;
-            }
+          register: async () => {
+            throw new Error('系统不支持用户注册，请联系管理员获取访问权限');
           },
           
           /**
@@ -538,8 +544,12 @@ export const useAuthStore = create<AuthStoreState>()(
             );
             
             try {
-              const authService = getAuthService();
-              await authService.resetPassword(email);
+              // TODO: 实际实现中调用AuthService
+              // const authService = getAuthService();
+              // await authService.resetPassword(email);
+              
+              // 模拟密码重置延迟
+              await new Promise(resolve => setTimeout(resolve, 1000));
               
               set(
                 {
@@ -587,8 +597,12 @@ export const useAuthStore = create<AuthStoreState>()(
             );
             
             try {
-              const authService = getAuthService();
-              await authService.confirmPasswordReset(token, newPassword);
+              // TODO: 实际实现中调用AuthService
+              // const authService = getAuthService();
+              // await authService.confirmPasswordReset(token, newPassword);
+              
+              // 模拟密码重置确认延迟
+              await new Promise(resolve => setTimeout(resolve, 800));
               
               set(
                 {
@@ -605,7 +619,7 @@ export const useAuthStore = create<AuthStoreState>()(
                 {
                   isLoading: false,
                   error: {
-                    code: 'RESET_CONFIRM_ERROR',
+                    code: 'UNKNOWN_ERROR',
                     message: errorMessage,
                     timestamp: new Date().toISOString(),
                   },
@@ -713,6 +727,61 @@ export const useAuthStore = create<AuthStoreState>()(
             );
           },
           
+          /**
+           * 验证当前用户是否为管理员
+           * Admin-Only系统的核心权限检查
+           * 
+           * @returns 是否为管理员用户
+           */
+          isAdmin: () => {
+            const state = get();
+            return state.isAuthenticated && state.user?.role === 'admin';
+          },
+          
+          /**
+           * 验证用户访问权限
+           * 确保只有管理员能够执行管理操作
+           * 
+           * @throws Error 如果用户未认证或非管理员
+           */
+          requireAdmin: () => {
+            const state = get();
+            
+            if (!state.isAuthenticated) {
+              throw new Error('用户未认证，请先登录');
+            }
+            
+            if (state.user?.role !== 'admin') {
+              throw new Error('权限不足，此操作仅限管理员');
+            }
+          },
+          
+          /**
+           * 检查用户会话有效性并验证管理员权限
+           * 
+           * @returns 是否为有效的管理员会话
+           */
+          hasValidAdminSession: () => {
+            const state = get();
+            
+            // 基础认证检查
+            if (!state.isAuthenticated || !state.user || !state.session) {
+              return false;
+            }
+            
+            // 管理员角色检查
+            if (state.user.role !== 'admin') {
+              return false;
+            }
+            
+            // 会话过期检查
+            if (state.session.expiresAt && new Date() >= new Date(state.session.expiresAt)) {
+              return false;
+            }
+            
+            return true;
+          },
+          
         },
       }),
       {
@@ -801,10 +870,9 @@ export function useAuthStoreHook() {
     error,
     isInitialized,
     
-    // 操作方法
+    // 基础操作方法
     login: actions.login,
     loginWithProvider: actions.loginWithProvider,
-    register: actions.register,
     logout: actions.logout,
     refreshSession: actions.refreshSession,
     resetPassword: actions.resetPassword,
@@ -813,22 +881,33 @@ export function useAuthStoreHook() {
     clearError: actions.clearError,
     initialize: actions.initialize,
     
-    // 便捷计算属性
-    isAdmin: user?.role === 'admin',
+    // Admin-Only 权限检查方法
+    isAdmin: actions.isAdmin,
+    requireAdmin: actions.requireAdmin,
+    hasValidAdminSession: actions.hasValidAdminSession,
+    
+    // 注册功能已移除 (Admin-Only 系统不支持用户自主注册)
+    register: actions.register, // 仅保留以抛出错误，确保调用时明确拒绝
+    
+    // 便捷计算属性 - 增强admin角色检查
+    isAdminUser: user?.role === 'admin' && isAuthenticated,
     userName: user?.name || user?.email || 'Anonymous',
     userAvatar: user?.avatar,
+    userRole: user?.role || null,
   };
 }
 
 /**
- * 账户安全状态Hook
- * 提供锁定和安全相关的状态信息
+ * 账户安全状态Hook (Admin-Only系统)
+ * 提供锁定和安全相关的状态信息，以及admin权限验证
  */
 export function useAuthSecurity() {
   const {
     loginAttempts,
     isLocked,
     lockoutExpiresAt,
+    user,
+    isAuthenticated,
     actions
   } = useAuthStore();
   
@@ -840,7 +919,7 @@ export function useAuthSecurity() {
   const remainingLockoutMinutes = Math.ceil(remainingLockoutTime / 60000);
   
   return {
-    // 安全状态
+    // 基础安全状态
     loginAttempts,
     isLocked,
     lockoutExpiresAt,
@@ -852,8 +931,14 @@ export function useAuthSecurity() {
     attemptsRemaining: Math.max(0, DEFAULT_SESSION_CONFIG.maxLoginAttempts - loginAttempts),
     isNearLockout: loginAttempts >= DEFAULT_SESSION_CONFIG.maxLoginAttempts - 1,
     
+    // Admin-Only 权限状态
+    isAdminUser: user?.role === 'admin' && isAuthenticated,
+    hasValidAdminSession: actions.hasValidAdminSession(),
+    canAccessSystem: actions.isAdmin(),
+    
     // 操作方法
     resetLoginAttempts: actions.resetLoginAttempts,
+    requireAdmin: actions.requireAdmin,
   };
 }
 

@@ -97,49 +97,22 @@ export class SupabaseAuthService implements AuthService {
   /**
    * Sign up new user with email and password
    * 
-   * @param userData - Registration form data
-   * @returns Authentication session (may require email confirmation)
-   * @throws AuthServiceError on validation errors or email conflicts
+   * NOTE: User registration has been disabled for admin-only authentication system.
+   * This method will always throw an error to prevent self-registration.
+   * 
+   * @param userData - Registration form data (unused)
+   * @returns Never returns - always throws error
+   * @throws AuthServiceError indicating registration is disabled
+   * 
+   * Requirements: 4.4, 4.5 (Admin-only authentication system)
    */
   async signUp(userData: AuthFormData): Promise<AuthSession> {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: userData.email,
-        password: userData.password,
-        options: {
-          data: {
-            name: userData.name || null,
-          },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      
-      if (error) {
-        throw this.mapSupabaseError(error);
-      }
-      
-      if (!data.user) {
-        throw this.createAuthError('SERVER_ERROR', 'Registration succeeded but no user was created');
-      }
-      
-      // Handle email confirmation requirement
-      if (!data.session && authConfig.security.requireEmailConfirmation) {
-        // Return a temporary session for email confirmation flow
-        return this.createPendingSession(data.user);
-      }
-      
-      if (!data.session) {
-        throw this.createAuthError('SERVER_ERROR', 'Registration succeeded but no session was created');
-      }
-      
-      return await this.convertToAuthSession(data.session, data.user);
-      
-    } catch (error) {
-      if (error instanceof Error && 'code' in error) {
-        throw error;
-      }
-      throw this.createAuthError('UNKNOWN_ERROR', 'An unexpected error occurred during sign up');
-    }
+    // Always throw error - user registration is disabled for admin-only system
+    throw this.createAuthError(
+      'SIGNUP_DISABLED',
+      'New user registration is disabled. Please contact an administrator for account access.',
+      'email'
+    );
   }
   
   // ========================================================================
@@ -808,27 +781,17 @@ export class SupabaseAuthService implements AuthService {
   
   /**
    * Create pending session for email confirmation flow
+   * 
+   * NOTE: Removed as part of admin-only authentication system.
+   * User registration and email confirmation are disabled.
+   * 
+   * @deprecated Method removed due to disabled user registration (Requirements 4.4, 4.5)
    */
   private createPendingSession(user: User): AuthSession {
-    return {
-      accessToken: '',
-      refreshToken: '',
-      expiresAt: new Date(Date.now() + 3600000).toISOString(), // 1 hour
-      refreshExpiresAt: new Date(Date.now() + 3600000).toISOString(),
-      user: {
-        id: user.id,
-        email: user.email || '',
-        emailVerified: false,
-        provider: 'email',
-        role: 'user',
-        metadata: {},
-        createdAt: user.created_at,
-        updatedAt: user.created_at,
-      },
-      createdAt: new Date().toISOString(),
-      lastActivity: new Date().toISOString(),
-      persistent: false,
-    };
+    throw this.createAuthError(
+      'SIGNUP_DISABLED', 
+      'Pending session creation is disabled in admin-only authentication system'
+    );
   }
   
   /**

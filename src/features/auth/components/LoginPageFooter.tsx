@@ -1,23 +1,23 @@
 /**
  * LoginPageFooter Component
  * 
- * 登录页面底部导航组件，提供注册导航和法律条款链接功能
- * 实现requirements.md中的Requirement 4：Registration Navigation
+ * 登录页面底部导航组件，为管理员专用认证系统提供帮助信息和法律条款链接
+ * 实现admin-only-auth-system规范中的Requirement 5.2和5.4
  * 
  * Requirements:
- * - 4.1: WHEN 用户点击'Sign up'链接 THEN 系统 SHALL 导航到注册页面
- * - 4.4: WHEN 底部导航文字显示时 THEN 系统 SHALL 显示"Don't have an account? Sign up"（完全匹配设计图）
- * - 4.5: WHEN "Sign up"链接显示时 THEN 系统 SHALL 使用蓝色文字突出显示
+ * - 5.2: WHEN 登录界面加载时 THEN 不 SHALL 显示注册链接、注册按钮或相关提示文本
+ * - 5.4: WHEN 用户忘记密码时 THEN 界面 SHALL 显示"请联系系统管理员重置密码"说明
  * 
  * Key Features:
- * - 精确匹配设计图的注册导航文字
- * - 支持自定义注册页面URL和文案
+ * - 管理员专用帮助提示和联系指导
+ * - 移除所有注册相关UI元素（默认模式）
  * - 集成法律条款链接（隐私政策、服务条款）
  * - 符合shadcn/ui设计系统的配色规范
  * - 完整的无障碍支持和键盘导航
  * - 响应式设计和主题系统集成
  * 
- * @version 1.0.0
+ * @version 2.0.0
+ * @updated 2025-08-18
  * @created 2025-08-17
  */
 
@@ -49,21 +49,35 @@ interface LegalLink {
 export interface LoginPageFooterProps {
   /**
    * 是否显示注册链接
-   * @default true
+   * @default false (管理员专用系统默认不显示注册功能)
    */
   showSignUp?: boolean;
   
   /**
    * 注册提示文字
+   * @deprecated 管理员专用系统不再推荐使用注册功能
    * @default "Don't have an account? Sign up"
    */
   signUpText?: string;
   
   /**
    * 注册页面URL
+   * @deprecated 管理员专用系统不再推荐使用注册功能
    * @default "/signup"
    */
   signUpUrl?: string;
+  
+  /**
+   * 是否启用管理员模式，显示管理员专用帮助信息
+   * @default true
+   */
+  adminMode?: boolean;
+  
+  /**
+   * 管理员帮助提示文字
+   * @default "需要账户访问权限？请联系系统管理员"
+   */
+  adminHelpText?: string;
   
   /**
    * 法律条款链接数组
@@ -101,13 +115,15 @@ const DEFAULT_LEGAL_LINKS: LegalLink[] = [
 /**
  * LoginPageFooter - 登录页面底部导航组件
  * 
- * 提供注册导航和法律条款链接，完全匹配设计图要求
- * 支持自定义配置和主题系统集成
+ * 为管理员专用认证系统提供帮助信息和法律条款链接
+ * 默认不显示注册功能，提供管理员专用的帮助指导
  */
 export function LoginPageFooter({
-  showSignUp = true,
+  showSignUp = false,
   signUpText = "Don't have an account? Sign up",
   signUpUrl = "/signup",
+  adminMode = true,
+  adminHelpText = "需要账户访问权限？请联系系统管理员",
   legalLinks = DEFAULT_LEGAL_LINKS,
   className,
   debug = false,
@@ -120,6 +136,8 @@ export function LoginPageFooter({
   if (debug) {
     console.log('[LoginPageFooter] Render:', {
       showSignUp,
+      adminMode,
+      adminHelpText,
       signUpText,
       signUpUrl,
       legalLinks: legalLinks.length,
@@ -131,8 +149,24 @@ export function LoginPageFooter({
   // ========================================================================
 
   /**
-   * 渲染注册导航文本
-   * 将文本分解为前半部分和链接部分，确保样式精确匹配设计图
+   * 渲染管理员专用帮助信息
+   * 提供管理员联系指导，替代注册链接
+   */
+  const renderAdminHelpText = () => {
+    if (!adminMode) return null;
+
+    return (
+      <p className="text-sm text-muted-foreground">
+        <span className="text-card-foreground">
+          {adminHelpText}
+        </span>
+      </p>
+    );
+  };
+
+  /**
+   * 渲染注册导航文本（向后兼容性保留）
+   * @deprecated 管理员专用系统推荐使用 renderAdminHelpText()
    */
   const renderSignUpNavigation = () => {
     if (!showSignUp) return null;
@@ -219,8 +253,11 @@ export function LoginPageFooter({
       role="contentinfo"
       aria-label="登录页面底部导航"
     >
-      {/* 注册导航 - 完全匹配设计图文案 */}
-      {renderSignUpNavigation()}
+      {/* 管理员专用帮助信息（优先显示）*/}
+      {adminMode && renderAdminHelpText()}
+      
+      {/* 注册导航（向后兼容性保留，默认情况下不显示）*/}
+      {!adminMode && renderSignUpNavigation()}
       
       {/* 法律条款链接 */}
       {renderLegalLinks()}

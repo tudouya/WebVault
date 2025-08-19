@@ -85,10 +85,12 @@ const ROUTE_CONFIGS: RouteConfig[] = [
     redirectTo: '/login',
   },
   
-  // 提交页面 - 暂时不需要认证 (根据需求可调整)
+  // 提交页面 - 需要管理员权限
   {
     pattern: /^\/submit/,
-    requiresAuth: false,
+    requiresAuth: true,
+    requiredRole: 'admin',
+    redirectTo: '/login',
   },
   
   // 公共页面 - 不需要认证

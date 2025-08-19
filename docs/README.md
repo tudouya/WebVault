@@ -5,6 +5,8 @@
 - [开发指南](./development.md) - 本地开发环境搭建和开发流程
 - [API文档](./api.md) - 后端API接口文档
 - [部署指南](./deployment.md) - 生产环境部署说明
+- [管理员认证系统部署指南](./admin-auth-deployment.md) - 管理员专用认证系统完整部署和使用文档
+- [Supabase Admin配置指南](./supabase-admin-config-guide.md) - Supabase项目管理员专用配置说明
 - [架构设计](../CLAUDE.md) - 完整项目架构文档
 
 ## 🏗️ 项目架构概览

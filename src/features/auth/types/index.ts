@@ -361,9 +361,10 @@ export interface AuthState {
 }
 
 /**
- * Authentication actions interface
+ * Authentication actions interface (Admin-Only System)
  * 
- * Defines available authentication actions for state management.
+ * Defines available authentication actions for state management in the admin-only system.
+ * Includes enhanced admin role validation and removed user registration capabilities.
  */
 export interface AuthActions {
   /** Initialize authentication state */
@@ -375,7 +376,7 @@ export interface AuthActions {
   /** Login with social provider */
   loginWithProvider: (provider: SocialProvider) => Promise<void>;
   
-  /** Register new user account */
+  /** Register new user account (DISABLED for Admin-Only system) */
   register: (formData: AuthFormData) => Promise<void>;
   
   /** Logout current user */
@@ -387,6 +388,9 @@ export interface AuthActions {
   /** Send password reset email */
   resetPassword: (email: string) => Promise<void>;
   
+  /** Confirm password reset with token */
+  confirmPasswordReset: (token: string, newPassword: string) => Promise<void>;
+  
   /** Update user profile */
   updateProfile: (updates: Partial<AuthUser>) => Promise<void>;
   
@@ -395,6 +399,19 @@ export interface AuthActions {
   
   /** Reset login attempts */
   resetLoginAttempts: () => void;
+  
+  // ========================================================================
+  // Admin-Only Role Validation Methods
+  // ========================================================================
+  
+  /** Check if current user is admin */
+  isAdmin: () => boolean;
+  
+  /** Require admin role (throws error if not admin) */
+  requireAdmin: () => void;
+  
+  /** Validate admin session and permissions */
+  hasValidAdminSession: () => boolean;
 }
 
 // ============================================================================

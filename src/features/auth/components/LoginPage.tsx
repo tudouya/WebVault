@@ -1,10 +1,15 @@
 /**
- * LoginPage Component
+ * LoginPage Component - Admin-Only Authentication System
  * 
- * 登录页面的主布局组件，集成所有登录相关的UI组件
+ * 管理员专用登录页面的主布局组件，集成所有登录相关的UI组件
  * 基于设计规范实现居中单列布局，最大宽度400px
  * 
- * Requirements:
+ * Admin-Only Requirements (admin-only-auth-system):
+ * - 5.1: 认证UI界面清理 - 只显示邮箱、密码输入框和登录按钮
+ * - 5.2: 隐藏注册链接、注册按钮或相关提示文本
+ * - 5.5: 明确标识为"管理员登录"页面
+ * 
+ * Original Requirements:
  * - 6.1: 精确配色系统和品牌展示
  * - 7.1: 表单设计和视觉层次
  * - 8.1: 按钮设计和交互效果
@@ -12,17 +17,19 @@
  * - 11.1: 响应式设计 - 移动设备隐藏右侧装饰图形，专注表单展示
  * 
  * Key Features:
- * - 完整的登录UI组合：LoginForm + SocialAuthButtons + LoginPageFooter
- * - 组件间事件处理协调和数据流管理
+ * - 管理员专用UI组合：仅邮箱密码登录表单（隐藏所有第三方登录和注册选项）
+ * - 明确的管理员身份标识和专用文案
+ * - 仅允许通过脚本创建的管理员账户登录
+ * - 移除Forgot password、Google、GitHub登录选项
  * - 响应式网格布局，集成主容器组件
  * - 主题提供者集成和基础响应式断点支持  
  * - AuthLayout组件集成，利用现有布局模式
  * - 移动优先的响应式设计
  * - 精确的CSS变量和响应式模式
  * 
- * @version 1.1.0
+ * @version 1.3.0
  * @created 2025-08-17
- * @updated 2025-08-18 - 集成SocialAuthButtons和完整事件处理
+ * @updated 2025-08-19 - 移除Forgot password、Google、GitHub登录选项，仅保留脚本创建的管理员账户登录
  */
 
 'use client';
@@ -69,15 +76,27 @@ export interface LoginPageProps {
   
   /**
    * 是否显示页脚
-   * @default true
+   * @default false - 管理员专用模式下隐藏注册相关UI
    */
   showFooter?: boolean;
   
   /**
    * 是否显示社交登录
-   * @default true
+   * @default false - 管理员专用模式下禁用社交登录
    */
   showSocialAuth?: boolean;
+  
+  /**
+   * 页面标题
+   * @default "管理员登录"
+   */
+  title?: string;
+  
+  /**
+   * 页面描述
+   * @default "WebVault 内容管理平台"
+   */
+  description?: string;
   
   /**
    * 调试模式
@@ -114,14 +133,21 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
  * 
  * 提供完整的登录页面布局，集成AuthLayout、响应式设计和主题支持
  * 遵循设计规范实现居中单列布局和移动端优化
+ * 
+ * 管理员专用配置：
+ * - 默认隐藏注册相关UI (showFooter=false)
+ * - 使用管理员专用标题和描述
+ * - 保持所有登录功能完整
  */
 export function LoginPage({
   className,
   onLoginSuccess,
   onLoginError,
   redirectUrl,
-  showFooter = true,
-  showSocialAuth = true,
+  showFooter = false,
+  showSocialAuth = false,
+  title = "管理员登录",
+  description = "WebVault 内容管理平台",
   debug = false,
 }: LoginPageProps) {
   
@@ -174,10 +200,10 @@ export function LoginPage({
   // ========================================================================
 
   return (
-    /* AuthLayout集成 - 利用现有布局模式 */
+    /* AuthLayout集成 - 利用现有布局模式，使用管理员专用文案 */
     <AuthLayout
-      title="欢迎回到 WebVault"
-      description="登录您的账户，继续管理您的网站收藏"
+      title={title}
+      description={description}
       showLogo={true}
       showBackground={true}
       variant="default"
@@ -191,7 +217,7 @@ export function LoginPage({
           onError={handleLoginError}
           redirectUrl={redirectUrl}
           showRememberMe={true}
-          showForgotPassword={true}
+          showForgotPassword={false}
           autoFocus={true}
           debug={debug}
         />

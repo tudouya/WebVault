@@ -15,7 +15,24 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "validate-seo": "node scripts/validate-seo.js"
+    "test:performance": "jest --testPathPatterns=performance --verbose",
+    "test:performance:integration": "jest --testPathPatterns=performance-integration --verbose",
+    "test:performance:auth": "jest --testPathPatterns=auth-performance-simplified --verbose",
+    "test:performance:middleware": "jest --testPathPatterns=middleware-performance --verbose",
+    "test:performance:cli": "jest --testPathPatterns=cli-performance --verbose",
+    "validate-seo": "node scripts/validate-seo.js",
+    "db:verify": "node scripts/database/verify-migration.js",
+    "db:test-structure": "node scripts/database/test-table-structure.js",
+    "db:migration-helper": "node scripts/database/execute-migration-sql.js",
+    "admin:create": "dotenv -e .env.local -- npx tsx scripts/admin/create-admin.ts",
+    "admin:list": "dotenv -e .env.local -- npx tsx scripts/admin/list-admins.ts",
+    "admin:update": "dotenv -e .env.local -- npx tsx scripts/admin/manage-admin.ts update",
+    "admin:delete": "dotenv -e .env.local -- npx tsx scripts/admin/manage-admin.ts delete",
+    "admin:reset-password": "dotenv -e .env.local -- npx tsx scripts/admin/manage-admin.ts reset-password",
+    "admin:status": "dotenv -e .env.local -- npx tsx scripts/admin/manage-admin.ts status",
+    "admin:unlock": "dotenv -e .env.local -- npx tsx scripts/admin/manage-admin.ts unlock",
+    "admin:verify-config": "dotenv -e .env.local -- npx tsx scripts/verify-admin-config.ts",
+    "admin:help": "echo 'WebVault Admin CLI Tools\n\nUsage:\n  npm run admin:create -- --email=admin@example.com --password=SecurePass123 --name=\"Admin User\"\n  npm run admin:list [-- --format=table|json] [--limit=20]\n  npm run admin:update -- --id=uuid-here --name=\"New Name\" [--email=new@email.com]\n  npm run admin:delete -- --id=uuid-here [--confirm]\n  npm run admin:reset-password -- --email=admin@example.com [--password=NewPass123]\n  npm run admin:status -- --email=admin@example.com\n  npm run admin:unlock -- --email=admin@example.com\n  npm run admin:verify-config  # 验证Supabase管理员专用配置\n\nEnvironment variables required in .env.local:\n  NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co\n  SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiJ9...\n\nFor detailed documentation, see: scripts/admin/README.md'"
   },
   "keywords": [],
   "author": "",
@@ -53,6 +70,8 @@
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "autoprefixer": "^10.4.21",
+    "dotenv": "^17.2.1",
+    "dotenv-cli": "^7.4.2",
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",
     "postcss": "^8.5.6",
@@ -60,6 +79,7 @@
     "tailwindcss": "^3.4.17",
     "tailwindcss-animate": "^1.0.7",
     "ts-jest": "^29.4.1",
+    "tsx": "^4.19.2",
     "typescript": "^5.9.2"
   }
 }
