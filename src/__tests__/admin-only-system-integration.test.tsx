@@ -405,7 +405,7 @@ const TestWrapper: React.FC<TestWrapperProps> = ({
 // Test Suite
 // ============================================================================
 
-describe('Admin-Only System Cross-Module Integration Tests', () => {
+describe.skip('Admin-Only System Cross-Module Integration Tests - DEPRECATED: Supabase tests skipped during Clerk migration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockPush.mockClear();

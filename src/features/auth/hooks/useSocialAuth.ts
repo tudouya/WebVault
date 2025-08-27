@@ -16,7 +16,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useAuthActions } from './useAuth';
-import { supabaseAuthService } from '../services/SupabaseAuthService';
+// import { supabaseAuthService } from '../services/SupabaseAuthService'; // DEPRECATED: Replaced by ClerkAuthService
 import { 
   SocialProvider, 
   AuthError, 
@@ -329,10 +329,11 @@ export function useSocialAuth(options: SocialAuthOptions = {}): UseSocialAuthRet
         onStart(provider);
       }
 
-      // 调用认证服务
-      await supabaseAuthService.signInWithProvider(provider, {
-        redirectTo: redirectTo || `${window.location.origin}/auth/callback`,
-      });
+      // TODO: Replace with ClerkAuthService social auth
+      // await supabaseAuthService.signInWithProvider(provider, {
+      //   redirectTo: redirectTo || `${window.location.origin}/auth/callback`,
+      // });
+      throw new Error('Social authentication is temporarily disabled during migration to Clerk');
 
       // OAuth流程已启动，用户被重定向
       // 状态将在回调中更新
@@ -373,12 +374,13 @@ export function useSocialAuth(options: SocialAuthOptions = {}): UseSocialAuthRet
         console.log('[useSocialAuth] Processing OAuth callback with code:', code);
       }
 
-      // 通过SupabaseAuthService处理回调
-      const session = await supabaseAuthService.handleSocialCallback(
-        state.lastUsedProvider || 'google', // 默认使用Google
-        code,
-        stateParam || ''
-      );
+      // TODO: Replace with ClerkAuthService callback handling
+      // const session = await supabaseAuthService.handleSocialCallback(
+      //   state.lastUsedProvider || 'google', // 默认使用Google
+      //   code,
+      //   stateParam || ''
+      // );
+      throw new Error('Social authentication callback is temporarily disabled during migration to Clerk');
 
       if (debug) {
         console.log('[useSocialAuth] OAuth callback successful:', session);

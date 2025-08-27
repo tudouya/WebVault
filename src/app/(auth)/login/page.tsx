@@ -98,7 +98,7 @@ export default function LoginPageRoute() {
       // 管理员专用模式：禁用社交登录选项，仅允许脚本创建的账户登录
       showSocialAuth={false}
       // 登录成功后的默认重定向（可由查询参数覆盖）
-      redirectUrl="/"
+      redirectUrl="/admin/dashboard"
     />
   )
 }

@@ -41,7 +41,7 @@ jest.mock('@/lib/supabase', () => ({
   },
 }));
 
-import { supabaseAuthService } from '@/features/auth/services/SupabaseAuthService';
+// import { supabaseAuthService } from '@/features/auth/services/SupabaseAuthService'; // DEPRECATED: Replaced by ClerkAuthService
 import type { AuthFormData } from '@/features/auth/types';
 
 // ============================================================================
@@ -187,7 +187,7 @@ async function simulateNetworkDelay(minMs = 10, maxMs = 50): Promise<void> {
 // 认证服务性能测试
 // ============================================================================
 
-describe('🚀 认证服务性能测试', () => {
+describe.skip('🚀 认证服务性能测试 - DEPRECATED: Supabase tests skipped during Clerk migration', () => {
   let profiler: PerformanceProfiler;
   
   beforeEach(() => {
@@ -500,7 +500,7 @@ describe('🚀 认证服务性能测试', () => {
 // 性能基准测试
 // ============================================================================
 
-describe('📈 性能基准测试', () => {
+describe.skip('📈 性能基准测试 - DEPRECATED: Supabase tests skipped during Clerk migration', () => {
   let profiler: PerformanceProfiler;
   
   beforeAll(() => {

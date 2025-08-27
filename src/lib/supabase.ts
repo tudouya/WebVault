@@ -15,6 +15,12 @@
 
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types/database';
+// Import compatibility adapter conditionally to avoid build errors during development
+// TODO: Uncomment when compatibility adapter dependencies are ready
+// import { 
+//   getSupabaseCompatibilityAdapter, 
+//   type CompatibleSupabaseClient 
+// } from './compat';
 
 // ============================================================================
 // Environment Variables Validation
@@ -33,18 +39,43 @@ if (!supabaseAnonKey) {
 }
 
 // ============================================================================
+// Migration Feature Flag Configuration
+// ============================================================================
+
+/**
+ * Feature flag for gradual migration to Clerk + D1
+ * 
+ * When enabled, exports the compatibility adapter instead of raw Supabase client.
+ * This allows for gradual rollout and testing of the new authentication system.
+ * 
+ * Set NEXT_PUBLIC_ENABLE_CLERK_MIGRATION=true to enable compatibility layer
+ * Set to false or undefined to use original Supabase client
+ */
+const isClerkMigrationEnabled = process.env.NEXT_PUBLIC_ENABLE_CLERK_MIGRATION === 'true';
+
+/**
+ * Migration rollout percentage (0-100)
+ * 
+ * For A/B testing during migration. If set, only the specified percentage
+ * of users will use the compatibility adapter.
+ * 
+ * Format: MIGRATION_ROLLOUT_PERCENTAGE=50 (for 50% rollout)
+ */
+const migrationRolloutPercentage = parseInt(process.env.MIGRATION_ROLLOUT_PERCENTAGE || '100', 10);
+
+// ============================================================================
 // Client-Side Supabase Client
 // ============================================================================
 
 /**
- * Client-side Supabase client for browser usage
+ * Original Supabase client instance
  * 
- * Used in React components and client-side operations.
- * Automatically handles authentication state and session management.
+ * Used as the base client for both direct usage and compatibility adapter.
+ * Contains all the standard Supabase client configuration.
  * 
  * Requirements: 1.1, 2.1, 5.1
  */
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+const originalSupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     // Enable automatic session refresh
     autoRefreshToken: true,
@@ -81,6 +112,77 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 });
 
 // ============================================================================
+// Migration Logic and Conditional Export
+// ============================================================================
+
+/**
+ * Determine if the current user should use the migration adapter
+ * 
+ * Uses feature flag and rollout percentage to control migration rollout.
+ * For A/B testing, uses a simple hash of user agent for consistent assignment.
+ */
+function shouldUseMigrationAdapter(): boolean {
+  // Check if migration is globally disabled
+  if (!isClerkMigrationEnabled) {
+    return false;
+  }
+  
+  // If rollout is 100%, always use migration
+  if (migrationRolloutPercentage >= 100) {
+    return true;
+  }
+  
+  // For A/B testing, use a consistent hash based on user agent
+  // This ensures the same user always gets the same experience
+  if (typeof window !== 'undefined' && migrationRolloutPercentage > 0) {
+    const userAgent = window.navigator.userAgent;
+    const hash = userAgent.split('').reduce((acc, char) => {
+      return ((acc << 5) - acc + char.charCodeAt(0)) & 0xffffffff;
+    }, 0);
+    const percentage = Math.abs(hash) % 100;
+    return percentage < migrationRolloutPercentage;
+  }
+  
+  // Server-side: use environment variable or default to migration
+  return migrationRolloutPercentage > 0;
+}
+
+/**
+ * Get the appropriate client based on migration flags
+ * 
+ * Returns either the compatibility adapter or the original Supabase client.
+ * This function enables gradual migration with feature flagging.
+ */
+function getClient() {
+  if (shouldUseMigrationAdapter()) {
+    // TODO: Return compatibility adapter when available
+    // For now, fall back to original client with migration logging
+    if (typeof window !== 'undefined') {
+      console.warn('Migration adapter requested but not available yet. Using original Supabase client.');
+    }
+    
+    // Uncomment when compatibility adapter is ready:
+    // return getSupabaseCompatibilityAdapter();
+    
+    // Temporary fallback to original client
+    return originalSupabaseClient;
+  }
+  
+  // Return original Supabase client
+  return originalSupabaseClient;
+}
+
+/**
+ * Main Supabase client export
+ * 
+ * Conditionally exports either the compatibility adapter or original client
+ * based on feature flags. This enables gradual migration rollout.
+ * 
+ * Requirements: R6.1, R6.2 (Compatibility layer routing)
+ */
+export const supabase = getClient();
+
+// ============================================================================
 // Next.js App Router Clients
 // ============================================================================
 
@@ -88,10 +190,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
  * Client component Supabase client
  * 
  * Optimized for use in React client components with automatic session handling.
- * Uses the main supabase client for now, server components will be handled separately.
+ * Uses the conditional client (either compatibility adapter or original Supabase).
  */
 export const createClientComponentSupabase = () => {
-  return supabase;
+  return getClient();
 };
 
 // ============================================================================
@@ -220,6 +322,58 @@ export async function getClientUser() {
     console.error('Failed to get client user:', error);
     return null;
   }
+}
+
+// ============================================================================
+// Migration Utility Functions  
+// ============================================================================
+
+/**
+ * Check if the current instance is using the migration adapter
+ * 
+ * Utility function for debugging and monitoring migration rollout.
+ * Can be used in development tools or admin dashboards.
+ */
+export function isUsingMigrationAdapter(): boolean {
+  return shouldUseMigrationAdapter();
+}
+
+/**
+ * Get migration status information
+ * 
+ * Returns detailed information about the current migration state
+ * for debugging and monitoring purposes.
+ */
+export function getMigrationStatus() {
+  return {
+    isEnabled: isClerkMigrationEnabled,
+    rolloutPercentage: migrationRolloutPercentage,
+    isCurrentlyUsing: shouldUseMigrationAdapter(),
+    userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'server-side',
+    timestamp: new Date().toISOString(),
+  };
+}
+
+/**
+ * Force refresh the client configuration
+ * 
+ * Re-evaluates migration flags and returns a fresh client instance.
+ * Useful during development or when feature flags change dynamically.
+ */
+export function refreshSupabaseClient() {
+  return getClient();
+}
+
+/**
+ * Get the original Supabase client (bypassing migration)
+ * 
+ * For debugging or fallback scenarios where the original client is needed.
+ * Should only be used in development or emergency situations.
+ * 
+ * @warning This bypasses the migration layer completely
+ */
+export function getOriginalSupabaseClient() {
+  return originalSupabaseClient;
 }
 
 // ============================================================================

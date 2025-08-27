@@ -36,8 +36,8 @@
 - **Framework**: Next.js 15 (App Router)
 - **Runtime**: React (客户端/服务端组件)
 - **Package Manager**: npm
-- **Database**: Supabase (PostgreSQL + 实时订阅)
-- **Authentication**: Supabase Auth + 抽象认证接口
+- **Database**: Cloudflare D1 (SQLite + Drizzle ORM)
+- **Authentication**: Clerk (完全托管认证服务)
 
 ### 🎨 **UI & 组件系统**
 
@@ -61,12 +61,12 @@
 ### 🎯 **核心业务库**
 
 - **网站目录管理**:
-  - `@supabase/supabase-js` (Supabase客户端)
-  - `@supabase/auth-helpers-nextjs` (Next.js认证集成)
+  - `drizzle-orm` (现代 TypeScript ORM)
+  - `@clerk/nextjs` (Next.js认证集成)
   
 - **安全与认证**:
-  - 自研抽象认证系统 (`src/lib/auth/`)
-  - Supabase RLS (行级安全策略)
+  - Clerk 托管认证服务 (`src/lib/clerk.ts`)
+  - 基于角色的权限控制 (RBAC)
   - 输入验证和XSS防护 (Zod验证)
 
 - **数据处理与分析**:

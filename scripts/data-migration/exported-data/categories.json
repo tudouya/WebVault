@@ -1,0 +1,122 @@
+[
+  {
+    "id": "a87165b0-36cd-4493-add4-b02f51a4993d",
+    "name": "Business",
+    "slug": "business",
+    "description": "Business and entrepreneurship tools",
+    "color": "#3b82f6",
+    "icon": "briefcase",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:29.861Z"
+  },
+  {
+    "id": "a05da59d-88d0-4045-ab4f-18fe575af98d",
+    "name": "Education",
+    "slug": "education",
+    "description": "Learning and educational resources",
+    "color": "#10b981",
+    "icon": "graduation-cap",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:29.861Z"
+  },
+  {
+    "id": "3dbb6b90-bc1f-4105-b856-0da5b23ec11b",
+    "name": "Finance",
+    "slug": "finance",
+    "description": "Financial tools and services",
+    "color": "#f59e0b",
+    "icon": "dollar-sign",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:29.861Z"
+  },
+  {
+    "id": "09b558f3-2c6e-4d65-bf88-0451cab0b8fd",
+    "name": "Design",
+    "slug": "design",
+    "description": "Design tools and resources",
+    "color": "#ec4899",
+    "icon": "palette",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:29.861Z"
+  },
+  {
+    "id": "44a8234e-fa55-4d87-bba7-9b058f11b98a",
+    "name": "Productivity",
+    "slug": "productivity",
+    "description": "Productivity and workflow tools",
+    "color": "#8b5cf6",
+    "icon": "zap",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:29.861Z"
+  },
+  {
+    "id": "5cd664b4-c7dd-47e1-8390-f0fa3fb158b7",
+    "name": "Entertainment",
+    "slug": "entertainment",
+    "description": "Entertainment and media",
+    "color": "#ef4444",
+    "icon": "play",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:29.861Z"
+  },
+  {
+    "id": "d94796fa-354b-4132-9dec-ba9d0b4e136e",
+    "name": "Sports",
+    "slug": "sports",
+    "description": "Sports and fitness",
+    "color": "#06b6d4",
+    "icon": "activity",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:29.861Z"
+  },
+  {
+    "id": "6c381eb8-101a-4aee-acc6-6625db64ca41",
+    "name": "Lifestyle",
+    "slug": "lifestyle",
+    "description": "Lifestyle and personal",
+    "color": "#84cc16",
+    "icon": "heart",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:29.861Z"
+  },
+  {
+    "id": "44c9d539-024e-49d3-a3bc-8680f7b92f77",
+    "name": "Travel",
+    "slug": "travel",
+    "description": "Travel and tourism",
+    "color": "#f97316",
+    "icon": "map-pin",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:29.861Z"
+  },
+  {
+    "id": "1f196979-e606-4575-9703-0608d6bf0c5b",
+    "name": "Games",
+    "slug": "games",
+    "description": "Gaming and interactive entertainment",
+    "color": "#a855f7",
+    "icon": "gamepad-2",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:29.861Z"
+  },
+  {
+    "id": "7c4c7312-b1f8-4e6e-a3d8-b7566c46b378",
+    "name": "Technology",
+    "slug": "technology",
+    "description": "Technology and software",
+    "color": "#6366f1",
+    "icon": "cpu",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:29.861Z"
+  },
+  {
+    "id": "ef35c89e-9433-4df9-811a-0ff8e9db4f95",
+    "name": "Health",
+    "slug": "health",
+    "description": "Health and wellness",
+    "color": "#22c55e",
+    "icon": "heart-pulse",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:29.861Z"
+  }
+]

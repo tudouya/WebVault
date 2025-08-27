@@ -15,7 +15,7 @@
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useAuthActions } from './useAuth';
-import { supabaseAuthService } from '../services/SupabaseAuthService';
+// import { supabaseAuthService } from '../services/SupabaseAuthService'; // DEPRECATED: Replaced by ClerkAuthService
 import { 
   PasswordResetData,
   NewPasswordData,
@@ -429,8 +429,9 @@ export function usePasswordReset(
       // 设置加载状态
       updateState({ isLoading: true });
 
-      // 通过认证服务验证令牌
-      const isValid = await supabaseAuthService.verifyResetToken(sanitizedToken);
+      // TODO: Replace with ClerkAuthService token verification
+      // const isValid = await supabaseAuthService.verifyResetToken(sanitizedToken);
+      const isValid = false; // Temporary: Always return false during migration (password reset disabled)
 
       if (isValid) {
         // 令牌有效 - 进入密码更新步骤

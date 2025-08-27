@@ -327,7 +327,7 @@ export function useAuthForm<T extends AuthFormType>(
       // 成功处理
       handleSuccess({
         success: true,
-        redirectUrl: redirectUrl || '/dashboard',
+        redirectUrl: redirectUrl || '/admin/dashboard',
         data: { email: sanitizedEmail, rememberMe: data.rememberMe },
       });
 

@@ -1,0 +1,80 @@
+{
+  "rollback_metadata": {
+    "rollback_date": "2025-08-25T04:13:10.376Z",
+    "rollback_type": "dry_run",
+    "source_system": "clerk_d1",
+    "target_system": "supabase",
+    "rollback_version": "1.0.0",
+    "execution_time_ms": 1998,
+    "success": true
+  },
+  "rollback_steps": [
+    {
+      "step": "parse_current_config",
+      "status": "completed",
+      "message": "成功解析当前环境配置",
+      "timestamp": "2025-08-25T04:13:08.379Z"
+    },
+    {
+      "step": "backup_clerk_config",
+      "status": "completed",
+      "message": "模拟备份 Clerk 配置",
+      "timestamp": "2025-08-25T04:13:08.380Z"
+    },
+    {
+      "step": "backup_env_file",
+      "status": "completed",
+      "message": "模拟备份环境文件",
+      "timestamp": "2025-08-25T04:13:08.380Z"
+    },
+    {
+      "step": "verify_supabase_config",
+      "status": "completed",
+      "message": "Supabase 配置验证通过",
+      "timestamp": "2025-08-25T04:13:08.380Z"
+    },
+    {
+      "step": "generate_rollback_config",
+      "status": "completed",
+      "message": "模拟生成回滚配置",
+      "timestamp": "2025-08-25T04:13:08.380Z"
+    },
+    {
+      "step": "supabase_health_check",
+      "status": "completed",
+      "message": "Supabase 服务健康",
+      "timestamp": "2025-08-25T04:13:10.376Z"
+    }
+  ],
+  "verification_results": {
+    "supabaseConfigRestored": false,
+    "clerkConfigDisabled": false,
+    "migrationFlagsDisabled": false,
+    "servicesHealthy": true
+  },
+  "backup_files": [],
+  "overall_status": "SUCCESS",
+  "summary": {
+    "completed_steps": 6,
+    "failed_steps": 0,
+    "total_steps": 6,
+    "backup_files_created": 0,
+    "errors_encountered": 0,
+    "warnings_issued": 0
+  },
+  "errors": [],
+  "warnings": [],
+  "next_steps": [
+    "Supabase 配置已恢复为主要认证系统",
+    "Clerk 和 D1 配置已禁用但保留用于参考",
+    "重启 Next.js 应用以应用配置更改",
+    "验证应用使用 Supabase 认证正常工作",
+    "监控应用性能和错误日志"
+  ],
+  "notes": [
+    "此为模拟运行，未实际修改配置",
+    "包含配置修改操作",
+    "备份文件已创建用于恢复",
+    "请保留此报告用于审计和故障排除"
+  ]
+}

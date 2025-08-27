@@ -1,0 +1,23 @@
+name = "webvault"
+compatibility_date = "2025-08-25"
+compatibility_flags = ["nodejs_compat"]
+
+# Development environment D1 database
+[[d1_databases]]
+binding = "DB"
+database_name = "webvault-development"
+database_id = "afc744c9-ac40-4119-973a-d9230691a8dd"
+
+# Production environment D1 database (will be used when deploying)
+[[d1_databases.env.production]]
+binding = "DB"
+database_name = "webvault-production"
+database_id = "c66acb6c-5f7c-47dc-bdba-72d00f0d50e4"
+
+# Environment variables
+[vars]
+NODE_ENV = "development"
+
+# Development specific configuration
+[dev]
+local = true

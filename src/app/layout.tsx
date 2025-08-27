@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import { ClerkProvider } from '@clerk/nextjs'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from '@/components/ui/toaster'
@@ -18,22 +19,24 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
-      <body className={inter.className}>
-        <div id="root">
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <NuqsAdapter>
-              {children}
-            </NuqsAdapter>
-            <Toaster />
-          </ThemeProvider>
-        </div>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="zh-CN" suppressHydrationWarning>
+        <body className={inter.className}>
+          <div id="root">
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <NuqsAdapter>
+                {children}
+              </NuqsAdapter>
+              <Toaster />
+            </ThemeProvider>
+          </div>
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }

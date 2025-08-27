@@ -44,7 +44,11 @@ import {
 } from '@/components/ui/form';
 
 // 认证hooks和类型导入
-import { useLoginForm } from '../hooks/useAuthForm';
+import { useSignIn, useAuth, useClerk } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { loginFormSchema } from '../schemas/auth-schemas';
 import type { LoginFormData } from '../schemas/auth-schemas';
 
 // ============================================================================
@@ -127,25 +131,129 @@ export function LoginForm({
 }: LoginFormProps) {
   
   // ========================================================================
+  // Clerk Authentication Hooks
+  // ========================================================================
+  
+  const { isSignedIn, isLoaded } = useAuth();
+  const { signIn, isLoaded: signInLoaded } = useSignIn();
+  const clerk = useClerk();
+  const router = useRouter();
+
+  // ========================================================================  
   // Form State Management
   // ========================================================================
   
-  const {
-    form,
-    isSubmitting,
-    isValid,
-    isDirty,
-    hasErrors,
-    submitError,
-    handleSubmit,
-    clearError,
-    validateEmail,
-  } = useLoginForm({
-    redirectUrl,
-    onSubmitSuccess: onSuccess,
-    onSubmitError: onError,
-    debug,
+  const form = useForm<LoginFormData>({
+    resolver: zodResolver(loginFormSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+      rememberMe: false,
+    },
   });
+
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [submitError, setSubmitError] = React.useState<string>('');
+
+  const clearError = () => setSubmitError('');
+
+  // 如果已经登录，直接跳转
+  React.useEffect(() => {
+    if (isLoaded && isSignedIn && redirectUrl) {
+      if (debug) console.log('[LoginForm] Already signed in, redirecting...');
+      router.push(redirectUrl);
+    }
+  }, [isLoaded, isSignedIn, router, redirectUrl, debug]);
+
+  // 表单提交处理
+  const handleSubmit = async (data: LoginFormData) => {
+    if (!signIn || !signInLoaded) {
+      setSubmitError('登录系统未就绪，请稍后重试');
+      return;
+    }
+
+    if (isSignedIn) {
+      if (debug) console.log('[LoginForm] Already signed in');
+      if (redirectUrl) router.push(redirectUrl);
+      return;
+    }
+
+    setIsSubmitting(true);
+    clearError();
+
+    try {
+      if (debug) console.log('[LoginForm] Starting sign in with:', data.email);
+      
+      // 使用 Clerk 官方认证方法
+      const signInAttempt = await signIn.create({
+        identifier: data.email,
+      });
+
+      const result = await signInAttempt.attemptFirstFactor({
+        strategy: 'password',
+        password: data.password,
+      });
+
+      if (result.status === 'complete') {
+        if (debug) console.log('[LoginForm] Sign in successful, activating session');
+        
+        // 确保会话完全激活 - 关键步骤！
+        await clerk.setActive({ session: result.createdSessionId });
+        
+        // 调用成功回调
+        onSuccess?.({ 
+          success: true, 
+          redirectUrl: redirectUrl || '/admin/dashboard',
+          data: { email: data.email, rememberMe: data.rememberMe }
+        });
+        
+        // 等待一个tick确保状态完全同步后再跳转
+        if (redirectUrl) {
+          await new Promise(resolve => setTimeout(resolve, 50));
+          router.push(redirectUrl);
+        }
+      } else {
+        if (debug) console.log('[LoginForm] Sign in incomplete:', result.status);
+        setSubmitError(`登录状态异常: ${result.status}`);
+      }
+    } catch (err: any) {
+      if (debug) console.error('[LoginForm] Sign in error:', err);
+      
+      // Clerk 错误处理
+      if (err.errors && err.errors.length > 0) {
+        const firstError = err.errors[0];
+        switch (firstError.code) {
+          case 'form_identifier_not_found':
+            setSubmitError('未找到此邮箱对应的账户，请检查邮箱地址');
+            break;
+          case 'form_password_incorrect':
+            setSubmitError('密码错误，请重新输入');
+            break;
+          case 'form_identifier_invalid':
+            setSubmitError('邮箱格式不正确');
+            break;
+          default:
+            setSubmitError(firstError.longMessage || firstError.message || '登录失败');
+        }
+      } else {
+        setSubmitError(err.message || '登录失败，请稍后重试');
+      }
+      
+      // 调用错误回调
+      onError?.(submitError);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const isValid = form.formState.isValid;
+  const isDirty = form.formState.isDirty;
+  const hasErrors = Object.keys(form.formState.errors).length > 0;
+
+  // Email validation helper (simplified)
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
 
   // ========================================================================
   // Local State for UI Enhancement

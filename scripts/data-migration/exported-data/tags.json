@@ -1,0 +1,186 @@
+[
+  {
+    "id": "e7071ddc-3211-47f5-97ad-11e64fb3fe27",
+    "name": "web",
+    "slug": "web",
+    "description": "Web-based applications",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  },
+  {
+    "id": "b002245d-739b-4330-a1a1-dfef9e18890a",
+    "name": "mobile",
+    "slug": "mobile",
+    "description": "Mobile applications",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  },
+  {
+    "id": "c5cfd8fe-e756-4ab8-91ae-90cefadac32f",
+    "name": "desktop",
+    "slug": "desktop",
+    "description": "Desktop applications",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  },
+  {
+    "id": "789a490f-72b2-4ac1-92ef-22f6a93d0b81",
+    "name": "ios",
+    "slug": "ios",
+    "description": "iOS applications",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  },
+  {
+    "id": "ff6a70ab-da14-472a-9602-d4f9b3059615",
+    "name": "android",
+    "slug": "android",
+    "description": "Android applications",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  },
+  {
+    "id": "191c1da6-a5b1-42af-80c3-037812924a45",
+    "name": "mac",
+    "slug": "mac",
+    "description": "macOS applications",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  },
+  {
+    "id": "503156d8-8052-441f-8aba-c18a53c9624e",
+    "name": "windows",
+    "slug": "windows",
+    "description": "Windows applications",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  },
+  {
+    "id": "92925156-3ec0-4379-840e-74900e8b7a0d",
+    "name": "linux",
+    "slug": "linux",
+    "description": "Linux applications",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  },
+  {
+    "id": "32d27c3d-8b4a-4a87-8355-44fc61be829d",
+    "name": "saas",
+    "slug": "saas",
+    "description": "Software as a Service",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  },
+  {
+    "id": "4fe013d7-bb59-41c7-8dfc-86e5a0aa879e",
+    "name": "free",
+    "slug": "free",
+    "description": "Free to use",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  },
+  {
+    "id": "a0f92699-515e-48c4-a3f7-16c37462e78f",
+    "name": "paid",
+    "slug": "paid",
+    "description": "Paid service",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  },
+  {
+    "id": "53a1a354-ed6f-4493-9e3a-2c1118079dad",
+    "name": "freemium",
+    "slug": "freemium",
+    "description": "Free with premium features",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  },
+  {
+    "id": "89c4f78c-6e91-456c-9eff-82fd99ada09c",
+    "name": "open-source",
+    "slug": "open-source",
+    "description": "Open source software",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  },
+  {
+    "id": "29608807-eabc-496b-a3fe-8a32aa263028",
+    "name": "api",
+    "slug": "api",
+    "description": "Provides API access",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  },
+  {
+    "id": "f702bd06-3e70-4de2-b5f7-81dc2b8bf23a",
+    "name": "ai",
+    "slug": "ai",
+    "description": "Artificial Intelligence powered",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  },
+  {
+    "id": "ba2511b0-9e05-4814-8d55-f358845b5c6e",
+    "name": "chrome-extension",
+    "slug": "chrome-extension",
+    "description": "Chrome browser extension",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  },
+  {
+    "id": "69b51591-3782-46b3-9c04-af4655fbc773",
+    "name": "firefox-extension",
+    "slug": "firefox-extension",
+    "description": "Firefox browser extension",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  },
+  {
+    "id": "86f1740e-420a-4247-b392-b710137acc29",
+    "name": "wordpress",
+    "slug": "wordpress",
+    "description": "WordPress plugin or theme",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  },
+  {
+    "id": "1cfda149-6e29-44df-ac95-386ec358d186",
+    "name": "shopify",
+    "slug": "shopify",
+    "description": "Shopify app or integration",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  },
+  {
+    "id": "37b77413-fb1c-4111-90c3-582cc43c570f",
+    "name": "slack",
+    "slug": "slack",
+    "description": "Slack integration",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  },
+  {
+    "id": "5127ad09-f7f8-412b-ba1a-b77a822f5c24",
+    "name": "google",
+    "slug": "google",
+    "description": "Google service or integration",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  },
+  {
+    "id": "aa311015-2f08-41ff-bffa-7e9c9268ea5c",
+    "name": "microsoft",
+    "slug": "microsoft",
+    "description": "Microsoft service or integration",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  },
+  {
+    "id": "04b2209a-5ca6-4dae-bee5-d14f07b8dfb0",
+    "name": "apple",
+    "slug": "apple",
+    "description": "Apple service or integration",
+    "created_at": "2025-08-06T10:08:03.695681+00:00",
+    "updated_at": "2025-08-25T17:36:30.463Z"
+  }
+]

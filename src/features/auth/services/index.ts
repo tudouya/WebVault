@@ -27,14 +27,14 @@ export type {
 // ============================================================================
 
 /**
- * Supabase Authentication Service
- * Concrete implementation using Supabase Auth SDK
+ * Clerk Authentication Service (Client-Side)
+ * Client-side implementation for use in React components and browser contexts
  * Requirements: 1.1 (Email auth), 2.1 (Social auth), 5.1 (Session management)
  */
 export { 
-  SupabaseAuthService, 
-  supabaseAuthService 
-} from './SupabaseAuthService';
+  ClerkClientAuthService,
+  clerkClientAuthService  
+} from './ClerkClientAuthService';
 
 /**
  * Session Management Service

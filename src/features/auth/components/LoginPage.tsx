@@ -35,6 +35,7 @@
 'use client';
 
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 // 引入认证相关组件
@@ -151,6 +152,8 @@ export function LoginPage({
   debug = false,
 }: LoginPageProps) {
   
+  const router = useRouter();
+  
   // ========================================================================
   // Event Handlers
   // ========================================================================
@@ -162,8 +165,18 @@ export function LoginPage({
     if (debug) {
       console.log('[LoginPage] Form login success:', result);
     }
+    
+    // 🎯 直接跳转 - Clerk 会自动处理状态同步
+    if (result.success && result.redirectUrl) {
+      if (debug) {
+        console.log('[LoginPage] Redirecting to:', result.redirectUrl);
+      }
+      router.push(result.redirectUrl);
+    }
+    
+    // 调用外部回调
     onLoginSuccess?.(result);
-  }, [onLoginSuccess, debug]);
+  }, [onLoginSuccess, debug, router]);
 
   /**
    * 处理登录错误（表单登录）
@@ -182,8 +195,18 @@ export function LoginPage({
     if (debug) {
       console.log(`[LoginPage] Social login success (${provider}):`, result);
     }
+    
+    // 🎯 执行自动跳转
+    if (result.success && result.redirectUrl) {
+      if (debug) {
+        console.log('[LoginPage] Redirecting to:', result.redirectUrl);
+      }
+      router.push(result.redirectUrl);
+    }
+    
+    // 调用外部回调
     onLoginSuccess?.(result);
-  }, [onLoginSuccess, debug]);
+  }, [onLoginSuccess, debug, router]);
 
   /**
    * 处理社交登录错误

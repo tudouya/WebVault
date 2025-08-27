@@ -15,9 +15,7 @@
  */
 
 import { createContext, useContext, useEffect, useCallback, useMemo, ReactNode } from 'react';
-import { useAuthStore } from '../stores/auth-store';
-import { supabaseAuthService } from '../services/SupabaseAuthService';
-import { supabase } from '@/lib/supabase';
+import { useClerkAuth } from './useClerkAuth';
 import { 
   AuthUser, 
   AuthSession, 
@@ -79,258 +77,89 @@ export function AuthProvider({
   debug = false,
 }: AuthProviderProps) {
   // ========================================================================
-  // Store Integration
+  // Clerk Integration
   // ========================================================================
   
-  const {
-    // 状态
-    isAuthenticated,
-    isLoading,
-    user,
-    session,
-    error,
-    isInitialized,
-    loginAttempts,
-    isLocked,
-    lockoutExpiresAt,
-    
-    // 操作方法
-    actions: {
-      login,
-      loginWithProvider,
-      register,
-      logout,
-      refreshSession,
-      resetPassword,
-      confirmPasswordReset,
-      updateProfile,
-      clearError,
-      initialize,
-      resetLoginAttempts,
+  const clerkAuth = useClerkAuth();
+  
+  // 映射到我们的接口
+  const isAuthenticated = clerkAuth.isAuthenticated;
+  const isLoading = clerkAuth.isLoading;
+  const user = clerkAuth.user;
+  const session = clerkAuth.session;
+  const error = clerkAuth.error;
+  const isInitialized = !clerkAuth.isLoading;
+  
+  // 简化的操作方法
+  const login = async (email: string, password: string, rememberMe?: boolean) => {
+    await clerkAuth.signInWithEmail(email, password);
+  };
+  
+  const loginWithProvider = async (provider: 'google' | 'github') => {
+    if (provider === 'google') {
+      await clerkAuth.signInWithGoogle();
+    } else if (provider === 'github') {
+      await clerkAuth.signInWithGitHub();
     }
-  } = useAuthStore();
+  };
+  
+  const logout = async () => {
+    await clerkAuth.signOut();
+  };
+  
+  // 占位方法
+  const register = async () => {
+    throw new Error('系统不支持用户注册，请联系管理员获取访问权限');
+  };
+  
+  const refreshSession = async () => {
+    // Clerk 自动处理会话刷新
+    return session!;
+  };
+  
+  const resetPassword = async (email: string) => {
+    throw new Error('请使用 Clerk 的密码重置界面');
+  };
+  
+  const confirmPasswordReset = async (token: string, newPassword: string) => {
+    throw new Error('请使用 Clerk 的密码重置界面');
+  };
+  
+  const updateProfile = async (updates: Partial<Pick<AuthUser, 'name' | 'avatar'>>) => {
+    throw new Error('请使用 Clerk 的用户资料界面');
+  };
+  
+  const clearError = () => {
+    // 错误由 Clerk hooks 处理
+  };
+  
+  const initialize = async () => {
+    // Clerk 自动初始化
+  };
+  
+  const resetLoginAttempts = () => {
+    // 由 Clerk 处理
+  };
+  
+  // 简化的安全状态
+  const loginAttempts = 0;
+  const isLocked = false;
+  const lockoutExpiresAt = null;
 
   // ========================================================================
-  // Session Management & Auto-refresh Logic
-  // ========================================================================
-
-  /**
-   * 检查会话是否需要刷新
-   * 
-   * 基于refreshThreshold设置，在会话过期前自动刷新。
-   * Requirements: 5.1 (自动刷新)
-   */
-  const shouldRefreshSession = useCallback((session: AuthSession): boolean => {
-    if (!session || !session.expiresAt) {
-      return false;
-    }
-
-    const now = new Date().getTime();
-    const expiresAt = new Date(session.expiresAt).getTime();
-    const refreshThreshold = DEFAULT_SESSION_CONFIG.refreshThreshold;
-    
-    // 在过期前15分钟触发刷新
-    return (expiresAt - now) <= refreshThreshold;
-  }, []);
-
-  /**
-   * 验证会话有效性
-   * 
-   * 检查会话是否过期，并触发相应的处理逻辑。
-   * Requirements: 5.1 (会话验证)
-   */
-  const validateSession = useCallback(async (session: AuthSession): Promise<boolean> => {
-    try {
-      // 检查本地会话过期
-      const now = new Date().getTime();
-      const expiresAt = new Date(session.expiresAt).getTime();
-      
-      if (now >= expiresAt) {
-        if (debug) {
-          console.log('[AuthProvider] Session expired locally');
-        }
-        return false;
-      }
-
-      // 通过Supabase验证会话
-      const isValid = await supabaseAuthService.validateSession(session);
-      
-      if (!isValid && debug) {
-        console.log('[AuthProvider] Session validation failed with Supabase');
-      }
-      
-      return isValid;
-    } catch (error) {
-      console.error('[AuthProvider] Session validation error:', error);
-      return false;
-    }
-  }, [debug]);
-
-  /**
-   * 自动会话刷新逻辑
-   * 
-   * 定期检查会话状态，在需要时自动刷新或处理过期。
-   * Requirements: 5.1 (自动刷新)
-   */
-  const handleAutoRefresh = useCallback(async () => {
-    if (!isAuthenticated || !session || !autoRefresh) {
-      return;
-    }
-
-    try {
-      // 检查是否需要刷新
-      if (shouldRefreshSession(session)) {
-        if (debug) {
-          console.log('[AuthProvider] Auto-refreshing session');
-        }
-        
-        await refreshSession();
-        
-        if (debug) {
-          console.log('[AuthProvider] Session refreshed successfully');
-        }
-      }
-      // 验证会话有效性
-      else {
-        const isValid = await validateSession(session);
-        
-        if (!isValid) {
-          if (debug) {
-            console.log('[AuthProvider] Session invalid, logging out');
-          }
-          
-          await logout();
-        }
-      }
-    } catch (error) {
-      console.error('[AuthProvider] Auto-refresh error:', error);
-      
-      // 刷新失败时自动登出
-      try {
-        await logout();
-      } catch (logoutError) {
-        console.error('[AuthProvider] Logout after refresh failure error:', logoutError);
-      }
-    }
-  }, [isAuthenticated, session, autoRefresh, shouldRefreshSession, validateSession, refreshSession, logout, debug]);
-
-  // ========================================================================
-  // Supabase Auth Event Listeners
+  // Admin Role Validation for Admin-Only System
   // ========================================================================
 
   /**
-   * 监听Supabase认证事件
-   * 
-   * 处理来自Supabase的认证状态变化事件，如登录、登出、令牌刷新等。
-   * 确保Context状态与Supabase认证状态同步。
+   * 验证用户是否为管理员
+   * Admin-Only系统的核心权限检查
    */
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return; // 仅在客户端运行
+    if (isAuthenticated && user && user.role !== 'admin') {
+      console.warn('[AuthProvider] 非管理员用户尝试登录，自动登出');
+      logout().catch(console.error);
     }
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, supabaseSession) => {
-      if (debug) {
-        console.log('[AuthProvider] Supabase auth event:', event, supabaseSession);
-      }
-
-      switch (event) {
-        case 'SIGNED_IN':
-          // Supabase登录事件 - 同步到Context
-          if (supabaseSession) {
-            if (debug) {
-              console.log('[AuthProvider] Syncing SIGNED_IN event');
-            }
-            // 注意：实际实现中需要将Supabase session转换为内部格式
-            // 这里简化处理，实际应该调用相应的store action
-          }
-          break;
-
-        case 'SIGNED_OUT':
-          // Supabase登出事件 - 清理Context状态
-          if (debug) {
-            console.log('[AuthProvider] Syncing SIGNED_OUT event');
-          }
-          if (isAuthenticated) {
-            await logout();
-          }
-          break;
-
-        case 'TOKEN_REFRESHED':
-          // 令牌刷新事件 - 更新Context会话
-          if (supabaseSession && debug) {
-            console.log('[AuthProvider] Token refreshed by Supabase');
-          }
-          break;
-
-        case 'USER_UPDATED':
-          // 用户更新事件 - 同步用户信息
-          if (debug) {
-            console.log('[AuthProvider] User updated by Supabase');
-          }
-          break;
-
-        default:
-          if (debug) {
-            console.log(`[AuthProvider] Unhandled auth event: ${event}`);
-          }
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [isAuthenticated, logout, debug]);
-
-  // ========================================================================
-  // Auto-refresh Timer
-  // ========================================================================
-
-  /**
-   * 设置会话检查定时器
-   * 
-   * 定期执行会话验证和自动刷新逻辑。
-   * Requirements: 5.1 (自动刷新)
-   */
-  useEffect(() => {
-    if (!autoRefresh || !isAuthenticated) {
-      return;
-    }
-
-    const interval = setInterval(() => {
-      handleAutoRefresh();
-    }, sessionCheckInterval);
-
-    // 立即执行一次检查
-    handleAutoRefresh();
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [autoRefresh, isAuthenticated, sessionCheckInterval, handleAutoRefresh]);
-
-  // ========================================================================
-  // Auto-initialization
-  // ========================================================================
-
-  /**
-   * 自动初始化认证状态
-   * 
-   * 在Provider挂载时自动检查和恢复认证状态。
-   */
-  useEffect(() => {
-    if (autoInitialize && !isInitialized && !isLoading) {
-      if (debug) {
-        console.log('[AuthProvider] Auto-initializing authentication');
-      }
-      
-      initialize().catch((error: any) => {
-        console.error('[AuthProvider] Auto-initialization failed:', error);
-      });
-    }
-  }, [autoInitialize, isInitialized, isLoading, initialize, debug]);
+  }, [isAuthenticated, user, logout]);
 
   // ========================================================================
   // Context Value Memoization
@@ -351,7 +180,7 @@ export function AuthProvider({
     error,
     isInitialized,
     
-    // 安全状态
+    // 安全状态  
     loginAttempts,
     isLocked,
     lockoutExpiresAt,
@@ -378,17 +207,6 @@ export function AuthProvider({
     loginAttempts,
     isLocked,
     lockoutExpiresAt,
-    initialize,
-    login,
-    loginWithProvider,
-    register,
-    logout,
-    refreshSession,
-    resetPassword,
-    confirmPasswordReset,
-    updateProfile,
-    clearError,
-    resetLoginAttempts,
   ]);
 
   // ========================================================================

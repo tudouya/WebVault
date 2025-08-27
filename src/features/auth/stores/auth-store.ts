@@ -2,6 +2,7 @@
  * Authentication State Management Store (Admin-Only System)
  * 
  * 基于Zustand创建认证状态管理，专为管理员身份验证设计的封闭式系统。
+ * 集成ClerkAuthService提供完整的认证功能。
  * 
  * 核心特性：
  * - 🔒 Admin-Only访问：仅允许管理员角色用户登录系统
@@ -9,21 +10,23 @@
  * - ⏰ 会话管理：支持30天持久化会话和15分钟锁定机制
  * - 🛡️ 安全存储：敏感信息不存储在localStorage，确保数据安全
  * - 🎯 权限验证：提供细粒度的admin权限检查和验证方法
+ * - 🔌 Clerk集成：使用ClerkAuthService处理所有认证相关操作
  * 
  * Admin-Only安全策略：
  * - 严格的角色验证：每次登录都验证用户必须具有admin角色
  * - 拒绝非admin访问：非管理员用户无法通过任何方式访问系统
- * - 社交登录限制：当前仅支持邮箱密码登录，确保管理员身份可控
+ * - 社交登录支持：通过Clerk支持Google和GitHub登录，但仍限制admin角色
  * - 注册功能禁用：register方法始终抛出错误，拒绝用户注册请求
  * 
  * Requirements:
+ * - R3.1: 集成ClerkAuthService作为认证服务实现
  * - 4.5: 禁用用户注册功能 - 系统运行时不存在任何用户自主注册入口
  * - 5.1: 会话管理 - 30天持久化会话，15分钟锁定机制
  * - Admin-Only: 仅允许预定义管理员账户访问系统
  * 
- * @version 1.2.0
+ * @version 1.3.0
  * @created 2025-08-17
- * @updated 2025-08-18 (Admin-only authentication with enhanced role validation)
+ * @updated 2025-08-21 (Integrated ClerkAuthService for complete authentication functionality)
  */
 
 import { create } from 'zustand';
@@ -37,6 +40,7 @@ import {
   AuthActions,
   DEFAULT_SESSION_CONFIG 
 } from '../types';
+import { clerkClientAuthService } from '../services/ClerkClientAuthService';
 
 // ============================================================================
 // Auth Store State Interface
@@ -129,12 +133,21 @@ export const useAuthStore = create<AuthStoreState>()(
             );
             
             try {
-              // TODO: 实际实现中会调用AuthService检查现有会话
-              // const authService = getAuthService();
-              // const session = await authService.getSession();
+              // 检查现有会话
+              const session = await clerkClientAuthService.getSession();
               
-              // 模拟初始化延迟
-              await new Promise(resolve => setTimeout(resolve, 300));
+              if (session && await clerkClientAuthService.validateSession(session)) {
+                // 恢复有效会话
+                set(
+                  {
+                    isAuthenticated: true,
+                    user: session.user,
+                    session: session,
+                  },
+                  false,
+                  'auth:initialize:session-restored'
+                );
+              }
               
               // 检查锁定状态是否过期
               if (state.lockoutExpiresAt && new Date() > new Date(state.lockoutExpiresAt)) {
@@ -217,95 +230,31 @@ export const useAuthStore = create<AuthStoreState>()(
             );
             
             try {
-              // TODO: 实际实现中调用AuthService
-              // const authService = getAuthService();
-              // const session = await authService.signIn({ email, password, rememberMe });
+              // 调用Clerk认证服务进行登录
+              const session = await clerkClientAuthService.signIn({
+                email,
+                password,
+                rememberMe
+              });
               
-              // 模拟登录延迟
-              await new Promise(resolve => setTimeout(resolve, 800));
-              
-              // TODO: 实际实现中会调用AuthService验证管理员身份
-              // const authService = getAuthService();
-              // const authResult = await authService.signIn({ email, password, rememberMe });
-              // 
               // 严格的admin角色验证 - 系统核心安全要求
-              // if (!authResult.user || authResult.user.role !== 'admin') {
-              //   // 记录非admin用户的登录尝试
-              //   await authService.recordFailedAttempt(email);
-              //   throw new Error('访问被拒绝：此系统仅允许管理员用户登录');
-              // }
-              
-              // 模拟管理员身份验证 (实际环境中移除)
-              // Admin-Only系统：只允许预定义的管理员账户登录
-              const isValidAdminCredentials = email === 'admin@webvault.com' && password === 'password123';
-              
-              if (!isValidAdminCredentials) {
-                // 记录失败尝试
-                const currentState = get();
-                const newAttemptCount = currentState.loginAttempts + 1;
+              if (!session.user || session.user.role !== 'admin') {
+                // 记录非admin用户的登录尝试
+                await clerkClientAuthService.recordFailedAttempt(email);
                 
-                // 检查是否达到最大尝试次数
-                if (newAttemptCount >= DEFAULT_SESSION_CONFIG.maxLoginAttempts) {
-                  const lockoutExpiry = new Date(Date.now() + DEFAULT_SESSION_CONFIG.lockoutDuration);
-                  
-                  set(
-                    {
-                      loginAttempts: newAttemptCount,
-                      isLocked: true,
-                      lockoutExpiresAt: lockoutExpiry.toISOString(),
-                    },
-                    false,
-                    'auth:account-locked'
-                  );
-                } else {
-                  set(
-                    {
-                      loginAttempts: newAttemptCount,
-                    },
-                    false,
-                    'auth:failed-attempt'
-                  );
-                }
+                // 立即签出非admin用户
+                await clerkClientAuthService.signOut();
                 
-                throw new Error('访问被拒绝：无效的管理员凭据');
+                throw new Error('访问被拒绝：此系统仅允许管理员用户登录');
               }
               
-              // 模拟成功登录的用户和会话数据
-              const mockUser: AuthUser = {
-                id: 'user-1',
-                email,
-                emailVerified: true,
-                name: 'Admin User',
-                avatar: '/assets/images/avatar-1.jpg',
-                provider: 'email',
-                role: 'admin',
-                metadata: {
-                  language: 'zh-CN',
-                  theme: 'system',
-                  lastLogin: new Date().toISOString(),
-                  loginCount: (state.user?.metadata.loginCount || 0) + 1,
-                },
-                createdAt: '2025-01-01T00:00:00.000Z',
-                updatedAt: new Date().toISOString(),
-              };
-              
-              const mockSession: AuthSession = {
-                accessToken: 'mock-jwt-token',
-                refreshToken: 'mock-refresh-token',
-                expiresAt: new Date(Date.now() + (rememberMe ? DEFAULT_SESSION_CONFIG.sessionDuration : 24 * 60 * 60 * 1000)).toISOString(),
-                refreshExpiresAt: new Date(Date.now() + DEFAULT_SESSION_CONFIG.sessionDuration).toISOString(),
-                user: mockUser,
-                createdAt: new Date().toISOString(),
-                lastActivity: new Date().toISOString(),
-                persistent: rememberMe || false,
-              };
-              
+              // 登录成功，更新状态
               set(
                 {
                   isAuthenticated: true,
                   isLoading: false,
-                  user: mockUser,
-                  session: mockSession,
+                  user: session.user,
+                  session: session,
                   error: null,
                   loginAttempts: 0,
                   isLocked: false,
@@ -353,21 +302,31 @@ export const useAuthStore = create<AuthStoreState>()(
             );
             
             try {
-              // TODO: 实际实现中调用AuthService
-              // const authService = getAuthService();
-              // const session = await authService.signInWithProvider(provider);
-              // 
+              // 调用Clerk社交登录
+              const session = await clerkClientAuthService.signInWithProvider(provider);
+              
               // 严格的admin角色验证 - 社交登录也必须验证admin权限
-              // if (!session.user || session.user.role !== 'admin') {
-              //   // 立即注销非admin用户的社交登录会话
-              //   await authService.signOut();
-              //   throw new Error('访问被拒绝：此系统仅允许管理员用户通过社交账户登录');
-              // }
+              if (!session.user || session.user.role !== 'admin') {
+                // 立即注销非admin用户的社交登录会话
+                await clerkClientAuthService.signOut();
+                throw new Error('访问被拒绝：此系统仅允许管理员用户通过社交账户登录');
+              }
               
-              // 模拟社交登录流程
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              
-              throw new Error(`访问被拒绝：Admin-Only系统当前仅支持邮箱密码登录`);
+              // 社交登录成功，更新状态
+              set(
+                {
+                  isAuthenticated: true,
+                  isLoading: false,
+                  user: session.user,
+                  session: session,
+                  error: null,
+                  loginAttempts: 0,
+                  isLocked: false,
+                  lockoutExpiresAt: null,
+                },
+                false,
+                'auth:social-login:success'
+              );
               
             } catch (error) {
               const errorMessage = error instanceof Error ? error.message : '社交登录失败';
@@ -418,11 +377,8 @@ export const useAuthStore = create<AuthStoreState>()(
             );
             
             try {
-              // TODO: 实际实现中调用AuthService
-              // const authService = getAuthService();
-              // await authService.signOut();
-              
-              await new Promise(resolve => setTimeout(resolve, 200));
+              // 调用Clerk登出服务
+              await clerkClientAuthService.signOut();
               
               set(
                 {
@@ -482,22 +438,14 @@ export const useAuthStore = create<AuthStoreState>()(
             );
             
             try {
-              // TODO: 实际实现中调用AuthService
-              // const authService = getAuthService();
-              // const newSession = await authService.refreshSession();
-              
-              await new Promise(resolve => setTimeout(resolve, 300));
-              
-              const updatedSession: AuthSession = {
-                ...state.session,
-                expiresAt: new Date(Date.now() + (state.session.persistent ? DEFAULT_SESSION_CONFIG.sessionDuration : 24 * 60 * 60 * 1000)).toISOString(),
-                lastActivity: new Date().toISOString(),
-              };
+              // 调用Clerk刷新会话服务
+              const refreshedSession = await clerkClientAuthService.refreshSession();
               
               set(
                 {
                   isLoading: false,
-                  session: updatedSession,
+                  session: refreshedSession,
+                  user: refreshedSession.user,
                   error: null,
                 },
                 false,
@@ -544,12 +492,8 @@ export const useAuthStore = create<AuthStoreState>()(
             );
             
             try {
-              // TODO: 实际实现中调用AuthService
-              // const authService = getAuthService();
-              // await authService.resetPassword(email);
-              
-              // 模拟密码重置延迟
-              await new Promise(resolve => setTimeout(resolve, 1000));
+              // 调用Clerk密码重置服务
+              await clerkClientAuthService.resetPassword(email);
               
               set(
                 {
@@ -597,12 +541,8 @@ export const useAuthStore = create<AuthStoreState>()(
             );
             
             try {
-              // TODO: 实际实现中调用AuthService
-              // const authService = getAuthService();
-              // await authService.confirmPasswordReset(token, newPassword);
-              
-              // 模拟密码重置确认延迟
-              await new Promise(resolve => setTimeout(resolve, 800));
+              // 调用Clerk密码重置确认服务
+              await clerkClientAuthService.confirmPasswordReset(token, newPassword);
               
               set(
                 {
@@ -654,17 +594,8 @@ export const useAuthStore = create<AuthStoreState>()(
             );
             
             try {
-              // TODO: 实际实现中调用AuthService
-              // const authService = getAuthService();
-              // const updatedUser = await authService.updateUserProfile(updates);
-              
-              await new Promise(resolve => setTimeout(resolve, 500));
-              
-              const updatedUser: AuthUser = {
-                ...state.user,
-                ...updates,
-                updatedAt: new Date().toISOString(),
-              };
+              // 调用Clerk用户资料更新服务
+              const updatedUser = await clerkClientAuthService.updateUserProfile(updates);
               
               set(
                 {
