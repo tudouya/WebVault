@@ -76,8 +76,8 @@ const MobileMenu = ({ isOpen, onClose, currentPath }: MobileMenuProps) => {
             )
           })}
           <div className="pt-4 border-t border-border">
-            <Button variant="default" className="w-full">
-              Sign In
+            <Button variant="default" className="w-full" asChild>
+              <Link href="/sign-in">Sign In</Link>
             </Button>
           </div>
         </nav>
@@ -157,8 +157,9 @@ export const HeaderNavigation = () => {
                 variant="default" 
                 size="sm"
                 className="hidden md:inline-flex"
+                asChild
               >
-                Sign In
+                <Link href="/sign-in">Sign In</Link>
               </Button>
 
               {/* 移动端菜单按钮 */}
