@@ -130,7 +130,7 @@ export default function SubmitPage() {
                   id="description"
                   placeholder="Describe what this website is about and why it's useful..."
                   value={formData.description}
-                  onChange={(e) => handleInputChange("description", e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => handleInputChange("description", e.target.value)}
                   required
                   disabled={isLoading}
                   rows={4}
