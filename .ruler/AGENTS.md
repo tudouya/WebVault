@@ -1,7 +1,3 @@
-
-
-<!-- Source: .ruler/AGENTS.md -->
-
 # AGENTS.md - WebVault
 
 ## 1. Mission（使命）

@@ -1,0 +1,61 @@
+# Ruler Configuration File for WebVault
+# See https://ai.intellectronica.net/ruler for documentation.
+
+# Default agents to apply when --agents is not specified
+# Currently focusing on Claude Code as primary AI assistant
+default_agents = ["claude"]
+
+# Enable nested rule loading from nested .ruler directories
+# Disabled for now as project structure is not complex enough yet
+nested = false
+
+# --- Global Configuration ---
+[gitignore]
+enabled = true
+
+[mcp]
+enabled = true
+merge_strategy = "merge"
+
+# --- Agent Specific Configurations ---
+
+# Claude Code - Primary AI assistant for this project
+[agents.claude]
+enabled = true
+output_path = "CLAUDE.md"
+
+# GitHub Copilot - Disabled for now, enable when needed
+[agents.copilot]
+enabled = false
+# output_path = ".github/copilot-instructions.md"
+
+# Cursor - Popular AI editor, enable when team uses it
+[agents.cursor]
+enabled = false
+# output_path = ".cursor/rules/ruler_cursor_instructions.mdc"
+
+# Aider - AI pair programming tool
+[agents.aider]
+enabled = false
+# output_path_instructions = "AGENTS.md"
+# output_path_config = ".aider.conf.yml"
+
+# Other agents disabled by default
+[agents.codex]
+enabled = true
+output_path = "AGENTS.md"
+
+[agents.windsurf]
+enabled = false
+
+[agents.cline]
+enabled = false
+
+[agents.amp]
+enabled = false
+
+[agents.kilocode]
+enabled = false
+
+# --- MCP Servers ---
+# No MCP servers configured yet - will add when needed for project
