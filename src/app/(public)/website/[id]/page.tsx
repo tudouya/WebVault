@@ -7,6 +7,8 @@ import { WebsiteDetailPage } from '@/features/websites/components/WebsiteDetailP
 
 // 强制动态渲染，确保最新数据和访问权限检查
 export const dynamic = 'force-dynamic'
+// Cloudflare Pages 需要 Edge Runtime
+export const runtime = 'edge'
 
 /**
  * 网站详情页面路由参数类型

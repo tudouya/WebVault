@@ -1,0 +1,14 @@
+# Cloudflare Wrangler configuration for WebVault
+
+name = "webvault"
+compatibility_date = "2025-09-18"
+compatibility_flags = ["nodejs_compat"]
+
+# Bind Cloudflare D1 to the Pages/Workers runtime
+[[d1_databases]]
+binding = "DB"
+database_name = "webvault"
+database_id = "0300606c-7656-4f1b-8279-be081621b727"
+
+# If you use Workers directly instead of Pages, you can configure entry points here.
+# For Next on Pages you generally don't set these.

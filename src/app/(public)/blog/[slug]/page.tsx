@@ -8,6 +8,8 @@ import { generateBlogMetadata, generateStructuredData } from '@/features/blog/ut
 
 // 强制动态渲染，确保最新数据和避免预渲染问题
 export const dynamic = 'force-dynamic'
+// Cloudflare Pages 需要 Edge Runtime
+export const runtime = 'edge'
 
 // 动态导入博客详情页面组件（待实现），优化性能
 const BlogDetailPage = dynamicImport(
@@ -78,34 +80,8 @@ interface BlogDetailPageProps {
   params: Promise<BlogDetailPageParams>
 }
 
-/**
- * 生成静态参数以支持静态生成 (SSG)
- * 
- * 为所有可用的博客文章生成静态路径，提高性能和SEO
- * 
- * @returns Promise<BlogDetailPageParams[]> - 博客slug参数数组
- */
-export async function generateStaticParams(): Promise<BlogDetailPageParams[]> {
-  try {
-    // 获取所有可用的博客文章slug
-    // 在实际项目中，这里应该从数据库或CMS获取数据
-    const blogSlugs = mockBlogDetails
-      .filter(blog => blog.isPublished) // 只包含已发布的文章
-      .map(blog => ({
-        slug: blog.slug
-      }))
-
-    console.log(`Generating static params for ${blogSlugs.length} blog posts`)
-    
-    return blogSlugs
-
-  } catch (error) {
-    console.error('Failed to generate static params for blog posts:', error)
-    // 即使生成静态参数失败，也返回空数组，避免构建失败
-    // 这将回退到ISR（增量静态再生）模式
-    return []
-  }
-}
+// Edge Runtime 不支持 generateStaticParams，改为完全动态渲染
+// 这确保与 Cloudflare D1 数据库的兼容性
 
 /**
  * 动态生成博客详情页面的元数据

@@ -5,10 +5,10 @@
  * 支持从domain参数获取favicon或返回默认图标
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
+export async function GET(request: Request) {
+  const searchParams = new URL(request.url).searchParams;
   const domain = searchParams.get('domain');
 
   if (!domain) {

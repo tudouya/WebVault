@@ -3,6 +3,8 @@ import dynamicImport from 'next/dynamic'
 
 // 强制动态渲染，支持CSR策略和多标签筛选操作
 export const dynamic = 'force-dynamic'
+// Cloudflare Pages 需要 Edge Runtime
+export const runtime = 'edge'
 
 // 动态导入 TagBrowsePage 组件以优化性能和避免构建问题
 const TagBrowsePage = dynamicImport(

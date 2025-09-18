@@ -3,6 +3,8 @@ import dynamicImport from 'next/dynamic'
 
 // 强制动态渲染，避免预渲染时的客户端状态管理问题
 export const dynamic = 'force-dynamic'
+// Cloudflare Pages 需要 Edge Runtime
+export const runtime = 'edge'
 
 // 动态导入 SearchPage 组件以优化性能和避免构建问题
 const SearchPage = dynamicImport(

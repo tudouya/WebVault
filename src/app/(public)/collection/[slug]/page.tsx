@@ -10,6 +10,8 @@ import type { WebsiteCardData } from '@/features/websites/types/website'
 
 // 强制动态渲染，避免预渲染时的客户端状态管理问题
 export const dynamic = 'force-dynamic'
+// Cloudflare Pages 需要 Edge Runtime
+export const runtime = 'edge'
 
 // 动态导入 CollectionDetailPage 组件以优化性能
 const DynamicCollectionDetailPage = dynamicImport(
@@ -303,26 +305,8 @@ export async function generateMetadata({
   }
 }
 
-/**
- * 生成静态路径（可选实现）
- * 
- * 为了提升性能，可以预生成常用的集合详情页面
- * 在生产环境中，这里应该从数据库获取所有集合的slug
- */
-export async function generateStaticParams() {
-  try {
-    // 获取所有活跃集合的slug
-    const collections = getMockCollections()
-    const activeCollections = collections.filter(c => c.status === 'active')
-    
-    return activeCollections.map(collection => ({
-      slug: collection.slug || collection.id,
-    }))
-  } catch (error) {
-    console.error('Failed to generate static params:', error)
-    return []
-  }
-}
+// Edge Runtime 不支持 generateStaticParams，改为完全动态渲染
+// 这确保与 Cloudflare D1 数据库的兼容性
 
 /**
  * 集合详情页面路由组件
