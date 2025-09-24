@@ -58,10 +58,10 @@ tmp/
 temp/
 
 # START Ruler Generated Files
+/../CLAUDE.md
+/../CLAUDE.md.bak
 /.codex/config.toml
 /.codex/config.toml.bak
 /AGENTS.md
 /AGENTS.md.bak
-/CLAUDE.md
-/CLAUDE.md.bak
 # END Ruler Generated Files
