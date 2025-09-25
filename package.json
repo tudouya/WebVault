@@ -8,13 +8,12 @@
   },
   "scripts": {
     "dev": "next dev",
-    "dev:cf": "next-on-pages && wrangler pages dev .vercel/output/static --port 8788 --live-reload",
+    "dev:cf": "next-on-pages && wrangler pages dev .vercel/output/static --port 8788",
     "build": "next build",
     "build:cf": "next-on-pages",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit",
-    "db:seed:d1": "wrangler d1 execute webvault --file scripts/seeds/d1-websites.sql"
+    "type-check": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
