@@ -21,17 +21,16 @@ import React from 'react';
 import { Search, RefreshCw, Home, AlertTriangle, Network } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 // 复用现有的ErrorBoundary类型和工具
-import { 
-  ErrorBoundary, 
-  ErrorType, 
-  ErrorInfo, 
+import {
+  ErrorBoundary,
+  ErrorType,
+  ErrorInfo,
   ErrorBoundaryProps,
   ErrorFallbackProps,
-  detectErrorType 
 } from './ErrorBoundary';
+import { WebsiteFilters } from '../types/website';
 
 /**
  * 搜索特定的错误类型枚举
@@ -84,7 +83,6 @@ interface SearchErrorFallbackProps extends ErrorFallbackProps {
  */
 const detectSearchErrorType = (error: Error): SearchErrorType => {
   const message = error.message.toLowerCase();
-  const name = error.name.toLowerCase();
 
   // 搜索查询错误
   if (message.includes('search query') || 
@@ -144,7 +142,7 @@ function SearchErrorFallback({
   onSearchRetry,
   onClearSearch,
   onResetFilters,
-  scope = 'search-page'
+  scope: _scope = 'search-page'
 }: SearchErrorFallbackProps) {
   
   const isPageLevel = level === 'page';
@@ -466,7 +464,7 @@ function SearchErrorFallback({
  * 继承ErrorBoundary的核心功能，为搜索页面提供专门的错误处理
  * 包含搜索特定的错误恢复选项和智能重试机制
  */
-export class SearchPageErrorBoundary extends React.Component<SearchPageErrorBoundaryProps, any> {
+export class SearchPageErrorBoundary extends React.Component<SearchPageErrorBoundaryProps, Record<string, never>> {
   constructor(props: SearchPageErrorBoundaryProps) {
     super(props);
   }
@@ -568,7 +566,7 @@ export function useSearchErrorHandler() {
   
   const handleSearchError = React.useCallback((error: Error, context?: {
     searchQuery?: string;
-    filters?: any;
+    filters?: Partial<WebsiteFilters>;
     page?: number;
   }) => {
     setSearchError(error);

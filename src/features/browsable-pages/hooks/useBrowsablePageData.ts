@@ -92,23 +92,23 @@ const DEFAULT_FETCH_CONFIG: Required<DataFetchConfig> = {
 /**
  * 简单的内存缓存实现
  */
-class SimpleCache {
-  private cache = new Map<string, { data: any; timestamp: number }>();
-  
-  get(key: string, timeout: number): any | null {
+class SimpleCache<T = unknown> {
+  private cache = new Map<string, { data: T; timestamp: number }>();
+
+  get(key: string, timeout: number): T | null {
     const entry = this.cache.get(key);
     if (!entry) return null;
-    
+
     const now = Date.now();
     if (now - entry.timestamp > timeout) {
       this.cache.delete(key);
       return null;
     }
-    
+
     return entry.data;
   }
-  
-  set(key: string, data: any): void {
+
+  set(key: string, data: T): void {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
@@ -146,7 +146,7 @@ export async function fetchDataByConfig(params: ApiCallParams): Promise<DataFetc
       if (cachedData) {
         return {
           success: true,
-          data: cachedData,
+          data: cachedData as BrowsablePageData<unknown>,
           fromCache: true,
           duration: Date.now() - startTime,
         };
@@ -191,7 +191,7 @@ async function buildMockDataByType(
   pageType: PageType,
   entitySlug: string,
   filters: FilterParams,
-  config: BrowsablePageConfig
+  _config: BrowsablePageConfig
 ): Promise<BrowsablePageData> {
   
   // 根据页面类型构建不同的实体数据
@@ -380,7 +380,7 @@ export function useBrowsablePageData(fetchConfig: DataFetchConfig = {}) {
   
   // 获取状态管理
   const store = useBrowsablePageStore();
-  const { syncUrlFromStore } = useBrowsablePageUrlSync();
+  const { syncUrlFromStore: _syncUrlFromStore } = useBrowsablePageUrlSync();
   
   // 内部状态引用
   const isLoadingRef = useRef<boolean>(false);
@@ -396,13 +396,13 @@ export function useBrowsablePageData(fetchConfig: DataFetchConfig = {}) {
     error,
     meta,
     actions: {
-      setConfig,
-      loadData: storeLoadData,
-      refreshData: storeRefreshData,
+      setConfig: _setConfig,
+      loadData: _storeLoadData,
+      refreshData: _storeRefreshData,
       setLoading,
       setError,
       clearError,
-      retryLoad: storeRetryLoad,
+      retryLoad: _storeRetryLoad,
       getCurrentEntitySlug,
     },
   } = store;

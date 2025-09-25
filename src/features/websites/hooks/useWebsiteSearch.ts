@@ -112,7 +112,6 @@ export function useWebsiteSearch(config: SearchConfig = {}) {
     actions: {
       setSearch,
       clearSearch: storeClearSearch,
-      setLoading,
     },
   } = store;
 

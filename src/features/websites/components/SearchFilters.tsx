@@ -31,11 +31,9 @@ import {
 import { Button } from '@/components/ui/button';
 
 import { 
-  searchFormSchema, 
   searchFormResolver, 
   searchFormDefaults,
   type SearchFormData,
-  FORM_ERROR_MESSAGES 
 } from '../schemas';
 import { useHomepageFilters } from '../stores/homepage-store';
 import { useWebsiteSearch } from '../hooks/useWebsiteSearch';
@@ -195,7 +193,6 @@ export function SearchFilters({
     setQuery,
     executeSearch,
     clearSearch,
-    query: currentQuery,
     isSearching,
     error: searchError,
     hasActiveSearch,
@@ -376,7 +373,10 @@ export function SearchFilters({
    */
   const handleSortSelect = (value: string) => {
     const [field, order] = value.split('-');
-    setSorting(field as any, order as 'asc' | 'desc');
+    setSorting(
+      field as 'created_at' | 'updated_at' | 'title' | 'rating' | 'visit_count' | 'featured' | 'relevance',
+      order as 'asc' | 'desc'
+    );
     
     // 触发筛选器变化回调
     onFiltersChange?.({

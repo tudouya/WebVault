@@ -20,7 +20,6 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
-  searchFormSchema, 
   searchFormResolver, 
   searchFormDefaults,
   type SearchFormData,
@@ -82,7 +81,7 @@ export function HeroSection({
    * 处理搜索表单提交
    * 验证输入后导航到搜索结果页面
    */
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: SearchFormData) => {
     try {
       const { query, searchType } = data;
       
@@ -228,7 +227,7 @@ export function HeroSection({
           {/* 搜索提示信息 */}
           <div className="mt-4 text-sm text-muted-foreground">
             <p>
-              尝试搜索 "设计工具"、"开发资源" 或 "学习平台" 等关键词
+              尝试搜索 &ldquo;设计工具&rdquo;、&ldquo;开发资源&rdquo; 或 &ldquo;学习平台&rdquo; 等关键词
             </p>
           </div>
         </div>

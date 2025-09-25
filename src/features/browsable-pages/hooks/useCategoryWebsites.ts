@@ -335,7 +335,7 @@ export function useCategoryWebsites(config: CategoryWebsitesConfig = {}) {
   
   // 获取状态管理
   const store = useBrowsablePageStore();
-  const { syncUrlFromStore, syncStoreFromUrl } = useBrowsablePageUrlSync();
+  const { syncUrlFromStore: _syncUrlFromStore, syncStoreFromUrl: _syncStoreFromUrl } = useBrowsablePageUrlSync();
   const filters = useBrowsablePageFilters();
   const pagination = useBrowsablePagePagination();
   

@@ -1,12 +1,25 @@
 /**
  * SocialShare 组件使用示例
- * 
+ *
  * 展示如何在博客详情页面中集成和使用社交分享组件
  * 包括不同配置选项和自定义回调处理
  */
 
 import React from 'react';
 import { SocialShare } from './SocialShare';
+
+// Google Analytics gtag 类型定义
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+declare function gtag(
+  command: 'event',
+  eventName: string,
+  eventParameters?: {
+    method?: string;
+    content_type?: string;
+    item_id?: string;
+    [key: string]: string | number | undefined;
+  }
+): void;
 
 /**
  * 基础使用示例
@@ -56,7 +69,8 @@ export function SocialShareWithCallbacksExample() {
     alert('链接已复制到剪贴板！');
   };
 
-  const handleShare = (platform: string, shareUrl: string) => {
+  const handleShare = (platform: string) => {
+    const shareUrl = "https://webvault.example.com/blog/nextjs-15-features";
     console.log(`用户分享到 ${platform}:`, shareUrl);
     // 这里可以记录分析数据
   };
@@ -141,26 +155,26 @@ export function BlogDetailPageIntegrationExample() {
     tags: ["React", "组件库", "设计系统", "TypeScript"]
   };
 
-  const handleShare = (platform: string, shareUrl: string) => {
+  const handleShare = (platform: string) => {
     // 发送分析事件
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'share', {
+    if (typeof window !== 'undefined' && (window as Window & { gtag?: typeof gtag }).gtag) {
+      (window as Window & { gtag?: typeof gtag }).gtag!('event', 'share', {
         method: platform,
         content_type: 'article',
         item_id: articleData.slug
       });
     }
-    
+
     console.log(`文章分享: ${platform} - ${articleData.title}`);
   };
 
   const handleCopySuccess = () => {
     // 显示成功提示
     console.log('文章链接已复制');
-    
+
     // 记录复制事件
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'copy_link', {
+    if (typeof window !== 'undefined' && (window as Window & { gtag?: typeof gtag }).gtag) {
+      (window as Window & { gtag?: typeof gtag }).gtag!('event', 'copy_link', {
         content_type: 'article',
         item_id: articleData.slug
       });

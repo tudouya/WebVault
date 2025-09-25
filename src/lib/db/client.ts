@@ -7,13 +7,19 @@ export interface DBContext {
   channel: DataChannel;
 }
 
+interface GlobalWithEdgeRuntime {
+  EdgeRuntime?: unknown;
+  DB?: unknown;
+}
+
 export function detectDataChannel(): DataChannel {
-  const isEdge = typeof (globalThis as any).EdgeRuntime !== 'undefined';
+  const global = globalThis as GlobalWithEdgeRuntime;
+  const isEdge = typeof global.EdgeRuntime !== 'undefined';
   // 检查是否有D1绑定环境变量
   const hasD1Binding = typeof process !== 'undefined' && (
     process.env.NODE_ENV === 'production' ||
     process.env.CLOUDFLARE_DATABASE_ID ||
-    typeof (globalThis as any).DB !== 'undefined'
+    typeof global.DB !== 'undefined'
   );
 
   console.log('DataChannel detection:', { isEdge, hasD1Binding, nodeEnv: process?.env?.NODE_ENV });

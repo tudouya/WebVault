@@ -22,6 +22,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { ChevronRight, Home, Calendar, Clock, Tag, User } from 'lucide-react';
@@ -150,11 +151,14 @@ const ArticleMeta = ({
       {/* 作者信息 */}
       <div className="flex items-center space-x-4">
         {author.avatar && (
-          <div className="relative">
-            <img
+          <div className="relative h-12 w-12">
+            <Image
               src={author.avatar}
               alt={`${author.name}的头像`}
-              className="h-12 w-12 rounded-full object-cover ring-2 ring-border"
+              className="rounded-full object-cover ring-2 ring-border"
+              fill
+              sizes="3rem"
+              unoptimized
             />
           </div>
         )}
@@ -240,11 +244,14 @@ const ArticleContent = ({
     {coverImage && (
       <div className="mb-8 -mx-4 sm:mx-0">
         <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
-          <img
+          <Image
             src={coverImage}
             alt={`${title} - 封面图片`}
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-            loading="lazy"
+            className="object-cover transition-transform duration-300 hover:scale-105"
+            fill
+            sizes="(min-width: 1024px) 1000px, 100vw"
+            unoptimized
+            priority={false}
           />
         </div>
       </div>

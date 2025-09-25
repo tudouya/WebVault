@@ -1,11 +1,7 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import dynamicImport from 'next/dynamic'
-import { 
-  CollectionDetailPage
-} from '@/features/browsable-pages/components/CollectionDetailPage'
 import { getMockCollections } from '@/features/websites/data/mockCollections'
-import type { Collection } from '@/features/websites/types/collection'
 import type { WebsiteCardData } from '@/features/websites/types/website'
 
 // 强制动态渲染，避免预渲染时的客户端状态管理问题

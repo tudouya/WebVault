@@ -1,9 +1,43 @@
 /**
  * Collection data type definitions
- * 
+ *
  * Defines the complete Collection interface with all business fields
  * including icon configuration, status management, and SEO capabilities.
  */
+
+/**
+ * Collection URL parameters for state synchronization
+ */
+export interface CollectionURLParams {
+  /** Search query */
+  search?: string | null;
+  /** Tag filters (comma-separated) */
+  tags?: string | null;
+  /** Status filter */
+  status?: string | null;
+  /** Sort field */
+  sort?: string | null;
+  sortBy?: string | null; // Compatibility field
+  /** Sort order */
+  order?: 'asc' | 'desc' | null;
+  sortOrder?: 'asc' | 'desc' | null; // Compatibility field
+  /** Current page */
+  page?: number | null;
+  /** Items per page */
+  limit?: number | null;
+  /** View mode */
+  view?: 'grid' | 'list' | null;
+  /** Group by field */
+  groupBy?: string | null;
+  /** Show preview */
+  showPreview?: boolean | null;
+  /** Date from filter */
+  dateFrom?: string | null;
+  /** Date to filter */
+  dateTo?: string | null;
+  /** Created by filter */
+  createdBy?: string | null;
+}
 
 /**
  * Collection status enumeration

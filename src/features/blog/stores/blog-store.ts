@@ -9,14 +9,13 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { 
-  parseAsString, 
-  parseAsInteger, 
-  useQueryState,
+import {
+  parseAsString,
+  parseAsInteger,
   useQueryStates
 } from 'nuqs';
-import { BlogCardData } from '../types';
-import { 
+import { BlogCardData, BlogURLParams } from '../types';
+import {
   BlogCategoryType,
   BLOG_CATEGORIES,
   BlogCategoryUtils
@@ -119,7 +118,7 @@ export interface BlogPageState {
     
     // URL同步方法
     /** 从URL同步状态 */
-    syncFromURL: (params: Record<string, any>) => void;
+    syncFromURL: (params: BlogURLParams) => void;
   };
 }
 
@@ -149,7 +148,7 @@ function generateMockBlogs(category: BlogCategoryType, page: number, itemsPerPag
   };
   
   const totalCount = categoryItemCounts[category] || 0;
-  const totalPages = Math.ceil(totalCount / itemsPerPage);
+  // const totalPages = Math.ceil(totalCount / itemsPerPage); // TODO: Use for pagination
   const startIndex = (page - 1) * itemsPerPage;
   const endIndex = Math.min(startIndex + itemsPerPage, totalCount);
   
@@ -217,7 +216,7 @@ export const useBlogStore = create<BlogPageState>()(
             if (state.loading) return;
             
             set(
-              (current) => ({
+              () => ({
                 loading: true,
                 error: null,
               }),
@@ -391,7 +390,7 @@ export const useBlogStore = create<BlogPageState>()(
           },
           
           // URL同步方法
-          syncFromURL: (params: Record<string, any>) => {
+          syncFromURL: (params: BlogURLParams) => {
             const {
               category = 'All',
               page = 1,
@@ -419,7 +418,7 @@ export const useBlogStore = create<BlogPageState>()(
         name: 'blog-store',
         storage: createJSONStorage(() => sessionStorage),
         // 只持久化用户偏好设置，URL参数通过nuqs管理
-        partialize: (state) => ({
+        partialize: () => ({
           // 不持久化任何状态，所有状态通过URL管理
         }),
       }
@@ -450,7 +449,7 @@ export function useBlogUrlSync() {
   
   // 从store更新URL状态 (状态变更时调用)
   const syncUrlFromStore = () => {
-    const blogUrlState: Record<string, any> = {};
+    const blogUrlState: BlogURLParams = {};
     
     // 只有当分类不是 'All' 时才添加到URL
     if (store.activeCategory && store.activeCategory !== 'All') {

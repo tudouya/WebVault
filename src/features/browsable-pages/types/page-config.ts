@@ -373,7 +373,7 @@ export interface BrowsablePageConfig {
   };
   
   /** Custom configuration for page type extensions */
-  custom?: Record<string, any>;
+  custom?: Record<string, unknown>;
 }
 
 /**
@@ -537,19 +537,19 @@ export const DEFAULT_PAGE_CONFIG: BrowsablePageConfig = {
 /**
  * Type guard to check if a configuration is valid
  */
-export function isValidPageConfig(config: any): config is BrowsablePageConfig {
-  return (
-    config &&
+export function isValidPageConfig(config: unknown): config is BrowsablePageConfig {
+  return Boolean(
+    config !== null &&
     typeof config === 'object' &&
-    typeof config.pageType === 'string' &&
-    ['collection', 'category', 'tag'].includes(config.pageType) &&
-    typeof config.id === 'string' &&
-    config.title &&
-    typeof config.title === 'object' &&
-    config.filters &&
-    typeof config.filters === 'object' &&
-    config.content &&
-    typeof config.content === 'object'
+    typeof (config as Record<string, unknown>).pageType === 'string' &&
+    ['collection', 'category', 'tag'].includes((config as Record<string, unknown>).pageType as string) &&
+    typeof (config as Record<string, unknown>).id === 'string' &&
+    (config as Record<string, unknown>).title &&
+    typeof (config as Record<string, unknown>).title === 'object' &&
+    (config as Record<string, unknown>).filters &&
+    typeof (config as Record<string, unknown>).filters === 'object' &&
+    (config as Record<string, unknown>).content &&
+    typeof (config as Record<string, unknown>).content === 'object'
   );
 }
 

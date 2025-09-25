@@ -21,7 +21,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCallback, KeyboardEvent, MouseEvent } from 'react';
+import { useCallback, useMemo, KeyboardEvent, MouseEvent } from 'react';
 import type { Collection, CollectionNavigation } from '../types/collection';
 
 /**
@@ -114,9 +114,9 @@ export function useCollectionNavigation(
   config: CollectionNavigationConfig = {}
 ): CollectionNavigationReturn {
   const router = useRouter();
-  
+
   // 合并配置
-  const finalConfig = { ...DEFAULT_CONFIG, ...config };
+  const finalConfig = useMemo(() => ({ ...DEFAULT_CONFIG, ...config }), [config]);
   
   /**
    * 获取集合详情页面URL

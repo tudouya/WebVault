@@ -42,7 +42,7 @@ export function CollectionPagination({
   const safeTotalPages = Math.max(totalPages, 1);
   const safeTotalItems = Math.max(totalItems, 0);
   const safeCurrentPage = Math.max(Math.min(currentPage, safeTotalPages), 1);
-  const safeItemsPerPage = Math.max(itemsPerPage, 1);
+  const _safeItemsPerPage = Math.max(itemsPerPage, 1);
 
   // 如果只有一页或没有数据，不显示分页
   if (safeTotalPages <= 1 || safeTotalItems === 0) {
@@ -65,7 +65,7 @@ export function CollectionPagination({
   const getPageRange = () => {
     const half = Math.floor(showPageNumbers / 2);
     let start = Math.max(1, safeCurrentPage - half);
-    let end = Math.min(safeTotalPages, start + showPageNumbers - 1);
+    const end = Math.min(safeTotalPages, start + showPageNumbers - 1);
     
     // 调整开始位置，确保显示足够的页码
     if (end - start + 1 < showPageNumbers) {

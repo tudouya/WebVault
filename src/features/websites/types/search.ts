@@ -5,7 +5,7 @@
  * including SearchHeader, SearchFilters, and SearchResults components.
  */
 
-import type { WebsiteCardData, WebsiteFilters, SearchPageFilters } from './website';
+import type { WebsiteCardData, SearchPageFilters } from './website';
 
 /**
  * Search page state enumeration

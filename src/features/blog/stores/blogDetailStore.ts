@@ -15,17 +15,15 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { 
-  parseAsString, 
+import {
+  parseAsString,
   parseAsBoolean,
-  useQueryState,
   useQueryStates
 } from 'nuqs';
 
 // 导入博客相关类型
-import { 
+import {
   BlogDetailData,
-  TableOfContentsItem,
   BlogDetailPageState,
   BlogDetailActions
 } from '../types/detail';
@@ -228,12 +226,12 @@ export interface BlogDetailStoreActions extends BlogDetailActions {
   resetUIState: () => void;
   
   // ========== URL同步方法 ==========
-  
+
   /** 从URL同步状态 */
-  syncFromURL: (params: Record<string, any>) => void;
-  
+  syncFromURL: (params: Record<string, string | null>) => void;
+
   /** 同步状态到URL */
-  syncToURL: () => Record<string, any>;
+  syncToURL: () => Record<string, string | null>;
 }
 
 /**
@@ -473,7 +471,7 @@ export const useBlogDetailStore = create<BlogDetailStoreState>()(
             if (state.isLoading) return;
             
             set(
-              (current) => ({
+              () => ({
                 isLoading: true,
                 error: null,
                 currentSlug: slug,
@@ -490,7 +488,7 @@ export const useBlogDetailStore = create<BlogDetailStoreState>()(
               const postDetail = generateMockBlogDetail(slug);
               
               set(
-                (current) => ({
+                () => ({
                   currentPost: postDetail,
                   isLoading: false,
                   isInitialized: true,
@@ -536,7 +534,7 @@ export const useBlogDetailStore = create<BlogDetailStoreState>()(
             if (state.isLoadingRelated) return;
             
             set(
-              (current) => ({
+              () => ({
                 isLoadingRelated: true,
                 relatedError: null,
                 relatedPostsConfig: finalConfig,
@@ -553,7 +551,7 @@ export const useBlogDetailStore = create<BlogDetailStoreState>()(
               const relatedPosts = generateMockRelatedPosts(postId, finalConfig);
               
               set(
-                (current) => ({
+                () => ({
                   relatedPosts,
                   isLoadingRelated: false,
                 }),
@@ -565,7 +563,7 @@ export const useBlogDetailStore = create<BlogDetailStoreState>()(
               console.error('Failed to load related posts:', error);
               
               set(
-                (current) => ({
+                () => ({
                   isLoadingRelated: false,
                   relatedError: error instanceof Error ? error.message : '加载相关文章失败',
                 }),
@@ -901,7 +899,7 @@ export const useBlogDetailStore = create<BlogDetailStoreState>()(
           
           resetUIState: () => {
             set(
-              (current) => ({
+              () => ({
                 showTableOfContents: true,
                 activeHeading: null,
                 showSharePanel: false,
@@ -914,16 +912,16 @@ export const useBlogDetailStore = create<BlogDetailStoreState>()(
           },
           
           // ========== URL同步方法 ==========
-          
-          syncFromURL: (params: Record<string, any>) => {
+
+          syncFromURL: (params: Record<string, string | null>) => {
             const {
-              showToc = true,
+              showToc = 'true',
               activeHeading = null,
             } = params;
-            
+
             set(
-              (current) => ({
-                showTableOfContents: Boolean(showToc),
+              () => ({
+                showTableOfContents: showToc === 'true',
                 activeHeading: activeHeading || null,
                 isInitialized: true,
               }),
@@ -934,13 +932,13 @@ export const useBlogDetailStore = create<BlogDetailStoreState>()(
           
           syncToURL: () => {
             const state = get();
-            const urlState: Record<string, any> = {};
-            
+            const urlState: Record<string, string | null> = {};
+
             // 只有当目录隐藏时才添加到URL
             if (!state.showTableOfContents) {
-              urlState.showToc = false;
+              urlState.showToc = 'false';
             }
-            
+
             // 只有当有激活标题时才添加到URL
             if (state.activeHeading) {
               urlState.activeHeading = state.activeHeading;
@@ -982,7 +980,7 @@ export function useBlogDetailUrlSync() {
   
   // 从URL更新store状态
   const syncStoreFromUrl = () => {
-    actions.syncFromURL(urlState);
+    actions.syncFromURL(urlState as Record<string, string | null>);
   };
   
   // 从store更新URL状态

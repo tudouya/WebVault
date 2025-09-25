@@ -15,7 +15,7 @@ interface WebsiteDetailInfoProps {
   /** Tag click handler */
   onTagClick?: (tag: string) => void;
   /** Category click handler */
-  onCategoryClick?: (category: any) => void;
+  onCategoryClick?: (category: { id: string; name: string; slug: string }) => void;
 }
 
 /**

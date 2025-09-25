@@ -61,7 +61,7 @@ export default function SubmitPage() {
           </div>
           <h1 className="text-3xl font-bold text-foreground mb-2">Submit a Website</h1>
           <p className="text-lg text-muted-foreground">
-            Share a great website with our community. We'll review it and add it to our directory.
+            Share a great website with our community. We&apos;ll review it and add it to our directory.
           </p>
         </div>
 
@@ -70,7 +70,7 @@ export default function SubmitPage() {
           <Alert className="mb-6 border-green-200 bg-green-50 text-green-800">
             <CheckCircle className="h-4 w-4" />
             <AlertDescription>
-              Website submitted successfully! We'll review it and get back to you soon.
+              Website submitted successfully! We&apos;ll review it and get back to you soon.
             </AlertDescription>
           </Alert>
         )}
@@ -175,7 +175,7 @@ export default function SubmitPage() {
                   disabled={isLoading}
                 />
                 <p className="text-xs text-muted-foreground">
-                  We'll use this to contact you about your submission status
+                  We&apos;ll use this to contact you about your submission status
                 </p>
               </div>
 
@@ -200,7 +200,7 @@ export default function SubmitPage() {
             <ul className="space-y-2 text-muted-foreground">
               <li>• Make sure the website is functional and accessible</li>
               <li>• Provide accurate and detailed descriptions</li>
-              <li>• Check that the website isn't already in our directory</li>
+              <li>• Check that the website isn&apos;t already in our directory</li>
               <li>• We review all submissions manually and will notify you of the status</li>
               <li>• Spam, adult content, or malicious websites will be rejected</li>
             </ul>

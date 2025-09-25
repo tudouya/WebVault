@@ -409,7 +409,7 @@ export function withErrorBoundary<T extends object>(
  * Hook - 手动触发错误边界
  */
 export function useErrorHandler() {
-  return React.useCallback((error: Error, errorInfo?: Partial<ErrorInfo>) => {
+  return React.useCallback((error: Error, _errorInfo?: Partial<ErrorInfo>) => {
     // 在下一个事件循环中抛出错误，让错误边界捕获
     setTimeout(() => {
       throw error;

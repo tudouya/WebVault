@@ -534,7 +534,7 @@ export function useBlogLoadingState() {
    默认导出所有组件
    ======================================== */
 
-export default {
+const blogLoadingStates = {
   BlogLoadingSpinner,
   BlogCardSkeleton,
   BlogErrorState,
@@ -542,3 +542,5 @@ export default {
   BlogNetworkStatus,
   useBlogLoadingState,
 };
+
+export default blogLoadingStates;

@@ -18,7 +18,7 @@
 
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 // 导入布局组件
 import { BrowsablePageLayout } from './BrowsablePageLayout';
@@ -27,7 +27,6 @@ import type { BrowsablePageConfig } from '../types';
 // 导入React基础功能
 
 // 导入类型
-import type { WebsiteCardData } from '@/features/websites/types/website';
 
 /**
  * 创建标签页面配置
@@ -307,7 +306,7 @@ const TagErrorState = ({
 /**
  * 加载状态组件
  */
-const TagLoadingState = () => (
+const _TagLoadingState = () => (
   <div className="flex flex-col items-center justify-center py-16 px-4 text-center min-h-[500px]">
     <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6 animate-pulse">
       <div className="w-8 h-8 bg-primary/20 rounded-full animate-spin border-2 border-primary/30 border-t-primary" />
@@ -338,11 +337,11 @@ export function TagBrowsePage({
   className,
   onVisitWebsite,
   onTagClick,
-  onTagsChange,
-  onTagAdd,
-  onTagRemove,
+  onTagsChange: _onTagsChange,
+  onTagAdd: _onTagAdd,
+  onTagRemove: _onTagRemove,
   onError,
-  onLoadingChange,
+  onLoadingChange: _onLoadingChange,
 }: TagBrowsePageProps) {
   // 处理标签参数（支持多标签模式和单标签向后兼容）
   const tagSlugs = useMemo(() => {

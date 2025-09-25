@@ -20,7 +20,6 @@ import { Send, Mail, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
-  subscriptionFormSchema,
   subscriptionFormResolver,
   subscriptionFormDefaults,
   type SubscriptionFormData,
@@ -103,7 +102,7 @@ export function NewsletterSection({
    * 处理订阅表单提交
    * 验证输入、提交订阅请求并处理响应
    */
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: SubscriptionFormData) => {
     try {
       setSubscriptionStatus('submitting');
       setErrorMessage('');

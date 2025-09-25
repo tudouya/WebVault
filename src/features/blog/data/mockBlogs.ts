@@ -5,7 +5,7 @@
  * 包含6篇不同分类的博客文章，符合BlogCardData接口规范
  */
 
-import { BlogCardData, BlogDetailData, BlogAuthorDetail, BlogCategoryType, BlogCategoryUtils, BlogDetailDataUtils } from '../types';
+import { BlogCardData, BlogDetailData, BlogCategoryType, BlogCategoryUtils, BlogDetailDataUtils } from '../types';
 
 /**
  * Mock博客文章详情数据列表
@@ -2758,19 +2758,26 @@ export const addRelativeTimeToBlogs = (blogs: BlogCardData[]): (BlogCardData & {
  * @param blog 博客数据
  * @returns 是否为有效的博客数据
  */
-export const isValidBlogData = (blog: any): blog is BlogCardData => {
+export const isValidBlogData = (blog: unknown): blog is BlogCardData => {
+  if (typeof blog !== 'object' || blog === null) {
+    return false;
+  }
+
+  const blogObj = blog as Record<string, unknown>;
+  const author = blogObj.author as Record<string, unknown> | null | undefined;
+
   return (
-    typeof blog === 'object' &&
-    typeof blog.id === 'string' &&
-    typeof blog.title === 'string' &&
-    typeof blog.excerpt === 'string' &&
-    typeof blog.slug === 'string' &&
-    typeof blog.coverImage === 'string' &&
-    typeof blog.author === 'object' &&
-    typeof blog.author.name === 'string' &&
-    typeof blog.category === 'string' &&
-    typeof blog.publishedAt === 'string' &&
-    BlogCategoryUtils.isValidCategory(blog.category)
+    typeof blogObj.id === 'string' &&
+    typeof blogObj.title === 'string' &&
+    typeof blogObj.excerpt === 'string' &&
+    typeof blogObj.slug === 'string' &&
+    typeof blogObj.coverImage === 'string' &&
+    typeof blogObj.author === 'object' &&
+    blogObj.author !== null &&
+    typeof author?.name === 'string' &&
+    typeof blogObj.category === 'string' &&
+    typeof blogObj.publishedAt === 'string' &&
+    BlogCategoryUtils.isValidCategory(blogObj.category as string)
   );
 };
 
@@ -2779,6 +2786,6 @@ export const isValidBlogData = (blog: any): blog is BlogCardData => {
  * @param blogs 博客数据数组
  * @returns 有效的博客数据数组
  */
-export const validateBlogDataArray = (blogs: any[]): BlogCardData[] => {
+export const validateBlogDataArray = (blogs: unknown[]): BlogCardData[] => {
   return blogs.filter(isValidBlogData);
 };

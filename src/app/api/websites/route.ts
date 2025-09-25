@@ -28,7 +28,8 @@ export async function GET(request: Request) {
 
     const result = await websitesService.list({ page, pageSize, query, category, featured, includeAds, minRating });
     return NextResponse.json(jsendSuccess(result));
-  } catch (error: any) {
-    return NextResponse.json(jsendError('服务器错误', 'INTERNAL_ERROR', { error: String(error?.message || error) }), { status: 500 });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return NextResponse.json(jsendError('服务器错误', 'INTERNAL_ERROR', { error: errorMessage }), { status: 500 });
   }
 }

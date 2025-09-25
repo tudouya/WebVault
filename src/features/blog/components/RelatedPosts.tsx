@@ -22,9 +22,6 @@ interface RelatedPostsProps {
   /** 最小相似度阈值 */
   minSimilarityScore?: number;
   
-  /** 标签点击处理 */
-  onTagClick?: (tag: string) => void;
-  
   /** 作者点击处理 */
   onAuthorClick?: (authorId: string) => void;
 }
@@ -54,7 +51,6 @@ const RelatedPosts = React.memo(function RelatedPosts({
   limit = 3,
   strategy = 'mixed',
   minSimilarityScore = 0.2,
-  onTagClick,
   onAuthorClick
 }: RelatedPostsProps) {
   // 相关文章数据状态
@@ -104,7 +100,7 @@ const RelatedPosts = React.memo(function RelatedPosts({
     if (currentBlogId) {
       fetchRelatedPosts();
     }
-  }, [fetchRelatedPosts]);
+  }, [currentBlogId, fetchRelatedPosts]);
 
   // 如果正在加载，显示骨架屏
   if (isLoading) {
@@ -253,7 +249,7 @@ const RelatedPosts = React.memo(function RelatedPosts({
               No Related Posts Found
             </h3>
             <p className="text-sm text-muted-foreground">
-              We couldn't find any related articles at the moment. Check back later for more content!
+              We couldn&apos;t find any related articles at the moment. Check back later for more content!
             </p>
           </div>
         </div>
@@ -290,7 +286,6 @@ const RelatedPosts = React.memo(function RelatedPosts({
           >
             <BlogCard
               blog={post}
-              onTagClick={onTagClick}
               onAuthorClick={onAuthorClick}
               animationIndex={index}
               className="h-full hover:shadow-lg transition-shadow duration-300"
@@ -302,7 +297,7 @@ const RelatedPosts = React.memo(function RelatedPosts({
       {/* 推荐策略说明（开发模式下显示） */}
       {process.env.NODE_ENV === 'development' && (
         <div className="text-xs text-muted-foreground/60 text-center mt-4">
-          Recommended using "{strategy}" strategy • {relatedPosts.length} of {limit} posts found
+          Recommended using &quot;{strategy}&quot; strategy • {relatedPosts.length} of {limit} posts found
         </div>
       )}
     </section>

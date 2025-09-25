@@ -119,15 +119,15 @@ const LayoutContainer = ({
  * - 需求3.2: 标签页面加载筛选控件，提供标签筛选栏和排序下拉菜单
  * - 需求5.1: 桌面端使用3列网格布局展示网站卡片（响应式布局）
  */
-const FilterControls = ({ 
-  config, 
-  isLoading 
-}: { 
-  config: BrowsablePageConfig; 
-  isLoading: boolean; 
+const FilterControls = ({
+  config,
+  isLoading
+}: {
+  config: BrowsablePageConfig;
+  isLoading: boolean;
 }) => {
   const { data, filters, actions } = useBrowsablePageStore();
-  
+
   // 确定筛选类型：检查启用的筛选功能
   const filterType = React.useMemo(() => {
     if (config.filters.categoryEnabled || config.filters.tagEnabled) {
@@ -139,11 +139,6 @@ const FilterControls = ({
 
   // 启用排序功能检查
   const enableSorting = config.features.enableSorting && config.filters.sortEnabled;
-  
-  // 如果筛选和排序都禁用，则不显示控制栏
-  if (filterType === 'none' && !enableSorting) {
-    return null;
-  }
 
   // 准备筛选标签数据
   const filterItems = React.useMemo(() => {
@@ -226,6 +221,11 @@ const FilterControls = ({
     const [field, order] = value.split('_') as [SortField, SortOrder];
     actions.setSorting(field, order);
   }, [actions]);
+
+  // 如果筛选和排序都禁用，则不显示控制栏
+  if (filterType === 'none' && !enableSorting) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8">

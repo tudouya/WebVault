@@ -26,12 +26,11 @@ import { HeaderNavigation } from './HeaderNavigation';
 import { SearchHeader } from './SearchHeader';
 import { SearchFilters } from './SearchFilters';
 import { SearchResults } from './SearchResults';
-import { Pagination } from './Pagination';
 import { Footer } from './Footer';
 import { ErrorBoundary } from './ErrorBoundary';
 
 // 导入hooks和类型
-import { WebsiteCardData } from '../types/website';
+import { WebsiteCardData, WebsiteFilters } from '../types/website';
 import { SearchHeaderProps, SearchPageStatus } from '../types/search';
 import { getMockWebsites } from '../data/mockWebsites';
 
@@ -46,7 +45,6 @@ interface SearchPaginationWrapperProps {
   currentPage: number;
   totalPages: number;
   totalItems: number;
-  itemsPerPage: number;
   onPageChange: (page: number) => void;
   className?: string;
 }
@@ -55,7 +53,6 @@ const SearchPaginationWrapper = React.memo(function SearchPaginationWrapper({
   currentPage,
   totalPages,
   totalItems,
-  itemsPerPage,
   onPageChange,
   className
 }: SearchPaginationWrapperProps) {
@@ -87,7 +84,7 @@ const SearchPaginationWrapper = React.memo(function SearchPaginationWrapper({
   const getPageRange = () => {
     const half = Math.floor(showPageNumbers / 2);
     let start = Math.max(1, safeCurrentPage - half);
-    let end = Math.min(safeTotalPages, start + showPageNumbers - 1);
+    const end = Math.min(safeTotalPages, start + showPageNumbers - 1);
     
     // 调整开始位置，确保显示足够的页码
     if (end - start + 1 < showPageNumbers) {
@@ -274,7 +271,7 @@ export interface SearchPageProps {
   /**
    * 筛选器变化回调函数
    */
-  onFiltersChange?: (filters: any) => void;
+  onFiltersChange?: (filters: Partial<WebsiteFilters>) => void;
   
   /**
    * 重置筛选回调函数
@@ -430,7 +427,7 @@ const SearchPage = React.memo(function SearchPage({
     onSearch?.(query);
   }, [onSearch]);
 
-  const handleFiltersChange = useCallback((filters: any) => {
+  const handleFiltersChange = useCallback((filters: Partial<WebsiteFilters>) => {
     onFiltersChange?.(filters);
   }, [onFiltersChange]);
 
@@ -540,7 +537,6 @@ const SearchPage = React.memo(function SearchPage({
                     currentPage={currentPage}
                     totalPages={calculatedTotalPages}
                     totalItems={calculatedTotalResults}
-                    itemsPerPage={itemsPerPage}
                     onPageChange={handlePageChange}
                     className={cn(
                       "transition-all duration-300 ease-in-out",

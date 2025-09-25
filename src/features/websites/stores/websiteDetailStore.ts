@@ -19,7 +19,6 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { 
   parseAsString, 
   parseAsBoolean,
-  useQueryState,
   useQueryStates
 } from 'nuqs';
 
@@ -28,8 +27,7 @@ import {
   WebsiteDetailData,
   WebsiteDetailNavigation,
   WebsiteDetailLoadingState,
-  WebsiteDetailErrorState,
-  WebsiteDetailActions
+  WebsiteDetailErrorState
 } from '../types/detail';
 import { WebsiteCardData } from '../types/website';
 
@@ -41,6 +39,49 @@ import {
   RelatedWebsitesOptions,
   VisitTrackingResult
 } from '../services/websiteDetailService';
+
+type DetailUrlStateValue = string | number | boolean | null | undefined;
+type DetailUrlStateParams = Record<string, DetailUrlStateValue>;
+
+function toStringValue(value: DetailUrlStateValue, defaultValue: string): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  return defaultValue;
+}
+
+function toNumberValue(value: DetailUrlStateValue, defaultValue: number): number {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : defaultValue;
+  }
+  return defaultValue;
+}
+
+function toBooleanValue(value: DetailUrlStateValue, defaultValue: boolean): boolean {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (typeof value === 'number') {
+    return value !== 0;
+  }
+  if (typeof value === 'string') {
+    const normalized = value.toLowerCase();
+    if (['true', '1', 'yes', 'on'].includes(normalized)) {
+      return true;
+    }
+    if (['false', '0', 'no', 'off'].includes(normalized)) {
+      return false;
+    }
+  }
+  return defaultValue;
+}
 
 /**
  * 网站详情页面URL搜索参数解析器配置
@@ -320,10 +361,10 @@ export interface WebsiteDetailStoreActions {
   // ========== URL同步方法 ==========
   
   /** 从URL同步状态 */
-  syncFromURL: (params: Record<string, any>) => void;
+  syncFromURL: (params: DetailUrlStateParams) => void;
   
   /** 同步状态到URL */
-  syncToURL: () => Record<string, any>;
+  syncToURL: () => DetailUrlStateParams;
 }
 
 /**
@@ -721,7 +762,7 @@ export const useWebsiteDetailStore = create<WebsiteDetailStoreState>()(
           
           // ========== 用户交互管理 ==========
           
-          toggleBookmark: async (websiteId: string) => {
+          toggleBookmark: async (_websiteId: string) => {
             try {
               // 模拟API调用
               await new Promise(resolve => setTimeout(resolve, 300));
@@ -745,7 +786,7 @@ export const useWebsiteDetailStore = create<WebsiteDetailStoreState>()(
             }
           },
           
-          shareWebsite: async (websiteId: string, platform = 'copy') => {
+          shareWebsite: async (_websiteId: string, platform = 'copy') => {
             const state = get();
             if (!state.currentWebsite) return;
             
@@ -1039,7 +1080,7 @@ export const useWebsiteDetailStore = create<WebsiteDetailStoreState>()(
           
           // ========== URL同步方法 ==========
           
-          syncFromURL: (params: Record<string, any>) => {
+          syncFromURL: (params: DetailUrlStateParams) => {
             const {
               relatedStrategy = 'mixed',
               relatedLimit = '4',
@@ -1047,17 +1088,21 @@ export const useWebsiteDetailStore = create<WebsiteDetailStoreState>()(
               showStats = true,
             } = params;
             
-            const limit = parseInt(relatedLimit) || 4;
+            const strategyValue = toStringValue(relatedStrategy, 'mixed');
+            const limitValue = toNumberValue(relatedLimit, 4);
+            const limit = Number.isFinite(limitValue) ? limitValue : 4;
+            const showRelatedValue = toBooleanValue(showRelated, true);
+            const showStatsValue = toBooleanValue(showStats, true);
             
             set(
               (current) => ({
                 relatedWebsitesConfig: {
                   ...current.relatedWebsitesConfig,
-                  strategy: relatedStrategy as RelatedWebsitesConfig['strategy'],
+                  strategy: strategyValue as RelatedWebsitesConfig['strategy'],
                   limit: Math.max(1, Math.min(10, limit)),
                 },
-                showRelatedWebsites: Boolean(showRelated),
-                showVisitStats: Boolean(showStats),
+                showRelatedWebsites: showRelatedValue,
+                showVisitStats: showStatsValue,
                 isInitialized: true,
               }),
               false,
@@ -1067,7 +1112,7 @@ export const useWebsiteDetailStore = create<WebsiteDetailStoreState>()(
           
           syncToURL: () => {
             const state = get();
-            const urlState: Record<string, any> = {};
+            const urlState: DetailUrlStateParams = {};
             
             // 只有当配置不是默认值时才添加到URL
             if (state.relatedWebsitesConfig.strategy !== 'mixed') {

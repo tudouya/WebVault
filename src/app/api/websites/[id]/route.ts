@@ -4,9 +4,9 @@ import { websitesService } from '@/lib/services/websitesService';
 
 export const runtime = 'edge';
 
-export async function GET(_request: Request, { params }: any) {
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     if (!id || typeof id !== 'string') {
       return NextResponse.json(jsendFail({ message: 'Invalid id' }), { status: 400 });
     }
@@ -17,7 +17,8 @@ export async function GET(_request: Request, { params }: any) {
     }
 
     return NextResponse.json(jsendSuccess(website));
-  } catch (error: any) {
-    return NextResponse.json(jsendError('服务器错误', 'INTERNAL_ERROR', { error: String(error?.message || error) }), { status: 500 });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return NextResponse.json(jsendError('服务器错误', 'INTERNAL_ERROR', { error: errorMessage }), { status: 500 });
   }
 }

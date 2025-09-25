@@ -161,7 +161,7 @@ const CollectionLoadingState = ({ collectionSlug }: { collectionSlug: string }) 
     </h3>
     
     <p className="text-muted-foreground max-w-sm leading-relaxed">
-      正在获取"{collectionSlug}"集合的详细信息和网站列表...
+      正在获取&ldquo;{collectionSlug}&rdquo;集合的详细信息和网站列表...
     </p>
   </div>
 );
@@ -194,7 +194,7 @@ export function CollectionDetailPage({
     isLoading,
     hasError,
     error,
-    isEmpty,
+    isEmpty: _isEmpty,
     isNotFound,
     found,
     source,
@@ -203,12 +203,12 @@ export function CollectionDetailPage({
     clearError,
     currentPage,
     totalPages,
-    hasNextPage,
-    hasPrevPage,
-    searchQuery,
-    tagsFilter,
-    sorting,
-    config: hookConfig,
+    hasNextPage: _hasNextPage,
+    hasPrevPage: _hasPrevPage,
+    searchQuery: _searchQuery,
+    tagsFilter: _tagsFilter,
+    sorting: _sorting,
+    config: _hookConfig,
   } = useCollectionDetail({
     collectionId: collectionSlug,
     initialData,
@@ -451,7 +451,7 @@ export function generateCollectionMetadata(
   }
 ): Metadata {
   // 默认meta信息
-  const defaultTitle = 'WebVault - 网站集合详情';
+  const _defaultTitle = 'WebVault - 网站集合详情';
   const defaultDescription = '探索WebVault精选的网站集合，发现按主题整理的优质网站资源。';
   
   if (!collection) {

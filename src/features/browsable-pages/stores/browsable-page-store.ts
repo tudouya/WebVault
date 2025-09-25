@@ -15,11 +15,9 @@ import {
   parseAsString, 
   parseAsInteger, 
   parseAsBoolean,
-  useQueryState,
   useQueryStates
 } from 'nuqs';
-import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { 
   BrowsablePageState,
   BrowsablePageConfig,
@@ -130,7 +128,7 @@ export interface BrowsablePageStoreState extends BrowsablePageState {
     resetAll: () => void;
     
     // URL状态同步方法
-    syncFromURL: (params: Record<string, any>) => void;
+    syncFromURL: (params: BrowsablePageURLParams) => void;
     syncToURL: () => BrowsablePageURLParams;
     enableUrlSync: () => void;
     disableUrlSync: () => void;
@@ -279,9 +277,19 @@ export const useBrowsablePageStore = create<BrowsablePageStoreState>()(
               const itemsPerPage = state.filters.itemsPerPage || 12;
               
               // 生成页面特定的实体数据
-              let entityData: any;
+              let entityData: BrowsablePageData['entity'] = {
+                id: 'default',
+                name: 'Default Entity',
+                slug: 'default',
+                description: 'Default description',
+                stats: {
+                  websiteCount: mockWebsites.length,
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                },
+              };
               let websiteData = [...mockWebsites];
-              
+
               if (pageType === 'collection') {
                 entityData = {
                   id: entitySlug || 'developer-essential-tools',
@@ -451,8 +459,8 @@ export const useBrowsablePageStore = create<BrowsablePageStoreState>()(
           
           // 筛选方法
           updateFilters: (updates: Partial<FilterParams>) => {
-            const state = get();
-            
+            get();
+
             set(
               (current) => ({
                 filters: { ...current.filters, ...updates },
@@ -712,7 +720,7 @@ export const useBrowsablePageStore = create<BrowsablePageStoreState>()(
           },
           
           // URL状态同步方法
-          syncFromURL: (params: Record<string, any>) => {
+          syncFromURL: (params: BrowsablePageURLParams) => {
             const {
               slug = null,
               q = '',
@@ -934,11 +942,11 @@ export const useBrowsablePageStore = create<BrowsablePageStoreState>()(
                 tags: newParams.tags,
                 sort: newParams.sort,
                 order: newParams.order,
-                page: newParams.page ? parseInt(newParams.page) : 1,
-                limit: newParams.limit ? parseInt(newParams.limit) : state.config.content.grid.defaultItemsPerPage,
+                page: newParams.page ? parseInt(String(newParams.page)) : 1,
+                limit: newParams.limit ? parseInt(String(newParams.limit)) : state.config.content.grid.defaultItemsPerPage,
                 view: newParams.view,
                 featured: newParams.featured === 'true',
-                rating: newParams.rating ? parseInt(newParams.rating) : 0,
+                rating: newParams.rating ? parseInt(String(newParams.rating)) : 0,
                 ads: newParams.ads !== 'false',
               };
               
@@ -1035,12 +1043,18 @@ export function useBrowsablePageUrlSync() {
   
   // 从URL更新store状态 (组件首次加载时调用)
   const syncStoreFromUrl = () => {
-    actions.syncFromURL(urlState);
+    // 转换 urlState 以匹配 BrowsablePageURLParams 类型
+    const params: BrowsablePageURLParams = {
+      ...urlState,
+      order: urlState.order === 'asc' || urlState.order === 'desc' ? urlState.order : undefined,
+      view: urlState.view === 'grid' || urlState.view === 'list' ? urlState.view : undefined,
+    };
+    actions.syncFromURL(params);
   };
   
   // 从store更新URL状态 (状态变更时调用)
   const syncUrlFromStore = () => {
-    const browsablePageUrlState: Record<string, any> = {
+    const browsablePageUrlState: BrowsablePageURLParams = {
       slug: store.actions.getCurrentEntitySlug() || undefined,
       q: store.filters.search || undefined,
       category: store.filters.categoryId || undefined,
@@ -1056,7 +1070,21 @@ export function useBrowsablePageUrlSync() {
       ads: !store.filters.includeAds ? store.filters.includeAds : undefined,
     };
     
-    setUrlState(browsablePageUrlState);
+    // 转换类型以匹配 nuqs 的期望格式
+    setUrlState({
+      slug: browsablePageUrlState.slug || null,
+      q: browsablePageUrlState.q || null,
+      category: browsablePageUrlState.category || null,
+      tags: browsablePageUrlState.tags || null,
+      sort: browsablePageUrlState.sort || null,
+      order: browsablePageUrlState.order || null,
+      page: typeof browsablePageUrlState.page === 'number' ? browsablePageUrlState.page : null,
+      limit: typeof browsablePageUrlState.limit === 'number' ? browsablePageUrlState.limit : null,
+      view: browsablePageUrlState.view || null,
+      featured: typeof browsablePageUrlState.featured === 'boolean' ? browsablePageUrlState.featured : null,
+      rating: typeof browsablePageUrlState.rating === 'number' ? browsablePageUrlState.rating : null,
+      ads: typeof browsablePageUrlState.ads === 'boolean' ? browsablePageUrlState.ads : null,
+    });
   };
   
   return {

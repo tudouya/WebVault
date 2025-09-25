@@ -38,23 +38,6 @@ const detectMaliciousContent = (value: string): boolean => {
 };
 
 /**
- * 安全字符串验证
- * 通用的字符串验证，包含XSS防护
- */
-const safeStringValidator = (fieldName: string, maxLength: number = 500) => {
-  return z
-    .string()
-    .trim()
-    .max(maxLength, `${fieldName}不能超过${maxLength}个字符`)
-    .refine(
-      (value) => !detectMaliciousContent(value),
-      {
-        message: `${fieldName}包含不安全的内容，请移除脚本标签和危险字符`,
-      }
-    );
-};
-
-/**
  * 搜索表单验证Schema
  * 
  * 用于首页主搜索框的输入验证

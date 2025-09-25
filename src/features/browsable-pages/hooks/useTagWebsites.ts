@@ -381,7 +381,7 @@ export function useTagWebsites(config: TagWebsitesConfig = {}) {
   
   // 获取状态管理
   const store = useBrowsablePageStore();
-  const { syncUrlFromStore, syncStoreFromUrl } = useBrowsablePageUrlSync();
+  const { syncUrlFromStore: _syncUrlFromStore, syncStoreFromUrl: _syncStoreFromUrl } = useBrowsablePageUrlSync();
   const filters = useBrowsablePageFilters();
   const pagination = useBrowsablePagePagination();
   
@@ -404,13 +404,13 @@ export function useTagWebsites(config: TagWebsitesConfig = {}) {
       clearError,
       updateFilters,
       setSearch,
-      setTags,
+      setTags: _setTags,
       setSorting,
       clearFilters: storeClearFilters,
       setPage,
       setItemsPerPage,
       setViewMode,
-      getCurrentEntitySlug,
+      getCurrentEntitySlug: _getCurrentEntitySlug,
     },
   } = store;
 
@@ -767,7 +767,7 @@ export function useTagWebsites(config: TagWebsitesConfig = {}) {
 
   // 构建标签网站状态
   const tagWebsitesState: TagWebsitesState = useMemo(() => {
-    const activeTags = currentTagSlugsRef.current.map((slug, index) => ({
+    const activeTags = currentTagSlugsRef.current.map((slug) => ({
       id: `tag-${slug}`,
       name: `#${slug}`,
       slug: slug,

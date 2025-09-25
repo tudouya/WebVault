@@ -11,7 +11,7 @@ import type { BlogCardData } from "../types";
 interface BlogCardProps {
   blog: BlogCardData;
   className?: string;
-  onTagClick?: (tag: string) => void;
+  onBlogClick?: (blog: BlogCardData) => void;
   onAuthorClick?: (authorId: string) => void;
   animationIndex?: number; // 用于stagger动画的索引
 }
@@ -59,7 +59,7 @@ function formatRelativeTime(publishedAt: string): string {
 const BlogCard = React.memo(function BlogCard({ 
   blog, 
   className,
-  onTagClick,
+  onBlogClick,
   onAuthorClick,
   animationIndex = 0
 }: BlogCardProps) {
@@ -78,9 +78,9 @@ const BlogCard = React.memo(function BlogCard({
   });
 
   const handleClick = useCallback(() => {
-    // 导航到博客详情页面
+    onBlogClick?.(blog);
     router.push(`/blog/${blog.slug}`);
-  }, [router, blog.slug]);
+  }, [blog, onBlogClick, router]);
 
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -135,12 +135,10 @@ const BlogCard = React.memo(function BlogCard({
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            priority={false}
-            loading="lazy"
             placeholder="blur"
             blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
             onError={handleCoverImageError}
-            unoptimized={false}
+            unoptimized
             quality={85}
             style={{
               color: 'transparent',

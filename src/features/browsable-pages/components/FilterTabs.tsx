@@ -15,7 +15,7 @@
 'use client';
 
 import React from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
+import { cva } from 'class-variance-authority';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 

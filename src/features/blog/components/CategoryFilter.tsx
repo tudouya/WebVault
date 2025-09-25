@@ -89,9 +89,9 @@ export function CategoryFilter({
   const containerRef = useRef<HTMLDivElement>(null);
   
   // 处理分类点击
-  const handleCategoryClick = (category: BlogCategoryType) => {
+  const handleCategoryClick = useCallback((category: BlogCategoryType) => {
     onCategoryChange(category);
-  };
+  }, [onCategoryChange]);
 
   // 获取当前激活分类的索引
   const getActiveCategoryIndex = useCallback(() => {
@@ -164,7 +164,7 @@ export function CategoryFilter({
         handleCategoryClick(currentCategory);
         break;
     }
-  }, [getActiveCategoryIndex, onCategoryChange, focusCategoryAtIndex]);
+  }, [getActiveCategoryIndex, onCategoryChange, focusCategoryAtIndex, handleCategoryClick]);
 
   return (
     <div 

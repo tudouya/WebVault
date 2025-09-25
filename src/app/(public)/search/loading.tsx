@@ -1,7 +1,7 @@
 import React from 'react';
 import { LoadingSpinner, WebsiteCardSkeleton, SearchLoadingIndicator } from '@/features/websites/components/LoadingStates';
 import { cn } from '@/lib/utils';
-import { Search, Filter, Globe } from 'lucide-react';
+import { Search, Filter } from 'lucide-react';
 
 /**
  * 搜索页面加载组件

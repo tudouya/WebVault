@@ -23,7 +23,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
-import { ChevronDown, ChevronRight, X } from 'lucide-react';
+import { ChevronDown, X } from 'lucide-react';
 
 interface SidebarFiltersProps {
   /**

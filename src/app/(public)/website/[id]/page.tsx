@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { websiteDetailService } from '@/features/websites/services/websiteDetailService'
-import { generateWebsiteMetadata, generateWebsiteStructuredData } from '@/features/websites/utils/seoUtils'
+import { generateWebsiteMetadata } from '@/features/websites/utils/seoUtils'
 import { WebsiteDetailData } from '@/features/websites/types/detail'
 import { WebsiteDetailPage } from '@/features/websites/components/WebsiteDetailPage'
 

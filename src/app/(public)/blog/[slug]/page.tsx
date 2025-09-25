@@ -1,10 +1,10 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import dynamicImport from 'next/dynamic'
-import { getBlogBySlug, blogDetailService } from '@/features/blog/data/blogDetailService'
-import { mockBlogDetails } from '@/features/blog/data/mockBlogs'
+import { getBlogBySlug } from '@/features/blog/data/blogDetailService'
 import { BlogDetailData } from '@/features/blog/types'
 import { generateBlogMetadata, generateStructuredData } from '@/features/blog/utils/seoUtils'
+import type { BlogPostingStructuredData } from '@/features/blog/utils'
 
 // 强制动态渲染，确保最新数据和避免预渲染问题
 export const dynamic = 'force-dynamic'
@@ -199,20 +199,20 @@ export default async function BlogDetailPageRoute({ params }: BlogDetailPageProp
   }
 
   // 生成结构化数据用于页面注入
-  let structuredData: any
+  let structuredData: BlogPostingStructuredData | null = null
   try {
     structuredData = generateStructuredData(blogData)
   } catch (error) {
     console.error('Error generating structured data:', error)
     // 如果结构化数据生成失败，使用空对象但不阻止页面渲染
-    structuredData = {}
+    structuredData = null
   }
 
   // 渲染博客详情页面，包含结构化数据脚本
   return (
     <>
       {/* 注入JSON-LD结构化数据 */}
-      {Object.keys(structuredData).length > 0 && (
+      {structuredData && (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

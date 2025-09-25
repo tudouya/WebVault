@@ -43,96 +43,100 @@ interface SearchResultsProps {
  * 搜索空结果状态组件
  * 使用React.memo优化性能
  */
-const EmptySearchResults = React.memo(({ searchQuery }: { searchQuery?: string }) => (
-  <div className="col-span-full flex flex-col items-center justify-center py-16 px-4 text-center min-h-[400px]">
-    <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-6">
-      <Search className="w-10 h-10 text-muted-foreground" />
+const EmptySearchResults = React.memo(function EmptySearchResults({ searchQuery }: { searchQuery?: string }) {
+  return (
+    <div className="col-span-full flex flex-col items-center justify-center py-16 px-4 text-center min-h-[400px]">
+      <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-6">
+        <Search className="w-10 h-10 text-muted-foreground" />
+      </div>
+      <h3 className="text-xl font-semibold text-foreground mb-3">
+        未找到搜索结果
+      </h3>
+      <div className="text-muted-foreground max-w-md space-y-4">
+        {searchQuery ? (
+          <>
+            <p>没有找到包含 <span className="font-medium text-foreground">"{searchQuery}"</span> 的网站</p>
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-foreground">搜索建议：</p>
+              <ul className="text-sm space-y-1 text-left">
+                <li>• 尝试使用更简单的关键词</li>
+                <li>• 检查关键词的拼写</li>
+                <li>• 使用同义词或相关术语</li>
+                <li>• 清除筛选条件重新搜索</li>
+              </ul>
+            </div>
+          </>
+        ) : (
+          <>
+            <p>没有符合当前筛选条件的网站</p>
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-foreground">建议操作：</p>
+              <ul className="text-sm space-y-1 text-left">
+                <li>• 清除部分筛选条件</li>
+                <li>• 尝试输入搜索关键词</li>
+                <li>• 查看所有分类的网站</li>
+              </ul>
+            </div>
+          </>
+        )}
+      </div>
     </div>
-    <h3 className="text-xl font-semibold text-foreground mb-3">
-      未找到搜索结果
-    </h3>
-    <div className="text-muted-foreground max-w-md space-y-4">
-      {searchQuery ? (
-        <>
-          <p>没有找到包含 <span className="font-medium text-foreground">"{searchQuery}"</span> 的网站</p>
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-foreground">搜索建议：</p>
-            <ul className="text-sm space-y-1 text-left">
-              <li>• 尝试使用更简单的关键词</li>
-              <li>• 检查关键词的拼写</li>
-              <li>• 使用同义词或相关术语</li>
-              <li>• 清除筛选条件重新搜索</li>
-            </ul>
-          </div>
-        </>
-      ) : (
-        <>
-          <p>没有符合当前筛选条件的网站</p>
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-foreground">建议操作：</p>
-            <ul className="text-sm space-y-1 text-left">
-              <li>• 清除部分筛选条件</li>
-              <li>• 尝试输入搜索关键词</li>
-              <li>• 查看所有分类的网站</li>
-            </ul>
-          </div>
-        </>
-      )}
-    </div>
-  </div>
-));
+  );
+});
 
 /**
  * 搜索错误状态组件
  * 使用React.memo优化性能
  */
-const SearchErrorState = React.memo(({ 
+const SearchErrorState = React.memo(function SearchErrorState({ 
   message, 
   onRetry 
 }: { 
   message?: string; 
   onRetry?: () => void; 
-}) => (
-  <div className="col-span-full flex flex-col items-center justify-center py-16 px-4 text-center min-h-[400px]">
-    <div className="w-20 h-20 bg-destructive/10 rounded-full flex items-center justify-center mb-6">
-      <AlertTriangle className="w-10 h-10 text-destructive" />
-    </div>
-    <h3 className="text-xl font-semibold text-foreground mb-3">
-      搜索出错了
-    </h3>
-    <p className="text-muted-foreground max-w-md mb-6">
-      {message || "无法完成搜索请求，请稍后重试"}
-    </p>
-    
-    {/* 重试按钮 */}
-    {onRetry && (
-      <div className="flex flex-col sm:flex-row gap-3">
-        <Button 
-          onClick={onRetry}
-          variant="default"
-          className="flex items-center gap-2"
-        >
-          <RefreshCw className="w-4 h-4" />
-          重试搜索
-        </Button>
-        <Button 
-          onClick={() => window.location.reload()}
-          variant="outline"
-          className="flex items-center gap-2"
-        >
-          <RefreshCw className="w-4 h-4" />
-          刷新页面
-        </Button>
+}) {
+  return (
+    <div className="col-span-full flex flex-col items-center justify-center py-16 px-4 text-center min-h-[400px]">
+      <div className="w-20 h-20 bg-destructive/10 rounded-full flex items-center justify-center mb-6">
+        <AlertTriangle className="w-10 h-10 text-destructive" />
       </div>
-    )}
-  </div>
-));
+      <h3 className="text-xl font-semibold text-foreground mb-3">
+        搜索出错了
+      </h3>
+      <p className="text-muted-foreground max-w-md mb-6">
+        {message || "无法完成搜索请求，请稍后重试"}
+      </p>
+      
+      {/* 重试按钮 */}
+      {onRetry && (
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button 
+            onClick={onRetry}
+            variant="default"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            重试搜索
+          </Button>
+          <Button 
+            onClick={() => window.location.reload()}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            刷新页面
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+});
 
 /**
  * 搜索结果统计信息组件
  * 使用React.memo优化性能
  */
-const SearchResultStats = React.memo(({ 
+const SearchResultStats = React.memo(function SearchResultStats({ 
   totalResults, 
   searchQuery,
   isLoading 
@@ -140,7 +144,7 @@ const SearchResultStats = React.memo(({
   totalResults?: number; 
   searchQuery?: string;
   isLoading?: boolean;
-}) => {
+}) {
   if (isLoading) {
     return (
       <div className="mb-6 pb-4 border-b border-border">

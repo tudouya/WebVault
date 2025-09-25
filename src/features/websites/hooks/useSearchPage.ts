@@ -255,7 +255,7 @@ export function useSearchFilters(config: SearchFiltersConfig = {}) {
   const store = useHomepageStore();
   const { syncSearchPageFromUrl, syncUrlFromSearchPage } = useSearchPageUrlSync();
   const searchPageState = useSearchPageState();
-  const { addToHistory, addRecentSearch } = useSearchHistory();
+  const { addToHistory } = useSearchHistory();
   const { updateStats } = useSearchStats();
 
   // 内部状态
@@ -284,9 +284,6 @@ export function useSearchFilters(config: SearchFiltersConfig = {}) {
       addTag,
       removeTag,
       setSorting,
-      setFeaturedOnly,
-      setIncludeAds,
-      setMinRating,
       resetFilters: storeResetFilters,
     },
   } = store;
@@ -625,7 +622,7 @@ export function useSearchFilters(config: SearchFiltersConfig = {}) {
   ]);
 
   // 为搜索页面特定操作创建带URL同步的包装函数
-  const createSyncedAction = useCallback(<T extends any[]>(
+  const createSyncedAction = useCallback(<T extends unknown[]>(
     action: (...args: T) => void
   ) => {
     return (...args: T) => {
@@ -1049,11 +1046,11 @@ export function useSearchPage(
         searchFilters.executeSearch(urlState.search);
       }
     }
-  }, []); // 只在组件初始化时运行一次
+  }, [syncSearchPageFromUrl, searchFilters, urlState]); // 添加所有依赖项
   
   // 监听浏览器前进后退事件，恢复搜索状态
   useEffect(() => {
-    const handlePopstate = (event: PopStateEvent) => {
+    const handlePopstate = (_event: PopStateEvent) => {
       console.log('浏览器后退/前进，恢复搜索状态');
       syncSearchPageFromUrl();
       
@@ -1132,7 +1129,6 @@ export function useSearchPage(
  */
 export function useSearchPageUrlStateSync() {
   const { syncSearchPageFromUrl, syncUrlFromSearchPage, urlState } = useSearchPageUrlSync();
-  const store = useHomepageStore();
   
   /**
    * 从URL恢复完整搜索状态

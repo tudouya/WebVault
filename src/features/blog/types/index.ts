@@ -1,9 +1,29 @@
 /**
  * Blog data type definitions
- * 
+ *
  * Defines the blog interfaces for the blog page UI implementation
  * including blog card data, category filtering, and detail page functionality.
  */
+
+/**
+ * Blog URL parameters for state synchronization
+ */
+export interface BlogURLParams {
+  /** Search query */
+  q?: string | null;
+  /** Category filter */
+  category?: string | null;
+  /** Tag filters (comma-separated) */
+  tags?: string | null;
+  /** Current page number */
+  page?: number | null;
+  /** Items per page */
+  perPage?: number | null;
+  /** Sort field */
+  sort?: string | null;
+  /** Sort order */
+  order?: 'asc' | 'desc' | null;
+}
 
 // 导入分类常量和类型
 export { 

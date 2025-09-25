@@ -8,7 +8,7 @@
  * across different page types while maintaining type safety.
  */
 
-import type { FilterState, SortField, SortOrder } from '@/features/websites/types/filters';
+import type { FilterState } from '@/features/websites/types/filters';
 import type { WebsiteCardData } from '@/features/websites/types/website';
 import type { PageType, BrowsablePageConfig } from './page-config';
 
@@ -68,7 +68,7 @@ export interface FilterParams extends Omit<FilterState, 'categoryId' | 'selected
  * Provides consistent data format across all page types
  * while allowing type-specific extensions through generics.
  */
-export interface BrowsablePageData<T = any> {
+export interface BrowsablePageData<T = unknown> {
   /** Entity information */
   entity: {
     /** Entity ID */
@@ -217,29 +217,29 @@ export interface TagMetadata {
  */
 export interface BrowsablePageURLParams {
   /** Entity slug (collection/category/tag) */
-  slug?: string;
+  slug?: string | null;
   /** Search query */
-  q?: string;
+  q?: string | null;
   /** Category filter */
-  category?: string;
+  category?: string | null;
   /** Tag filters (comma-separated) */
-  tags?: string;
+  tags?: string | null;
   /** Sort field */
-  sort?: string;
+  sort?: string | null;
   /** Sort order */
-  order?: 'asc' | 'desc';
+  order?: 'asc' | 'desc' | null;
   /** View mode */
-  view?: 'grid' | 'list';
+  view?: 'grid' | 'list' | null;
   /** Current page */
-  page?: string;
+  page?: number | string | null;
   /** Items per page */
-  limit?: string;
+  limit?: number | string | null;
   /** Featured filter */
-  featured?: string;
+  featured?: boolean | string | null;
   /** Rating filter */
-  rating?: string;
+  rating?: number | string | null;
   /** Include ads filter */
-  ads?: string;
+  ads?: boolean | string | null;
 }
 
 /**

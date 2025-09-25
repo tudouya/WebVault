@@ -14,12 +14,10 @@
 
 import React from 'react';
 import {
-  Search,
   Github,
   Twitter,
   Instagram,
-  Youtube,
-  ExternalLink
+  Youtube
 } from 'lucide-react';
 
 /**

@@ -22,9 +22,10 @@
  */
 
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
-import { Copy, Check, ExternalLink, Maximize2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { blogTypographyClasses } from '../styles/typography';
+
+type BlogContentStyle = React.CSSProperties & { '--max-image-width'?: string };
 
 /**
  * 渲染器配置接口
@@ -54,8 +55,6 @@ export interface BlogContentRendererProps {
   config?: BlogContentRendererConfig;
   /** 自定义类名 */
   className?: string;
-  /** 文章标题（用于图片 alt 属性） */
-  articleTitle?: string;
 }
 
 /**
@@ -280,7 +279,6 @@ export const BlogContentRenderer: React.FC<BlogContentRendererProps> = ({
   contentType = 'markdown',
   config,
   className,
-  articleTitle = 'Blog Article',
 }) => {
   const mergedConfig = useMemo(() => ({ ...DEFAULT_CONFIG, ...config }), [config]);
   const { copiedCode, copyCode } = useCodeCopy();
@@ -396,13 +394,14 @@ export const BlogContentRenderer: React.FC<BlogContentRendererProps> = ({
     );
   }
 
+  const styleVariables: BlogContentStyle = {
+    '--max-image-width': mergedConfig.maxImageWidth,
+  };
+
   return (
     <div 
       className={baseStyles}
-      style={{
-        // Requirements 10.2: 多媒体内容设计 - 图片最大宽度
-        ['--max-image-width' as any]: mergedConfig.maxImageWidth,
-      }}
+      style={styleVariables}
     >
       {/* Requirements 2.1 & 2.2: 安全渲染内容 */}
       <div 
@@ -516,7 +515,6 @@ export default BlogContentRenderer;
  *     maxImageWidth: '800px',
  *   }}
  *   className="custom-blog-content"
- *   articleTitle="我的博客文章"
  * />
  * ```
  */

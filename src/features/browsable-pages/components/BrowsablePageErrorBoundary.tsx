@@ -548,7 +548,7 @@ export function useBrowsablePageErrorHandler() {
     
     // 在错误对象上附加上下文信息（仅用于调试）
     if (context && process.env.NODE_ENV === 'development') {
-      (enhancedError as any).__browsablePageContext = context;
+      (enhancedError as Error & { __browsablePageContext?: unknown }).__browsablePageContext = context;
     }
 
     // 在下一个事件循环中抛出错误，让错误边界捕获

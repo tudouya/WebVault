@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { 
   useBrowsablePageUrlSync,
   useBrowsablePageStore,
@@ -21,7 +21,7 @@ export function CollectionPageExample({ collectionSlug }: { collectionSlug: stri
   const { actions } = store;
   
   // 配置集合页面
-  const collectionConfig: BrowsablePageConfig = {
+  const collectionConfig: BrowsablePageConfig = useMemo(() => ({
     ...DEFAULT_PAGE_CONFIG,
     pageType: 'collection',
     filters: {
@@ -30,12 +30,12 @@ export function CollectionPageExample({ collectionSlug }: { collectionSlug: stri
       categoryEnabled: true,
       tagEnabled: true,
     },
-  };
+  }), []);
 
   useEffect(() => {
     // 设置页面配置
     actions.setConfig(collectionConfig);
-  }, [actions]);
+  }, [actions, collectionConfig]);
 
   return (
     <div>
@@ -59,14 +59,14 @@ export function CategoryPageExample() {
   // 手动同步URL到store (如果不使用BrowsablePageUrlManager组件)
   useEffect(() => {
     urlSync.syncStoreFromUrl();
-  }, []);
+  }, [urlSync]);
 
   // 监听筛选条件变化，自动更新URL
   useEffect(() => {
     if (store.meta.isInitialized) {
       urlSync.syncUrlFromStore();
     }
-  }, [store.filters, store.meta.isInitialized]);
+  }, [store.filters, store.meta.isInitialized, urlSync]);
 
   return (
     <div>
@@ -92,7 +92,7 @@ export function TagPageExample() {
   const { actions } = store;
 
   // 标签页面配置
-  const tagConfig: BrowsablePageConfig = {
+  const tagConfig: BrowsablePageConfig = useMemo(() => ({
     ...DEFAULT_PAGE_CONFIG,
     pageType: 'tag',
     filters: {
@@ -100,11 +100,11 @@ export function TagPageExample() {
       searchEnabled: true,
       categoryEnabled: true, // 标签页面可以按分类筛选
     },
-  };
+  }), []);
 
   useEffect(() => {
     actions.setConfig(tagConfig);
-  }, []);
+  }, [actions, tagConfig]);
 
   return (
     <div>

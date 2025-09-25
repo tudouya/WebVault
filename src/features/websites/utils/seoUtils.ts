@@ -413,10 +413,6 @@ export function generateSocialSharingUrls(
   const seoConfig = { ...DEFAULT_SEO_CONFIG, ...config }
   const websiteUrl = new URL(`/website/${website.id}`, seoConfig.baseUrl).toString()
   const title = encodeURIComponent(website.title)
-  const description = encodeURIComponent(
-    website.description || `在 ${seoConfig.siteName} 发现 ${website.title}`
-  )
-  
   return {
     twitter: `https://twitter.com/intent/tweet?text=${title}&url=${encodeURIComponent(websiteUrl)}`,
     facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(websiteUrl)}`,

@@ -14,6 +14,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { LoadingSpinner } from '@/features/websites/components/LoadingStates';
 import { AlertCircle, ExternalLink, X } from 'lucide-react';
@@ -268,6 +269,12 @@ const AdContent = ({
   onAdClose?: (adId: string) => void;
   className?: string;
 }) => {
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [ad.imageUrl]);
+
   const handleClick = () => {
     onAdClick?.(ad);
     
@@ -317,19 +324,21 @@ const AdContent = ({
         </div>
         
         {/* 广告图片 */}
-        {ad.imageUrl && (
-          <div className="mb-4">
-            <img
+        {ad.imageUrl && !imageError && (
+          <div
+            className={cn(
+              'relative mb-4 overflow-hidden rounded-md',
+              displayType === 'sidebar' ? 'h-32' : 'h-24'
+            )}
+          >
+            <Image
               src={ad.imageUrl}
               alt={ad.title}
-              className={cn(
-                'w-full rounded-md object-cover',
-                displayType === 'sidebar' ? 'h-32' : 'h-24'
-              )}
-              onError={(e) => {
-                // 图片加载失败时隐藏
-                e.currentTarget.style.display = 'none';
-              }}
+              className="object-cover"
+              fill
+              sizes={displayType === 'sidebar' ? '(min-width: 768px) 16rem, 100vw' : '(min-width: 768px) 24rem, 100vw'}
+              onError={() => setImageError(true)}
+              unoptimized
             />
           </div>
         )}
@@ -402,24 +411,19 @@ export function AdBanner({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDismissed, setIsDismissed] = useState(false);
-  
-  // 如果未启用广告显示，不渲染组件
-  if (!enabled || isDismissed) {
-    return null;
-  }
-  
+
   /**
    * 获取广告数据
    */
-  const loadAdData = async () => {
+  const loadAdData = React.useCallback(async () => {
     if (!adSlot && !adData) return;
-    
+
     setIsLoading(true);
     setError(null);
-    
+
     try {
       let ad: AdData | null = null;
-      
+
       if (adData) {
         // 使用传入的静态广告数据
         ad = adData;
@@ -427,7 +431,7 @@ export function AdBanner({
         // 动态获取广告数据
         ad = await fetchAdData(adSlot);
       }
-      
+
       if (ad && isValidAdData(ad)) {
         setCurrentAd(ad);
       } else {
@@ -440,8 +444,8 @@ export function AdBanner({
     } finally {
       setIsLoading(false);
     }
-  };
-  
+  }, [adSlot, adData]);
+
   // 初始化时验证和加载广告数据
   useEffect(() => {
     if (adData) {
@@ -455,7 +459,12 @@ export function AdBanner({
       // 对于动态数据，执行加载
       loadAdData();
     }
-  }, [adSlot, adData]);
+  }, [adSlot, adData, currentAd, loadAdData]);
+
+  // 如果未启用广告显示，不渲染组件
+  if (!enabled || isDismissed) {
+    return null;
+  }
   
   /**
    * 处理广告关闭

@@ -22,6 +22,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import type { BlogCardData, BlogCategoryType } from '../types';
 
 // 导入已存在的通用组件
 import { HeaderNavigation } from '@/features/websites/components/HeaderNavigation';
@@ -142,8 +143,8 @@ export function BlogIndexPage({
   }, [activeCategory, blogPagination.currentPage, isInitialized, syncUrlFromStore]);
   
   // 处理分类筛选变化
-  const handleCategoryChange = (category: string) => {
-    setActiveCategory(category as any);
+  const handleCategoryChange = (category: BlogCategoryType) => {
+    setActiveCategory(category);
   };
   
   // 处理分页变化
@@ -152,7 +153,7 @@ export function BlogIndexPage({
   };
   
   // 处理文章卡片点击 - 导航到文章详情页面
-  const handleBlogClick = (blog: any) => {
+  const handleBlogClick = (blog: BlogCardData) => {
     try {
       // 构建文章详情页面的URL
       const detailUrl = `/blog/${blog.slug || blog.id}`;

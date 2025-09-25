@@ -22,7 +22,6 @@ import React from 'react';
 import Link from 'next/link';
 import { Home, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { WebsiteDetailData } from '../types/detail';
 import type { Category } from '../types/category';
 
 /**

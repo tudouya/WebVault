@@ -18,17 +18,13 @@
 
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 // 导入布局组件
 import { BrowsablePageLayout } from './BrowsablePageLayout';
 import type { BrowsablePageConfig } from '../types';
 
-// 导入数据Hook
-import { useCategoryWebsites } from '../hooks/useCategoryWebsites';
-
 // 导入类型
-import type { WebsiteCardData } from '@/features/websites/types/website';
 
 /**
  * 创建分类页面配置
@@ -293,16 +289,16 @@ const CategoryErrorState = ({
 /**
  * 加载状态组件
  */
-const CategoryLoadingState = () => (
+const _CategoryLoadingState = () => (
   <div className="flex flex-col items-center justify-center py-16 px-4 text-center min-h-[500px]">
     <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6 animate-pulse">
       <div className="w-8 h-8 bg-primary/20 rounded-full animate-spin border-2 border-primary/30 border-t-primary" />
     </div>
-    
+
     <h3 className="text-lg font-semibold text-foreground mb-2">
       正在加载分类数据
     </h3>
-    
+
     <p className="text-muted-foreground max-w-sm leading-relaxed">
       正在获取分类信息和网站列表...
     </p>
@@ -319,13 +315,13 @@ const CategoryLoadingState = () => (
  * - 响应式布局适配
  */
 export function CategoryBrowsePage({
-  selectedCategory,
+  selectedCategory: _selectedCategory,
   className,
   onVisitWebsite,
   onTagClick,
-  onCategoryChange,
+  onCategoryChange: _onCategoryChange,
   onError,
-  onLoadingChange,
+  onLoadingChange: _onLoadingChange,
 }: CategoryBrowsePageProps) {
   // 生成页面配置
   const pageConfig = useMemo(() => {
@@ -355,7 +351,7 @@ export function CategoryBrowsePage({
     <div className={className}>
       <BrowsablePageLayout
         config={pageConfig}
-        entitySlug={selectedCategory || 'development'}
+        entitySlug={_selectedCategory || 'development'}
         onVisitWebsite={onVisitWebsite}
         onTagClick={onTagClick}
       />

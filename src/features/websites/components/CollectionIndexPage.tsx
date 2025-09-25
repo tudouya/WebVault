@@ -121,7 +121,7 @@ export function CollectionIndexPage({
       // 然后加载数据
       loadCollections();
     }
-  }, [isInitialized]); // 只依赖isInitialized，避免无限循环
+  }, [isInitialized, syncStoreFromUrl, loadCollections]); // 添加所有依赖项
   
   // 处理集合卡片点击 - 导航到集合详情页面
   const handleCollectionClick = (collection: CollectionCardData) => {

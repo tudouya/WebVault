@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import Image, { type ImageProps } from "next/image";
+import React, { useState, useCallback, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useIntersectionObserver } from "@/hooks/useIntersectionObserver";
 import { useImagePerformance } from "@/hooks/useImagePerformance";
@@ -26,8 +27,8 @@ interface LazyImageProps {
   onLoad?: () => void;
   /** 图片加载失败回调 */
   onError?: () => void;
-  /** 其他img属性 */
-  imgProps?: React.ImgHTMLAttributes<HTMLImageElement>;
+  /** 传递给 Next.js Image 组件的其他属性 */
+  imageProps?: Omit<ImageProps, "src" | "alt">;
   /** 图片的内联样式 */
   style?: React.CSSProperties;
   /** 是否启用性能监控 */
@@ -72,7 +73,7 @@ export function LazyImage({
   lazy = true,
   onLoad,
   onError,
-  imgProps = {},
+  imageProps,
   style,
   enablePerformanceMonitoring = false,
 }: LazyImageProps) {
@@ -109,13 +110,35 @@ export function LazyImage({
   // 是否应该显示图片
   const shouldShowImage = !lazy || isIntersecting;
 
+  useEffect(() => {
+    if (shouldShowImage && enablePerformanceMonitoring) {
+      startMonitoring();
+    }
+  }, [enablePerformanceMonitoring, shouldShowImage, startMonitoring]);
+
+  const {
+    priority: propPriority,
+    width,
+    height,
+    sizes,
+    quality,
+    placeholder: nextPlaceholder,
+    blurDataURL,
+    unoptimized = true,
+    ...restImageProps
+  } = imageProps ?? {};
+
+  const hasExplicitDimensions = typeof width === "number" && typeof height === "number";
+  const priority = propPriority ?? false;
+  const loading = priority ? undefined : (lazy ? "lazy" : "eager");
+
   return (
     <div 
       ref={intersectionRef}
       className={cn("relative overflow-hidden", containerClassName)}
     >
       {shouldShowImage && !imageError ? (
-        <img
+        <Image
           src={src}
           alt={alt}
           className={cn(
@@ -124,11 +147,19 @@ export function LazyImage({
             className
           )}
           style={style}
-          loading={lazy ? "lazy" : "eager"}
           onLoad={handleImageLoad}
           onError={handleImageError}
-          onLoadStart={() => enablePerformanceMonitoring && startMonitoring()}
-          {...imgProps}
+          priority={priority}
+          loading={loading}
+          width={hasExplicitDimensions ? width : undefined}
+          height={hasExplicitDimensions ? height : undefined}
+          fill={!hasExplicitDimensions}
+          sizes={sizes}
+          quality={quality}
+          placeholder={nextPlaceholder}
+          blurDataURL={blurDataURL}
+          unoptimized={unoptimized}
+          {...restImageProps}
         />
       ) : imageError && fallback ? (
         fallback

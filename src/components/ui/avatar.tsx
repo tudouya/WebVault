@@ -1,3 +1,4 @@
+import Image, { type ImageProps } from "next/image"
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
@@ -16,16 +17,34 @@ const Avatar = React.forwardRef<
 ))
 Avatar.displayName = "Avatar"
 
-const AvatarImage = React.forwardRef<
-  HTMLImageElement,
-  React.ImgHTMLAttributes<HTMLImageElement>
->(({ className, ...props }, ref) => (
-  <img
-    ref={ref}
-    className={cn("aspect-square h-full w-full", className)}
-    {...props}
-  />
-))
+type AvatarImageProps = Omit<ImageProps, "alt"> & { alt?: string }
+
+const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
+  (
+    { className, alt, width, height, sizes, priority, loading, unoptimized = true, ...rest },
+    ref
+  ) => {
+    const hasDimensions = typeof width === "number" && typeof height === "number"
+    const resolvedPriority = priority ?? false
+    const resolvedLoading = resolvedPriority ? undefined : loading ?? "lazy"
+
+    return (
+      <Image
+        ref={ref}
+        alt={alt || "Avatar"}
+        className={cn("aspect-square h-full w-full object-cover", className)}
+        width={hasDimensions ? width : undefined}
+        height={hasDimensions ? height : undefined}
+        fill={!hasDimensions}
+        sizes={sizes ?? "2.5rem"}
+        priority={resolvedPriority}
+        loading={resolvedLoading}
+        unoptimized={unoptimized}
+        {...rest}
+      />
+    )
+  }
+)
 AvatarImage.displayName = "AvatarImage"
 
 const AvatarFallback = React.forwardRef<

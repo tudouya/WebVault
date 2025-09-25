@@ -21,11 +21,15 @@ import {
   useCollectionFilters,
   useCollectionPagination,
 } from '@/features/websites/stores/collection-store';
-import { 
-  getMockCollections,
-  searchMockCollections,
-  filterMockCollectionsByStatus,
-  filterMockCollectionsByTags
+import {
+  getMockCollections
+} from '@/features/websites/data/mockCollections';
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type {
+  searchMockCollections as _searchMockCollections,
+  filterMockCollectionsByStatus as _filterMockCollectionsByStatus,
+  filterMockCollectionsByTags as _filterMockCollectionsByTags
 } from '@/features/websites/data/mockCollections';
 import type { Collection, CollectionStatus } from '@/features/websites/types/collection';
 import type { WebsiteCardData } from '@/features/websites/types/website';
@@ -202,8 +206,9 @@ async function fetchCollectionDetail(
     // 应用排序
     if (filters.sortBy && filters.sortOrder) {
       websites.sort((a, b) => {
-        let aValue: any, bValue: any;
-        
+        let aValue: string | number = 0;
+        let bValue: string | number = 0;
+
         switch (filters.sortBy) {
           case 'title':
             aValue = a.title.toLowerCase();
@@ -219,8 +224,8 @@ async function fetchCollectionDetail(
             break;
           case 'created_at':
           default:
-            aValue = new Date(a.created_at || 0);
-            bValue = new Date(b.created_at || 0);
+            aValue = new Date(a.created_at || 0).getTime();
+            bValue = new Date(b.created_at || 0).getTime();
             break;
         }
         
@@ -279,9 +284,9 @@ export function useCollectionDetail(config: CollectionDetailConfig) {
   }), [config]);
   
   // 获取store状态和方法
-  const collectionStore = useCollectionStore();
-  const { syncUrlFromStore, syncStoreFromUrl } = useCollectionUrlSync();
-  const { loadCollections, refreshCollections, clearError, setError } = useCollectionData();
+  const _collectionStore = useCollectionStore();
+  const { syncUrlFromStore: _syncUrlFromStore, syncStoreFromUrl: _syncStoreFromUrl } = useCollectionUrlSync();
+  const { loadCollections: _loadCollections, refreshCollections: _refreshCollections, clearError: _clearError, setError: _setError } = useCollectionData();
   const { searchQuery, statusFilter, tagsFilter, sorting } = useCollectionFilters();
   const { currentPage, itemsPerPage } = useCollectionPagination();
   

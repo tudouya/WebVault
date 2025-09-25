@@ -34,7 +34,7 @@ export class BlogDetailServiceError extends Error {
   constructor(
     message: string,
     public code: 'NOT_FOUND' | 'VALIDATION_ERROR' | 'FETCH_ERROR',
-    public details?: any
+    public details?: unknown
   ) {
     super(message);
     this.name = 'BlogDetailServiceError';
@@ -198,7 +198,7 @@ export class BlogDetailService {
       }
 
       // 获取候选文章列表
-      let candidateBlogs = excludeCurrentPost 
+      const candidateBlogs = excludeCurrentPost
         ? mockBlogDetails.filter(blog => blog.id !== currentBlogId)
         : mockBlogDetails;
 
@@ -315,10 +315,10 @@ export class BlogDetailService {
 
     // 检查是否为相关分类
     // 确保分类是有效的 BlogCategoryType
-    if (BlogCategoryUtils.isValidCategory(currentBlog.category) && 
+    if (BlogCategoryUtils.isValidCategory(currentBlog.category) &&
         BlogCategoryUtils.isValidCategory(candidateBlog.category)) {
-      const categoryRelations = BlogCategoryUtils.getRelatedCategories(currentBlog.category as any);
-      if (categoryRelations.includes(candidateBlog.category as any)) {
+      const categoryRelations = BlogCategoryUtils.getRelatedCategories(currentBlog.category);
+      if (categoryRelations.includes(candidateBlog.category)) {
         return 0.6;
       }
     }
@@ -502,17 +502,25 @@ export async function getSmartRecommendations(
     }
 
     // 分析用户阅读偏好
-    const userPreferences = (blogDetailService as any)['analyzeUserPreferences'](userReadHistory);
-    
+    const userPreferences = (blogDetailService as unknown as {
+      analyzeUserPreferences: (readHistory: string[]) => UserPreferences;
+    }).analyzeUserPreferences(userReadHistory);
+
     // 获取候选文章
-    const candidates = mockBlogDetails.filter(blog => 
+    const candidates = mockBlogDetails.filter(blog =>
       blog.id !== currentBlogId && !userReadHistory.includes(blog.id)
     );
 
     // 计算个性化相关性分数
     const scoredPosts = candidates.map(blog => ({
       blog,
-      score: (blogDetailService as any)['calculatePersonalizedScore'](currentBlog, blog, userPreferences)
+      score: (blogDetailService as unknown as {
+        calculatePersonalizedScore: (
+          currentBlog: BlogDetailData,
+          candidateBlog: BlogDetailData,
+          preferences: UserPreferences
+        ) => number;
+      }).calculatePersonalizedScore(currentBlog, blog, userPreferences)
     }));
 
     // 返回得分最高的文章
@@ -531,12 +539,13 @@ export async function getSmartRecommendations(
 
 // 为BlogDetailService类添加私有方法（通过原型扩展）
 declare module './blogDetailService' {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace BlogDetailService {
     interface BlogDetailService {
       analyzeUserPreferences(readHistory: string[]): UserPreferences;
       calculatePersonalizedScore(
-        currentBlog: BlogDetailData, 
-        candidateBlog: BlogDetailData, 
+        currentBlog: BlogDetailData,
+        candidateBlog: BlogDetailData,
         preferences: UserPreferences
       ): number;
     }

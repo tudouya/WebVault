@@ -110,7 +110,7 @@ export function WebsiteDetailInfoExample() {
     // In a real app, this would navigate to tag filter page
   };
 
-  const handleCategoryClick = (category: any) => {
+  const handleCategoryClick = (category: { id: string; name: string; slug: string }) => {
     console.log('Category clicked:', category);
     // In a real app, this would navigate to category page
   };

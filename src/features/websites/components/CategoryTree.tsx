@@ -18,10 +18,9 @@ import * as Collapsible from '@radix-ui/react-collapsible';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { 
-  Category, 
-  CategoryTreeNode,
-  CategoryNavigation 
+import {
+  Category,
+  CategoryTreeNode
 } from '../types';
 import { useHomepageCategories, useHomepageFilters } from '../stores/homepage-store';
 
@@ -542,10 +541,10 @@ export function CategoryTree({
   compact = false,
   onCategorySelect,
 }: CategoryTreeProps) {
-  const { 
-    expandedCategories, 
-    selectedCategory, 
-    toggleExpanded 
+  const {
+    expandedCategories,
+    selectedCategory: _selectedCategory,
+    toggleExpanded
   } = useHomepageCategories();
   
   const { 

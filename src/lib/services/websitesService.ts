@@ -1,5 +1,7 @@
+import type { InferSelectModel } from 'drizzle-orm';
 import { mockWebsites } from '@/features/websites/data/mockWebsites';
-import { getDbContext } from '@/lib/db/client';
+import type { WebsiteCardData } from '@/features/websites/types/website';
+import { websites } from '@/lib/db/schema/websites';
 import { WebsiteDTOSchema, type WebsiteDTO } from '@/lib/validations/websites';
 
 export interface ListParams {
@@ -22,13 +24,8 @@ export interface ListResult {
 export const websitesService = {
   async list(params: ListParams = {}): Promise<ListResult> {
     const { page = 1, pageSize = 12, query, category, featured, includeAds = true, minRating } = params;
-    const { channel } = getDbContext();
-    const isEdge = typeof (globalThis as any).EdgeRuntime !== 'undefined';
-
-    console.log('WebsitesService.list debug:', { channel, isEdge });
-
     // Force D1 adapter usage - try D1 first regardless of environment detection
-    const adapter = await tryImportAdapter<'d1'>('d1');
+    const adapter = await tryImportD1Adapter();
     console.log('D1 adapter import result:', !!adapter, !!adapter?.listWebsitesD1);
     if (adapter?.listWebsitesD1) {
       try {
@@ -42,7 +39,7 @@ export const websitesService = {
           includeAds,
           minRating,
         });
-        const dtoItems = (rows as any[]).map(mapDbRowToDTO).map(validateDTO);
+        const dtoItems = rows.map(mapDbRowToDTO).map(validateDTO);
         console.log('D1 database query successful, returned', dtoItems.length, 'items');
         return { items: dtoItems, page, pageSize, total: Number(total ?? dtoItems.length) };
       } catch (error) {
@@ -95,11 +92,8 @@ export const websitesService = {
   },
 
   async getById(id: string): Promise<WebsiteDTO | null> {
-    const { channel } = getDbContext();
-    const isEdge = typeof (globalThis as any).EdgeRuntime !== 'undefined';
-
     // Force D1 adapter usage - try D1 first regardless of environment detection
-    const adapter = await tryImportAdapter<'d1'>('d1');
+    const adapter = await tryImportD1Adapter();
     if (adapter?.getWebsiteByIdD1) {
       try {
         console.log('Attempting to use D1 database for getById:', id);
@@ -123,25 +117,55 @@ export const websitesService = {
   },
 };
 
-function mapWebsiteCardToDTO(w: any): WebsiteDTO {
-  const created = w.created_at || new Date().toISOString();
-  const updated = w.updated_at || created;
+type WebsiteCardSource = WebsiteCardData | WebsiteDTO;
+
+type WebsiteDbRow = InferSelectModel<typeof websites>;
+
+const STATUS_VALUES: WebsiteDTO['status'][] = ['active', 'inactive', 'pending', 'rejected'];
+
+function normalizeStatus(value: unknown): WebsiteDTO['status'] {
+  if (typeof value === 'string' && (STATUS_VALUES as string[]).includes(value)) {
+    return value as WebsiteDTO['status'];
+  }
+  return 'active';
+}
+
+function mapWebsiteCardToDTO(source: WebsiteCardSource): WebsiteDTO {
+  const created = 'created_at' in source && source.created_at
+    ? source.created_at
+    : new Date().toISOString();
+  const updated = 'updated_at' in source && source.updated_at
+    ? source.updated_at
+    : created;
+
+  const screenshot = 'screenshot_url' in source && source.screenshot_url
+    ? source.screenshot_url
+    : 'image_url' in source
+      ? source.image_url
+      : undefined;
+
+  const visitCount = 'visit_count' in source && typeof source.visit_count === 'number'
+    ? source.visit_count
+    : 'visitCount' in source && typeof source.visitCount === 'number'
+      ? source.visitCount
+      : 0;
+
   return {
-    id: String(w.id),
-    title: String(w.title),
-    description: w.description || undefined,
-    url: String(w.url),
-    favicon_url: w.favicon_url || undefined,
-    screenshot_url: w.screenshot_url || w.image_url || undefined,
-    tags: Array.isArray(w.tags) ? w.tags : [],
-    category: w.category || undefined,
-    isAd: Boolean(w.isAd),
-    adType: w.adType || undefined,
-    rating: typeof w.rating === 'number' ? w.rating : undefined,
-    visit_count: typeof w.visit_count === 'number' ? w.visit_count : 0,
-    is_featured: Boolean(w.is_featured),
-    is_public: w.is_public ?? true,
-    status: w.status ?? 'active',
+    id: String(source.id),
+    title: source.title,
+    description: source.description || undefined,
+    url: source.url,
+    favicon_url: source.favicon_url || undefined,
+    screenshot_url: screenshot,
+    tags: Array.isArray(source.tags) ? source.tags : [],
+    category: typeof source.category === 'string' ? source.category : undefined,
+    isAd: 'isAd' in source ? Boolean(source.isAd) : false,
+    adType: 'adType' in source ? source.adType : undefined,
+    rating: typeof source.rating === 'number' ? source.rating : undefined,
+    visit_count: visitCount,
+    is_featured: 'is_featured' in source ? Boolean(source.is_featured) : false,
+    is_public: 'is_public' in source ? Boolean(source.is_public) : true,
+    status: normalizeStatus('status' in source ? source.status : undefined),
     created_at: created,
     updated_at: updated,
   };
@@ -151,26 +175,28 @@ function validateDTO(dto: WebsiteDTO): WebsiteDTO {
   return WebsiteDTOSchema.parse(dto);
 }
 
-function mapDbRowToDTO(row: any): WebsiteDTO {
-  // Normalize DB columns to DTO shape (snake_case in DTO)
+function mapDbRowToDTO(row: WebsiteDbRow): WebsiteDTO {
+  const createdAt = row.createdAt ?? new Date().toISOString();
+  const updatedAt = row.updatedAt ?? createdAt;
+
   return {
     id: String(row.id),
-    title: String(row.title),
-    description: row.description || undefined,
-    url: String(row.url),
-    favicon_url: row.favicon_url || row.faviconUrl || undefined,
-    screenshot_url: row.screenshot_url || row.screenshotUrl || undefined,
-    tags: typeof row.tags === 'string' ? safeParseTags(row.tags) : Array.isArray(row.tags) ? row.tags : [],
-    category: row.category || row.category_id || undefined,
-    isAd: coerceBool(row.isAd ?? row.is_ad),
-    adType: row.adType || row.ad_type || undefined,
+    title: row.title,
+    description: row.description ?? undefined,
+    url: row.url,
+    favicon_url: row.faviconUrl ?? undefined,
+    screenshot_url: row.screenshotUrl ?? undefined,
+    tags: row.tags ? safeParseTags(row.tags) : [],
+    category: row.category ?? undefined,
+    isAd: coerceBool(row.isAd),
+    adType: row.adType ?? undefined,
     rating: typeof row.rating === 'number' ? row.rating : undefined,
-    visit_count: typeof row.visit_count === 'number' ? row.visit_count : (typeof row.visitCount === 'number' ? row.visitCount : 0),
-    is_featured: coerceBool(row.is_featured ?? row.isFeatured),
-    is_public: coerceBool(row.is_public ?? row.isPublic ?? true),
-    status: row.status ?? 'active',
-    created_at: row.created_at || row.createdAt || new Date().toISOString(),
-    updated_at: row.updated_at || row.updatedAt || new Date().toISOString(),
+    visit_count: typeof row.visitCount === 'number' ? row.visitCount : 0,
+    is_featured: coerceBool(row.isFeatured),
+    is_public: coerceBool(row.isPublic, true),
+    status: normalizeStatus(row.status),
+    created_at: createdAt,
+    updated_at: updatedAt,
   };
 }
 
@@ -183,18 +209,27 @@ function safeParseTags(val: string): string[] {
   }
 }
 
-function coerceBool(v: any): boolean {
+function coerceBool(v: unknown, defaultValue = false): boolean {
   if (typeof v === 'boolean') return v;
   if (typeof v === 'number') return v !== 0;
-  if (typeof v === 'string') return v === '1' || v.toLowerCase() === 'true';
-  return false;
+  if (typeof v === 'string') {
+    const normalized = v.toLowerCase();
+    if (['true', '1', 'yes', 'on'].includes(normalized)) {
+      return true;
+    }
+    if (['false', '0', 'no', 'off'].includes(normalized)) {
+      return false;
+    }
+  }
+  return defaultValue;
 }
 
-async function tryImportAdapter<T extends 'd1'>(name: T): Promise<any | null> {
+type D1AdapterModule = typeof import('@/lib/db/adapters/d1');
+
+async function tryImportD1Adapter(): Promise<D1AdapterModule | null> {
   try {
-    console.log(`Attempting to import adapter: @/lib/db/adapters/${name}`);
-    // Prefer real adapter filenames
-    const mod = await import(`@/lib/db/adapters/${name}` as any);
+    console.log('Attempting to import adapter: @/lib/db/adapters/d1');
+    const mod: D1AdapterModule = await import('@/lib/db/adapters/d1');
     console.log('Adapter import successful:', Object.keys(mod));
     return mod;
   } catch (e) {

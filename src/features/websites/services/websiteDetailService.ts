@@ -8,6 +8,7 @@
  * @author WebVault Team
  */
 
+import type { Category } from '../types/category';
 import { WebsiteDetailData } from '../types/detail';
 import { Website, WebsiteCardData } from '../types/website';
 import { mockWebsites } from '../data/mockWebsites';
@@ -40,7 +41,7 @@ export class WebsiteDetailServiceError extends Error {
   constructor(
     message: string,
     public code: 'NOT_FOUND' | 'ACCESS_DENIED' | 'VALIDATION_ERROR' | 'FETCH_ERROR' | 'VISIT_TRACKING_ERROR',
-    public details?: any
+    public details?: unknown
   ) {
     super(message);
     this.name = 'WebsiteDetailServiceError';
@@ -57,6 +58,102 @@ export interface VisitTrackingResult {
   newVisitCount: number;
   /** 错误信息（如果有） */
   error?: string;
+}
+
+type WebsiteDetailSource = Website | WebsiteCardData | WebsiteDetailData;
+
+function isWebsiteDetailData(source: WebsiteDetailSource): source is WebsiteDetailData {
+  return 'is_accessible' in source;
+}
+
+function toSlug(value: string): string {
+  const trimmed = value.trim();
+  const slug = trimmed
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return slug || trimmed;
+}
+
+function buildFallbackCategory(
+  name: string,
+  timestamps: { createdAt: string; updatedAt: string },
+  id?: string
+): Category {
+  return {
+    id: id ?? toSlug(name),
+    name,
+    slug: toSlug(name),
+    parentId: null,
+    children: [],
+    description: undefined,
+    icon_url: undefined,
+    color: undefined,
+    status: 'active',
+    sort_order: 0,
+    website_count: 0,
+    is_expanded: false,
+    is_visible: true,
+    created_at: timestamps.createdAt,
+    updated_at: timestamps.updatedAt,
+  };
+}
+
+function getCreatedAt(source: WebsiteDetailSource): string {
+  if ('created_at' in source && source.created_at) {
+    return source.created_at;
+  }
+  return new Date().toISOString();
+}
+
+function getUpdatedAt(source: WebsiteDetailSource, fallback: string): string {
+  if ('updated_at' in source && source.updated_at) {
+    return source.updated_at;
+  }
+  return fallback;
+}
+
+function getVisitCount(source: WebsiteDetailSource): number {
+  if ('visitCount' in source && typeof source.visitCount === 'number') {
+    return source.visitCount;
+  }
+  if ('visit_count' in source && typeof source.visit_count === 'number') {
+    return source.visit_count;
+  }
+  return 0;
+}
+
+function getScreenshotUrl(source: WebsiteDetailSource): string | undefined {
+  if ('screenshot_url' in source && source.screenshot_url) {
+    return source.screenshot_url;
+  }
+  if ('image_url' in source && source.image_url) {
+    return source.image_url;
+  }
+  return undefined;
+}
+
+function getCategoryId(source: WebsiteDetailSource): string | undefined {
+  if ('category_id' in source && source.category_id) {
+    return source.category_id;
+  }
+  if ('category' in source && source.category && typeof source.category === 'object' && 'id' in source.category && typeof source.category.id === 'string') {
+    return source.category.id;
+  }
+  return undefined;
+}
+
+function getCategoryName(source: WebsiteDetailSource): string | undefined {
+  if ('category' in source) {
+    const categoryValue = source.category;
+    if (typeof categoryValue === 'string') {
+      return categoryValue;
+    }
+    if (categoryValue && typeof categoryValue === 'object' && 'name' in categoryValue && typeof categoryValue.name === 'string') {
+      return categoryValue.name;
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -233,7 +330,7 @@ export class WebsiteDetailService {
       }
 
       // 获取候选网站列表，过滤掉不可访问的网站
-      let candidateWebsites = mockWebsites.filter(website => {
+      const candidateWebsites = mockWebsites.filter(website => {
         // 排除当前网站
         if (excludeCurrentWebsite && website.id === currentWebsiteId) {
           return false;
@@ -252,10 +349,15 @@ export class WebsiteDetailService {
         return true;
       });
 
+      const currentWebsiteDetail = this.transformToWebsiteDetailData(currentWebsite);
+      const candidateDetails = candidateWebsites.map((website) =>
+        this.transformToWebsiteDetailData(website)
+      );
+
       // 根据策略计算相关性分数
-      const scoredWebsites = candidateWebsites.map(website => ({
-        website,
-        score: this.calculateRelatednessScore(currentWebsite, website, strategy)
+      const scoredWebsites = candidateDetails.map((websiteDetail) => ({
+        website: websiteDetail,
+        score: this.calculateRelatednessScore(currentWebsiteDetail, websiteDetail, strategy),
       }));
 
       // 过滤低分网站并排序
@@ -419,61 +521,86 @@ export class WebsiteDetailService {
   /**
    * 转换基础网站数据为详情数据格式
    */
-  private transformToWebsiteDetailData(baseWebsite: any): WebsiteDetailData {
-    return {
-      // 基础Website字段映射（确保符合Website接口）
-      id: baseWebsite.id,
+  private transformToWebsiteDetailData(baseWebsite: WebsiteDetailSource): WebsiteDetailData {
+    if (isWebsiteDetailData(baseWebsite)) {
+      return this.deepCloneWebsiteData(baseWebsite);
+    }
+
+    const createdAt = getCreatedAt(baseWebsite);
+    const updatedAt = getUpdatedAt(baseWebsite, createdAt);
+    const visitCount = getVisitCount(baseWebsite);
+    const tags = Array.isArray(baseWebsite.tags) ? baseWebsite.tags : [];
+    const categoryId = getCategoryId(baseWebsite);
+    const categoryName = getCategoryName(baseWebsite);
+    const status = this.normalizeStatus(
+      'status' in baseWebsite ? (baseWebsite as { status?: unknown }).status : undefined
+    );
+
+    const detail: WebsiteDetailData = {
+      id: String(baseWebsite.id),
       title: baseWebsite.title,
       description: baseWebsite.description,
       url: baseWebsite.url,
-      tags: baseWebsite.tags || [],
+      tags,
       favicon_url: baseWebsite.favicon_url,
-      screenshot_url: baseWebsite.image_url || baseWebsite.screenshot_url,
-      category_id: baseWebsite.category, // MockData中category是字符串，映射到category_id
-      status: 'active', // MockData中没有status字段，默认为active
-      isAd: baseWebsite.isAd || false,
-      adType: baseWebsite.adType,
-      rating: baseWebsite.rating,
-      visitCount: baseWebsite.visit_count || 0, // 映射visit_count到visitCount
-      is_featured: baseWebsite.is_featured || false,
-      is_public: true, // MockData中没有is_public字段，默认为true
-      created_at: baseWebsite.created_at || new Date().toISOString(),
-      updated_at: baseWebsite.updated_at || new Date().toISOString(),
-      
+      screenshot_url: getScreenshotUrl(baseWebsite),
+      category_id: categoryId,
+      status,
+      isAd: 'isAd' in baseWebsite ? Boolean(baseWebsite.isAd) : false,
+      adType: 'adType' in baseWebsite ? baseWebsite.adType : undefined,
+      rating: typeof baseWebsite.rating === 'number' ? baseWebsite.rating : undefined,
+      visitCount,
+      is_featured: 'is_featured' in baseWebsite ? Boolean(baseWebsite.is_featured) : false,
+      is_public: 'is_public' in baseWebsite ? Boolean(baseWebsite.is_public) : true,
+      created_at: createdAt,
+      updated_at: updatedAt,
+
       // 详情页面专有字段
       content: baseWebsite.description || '',
       language: 'zh-CN',
-      popularity_score: this.calculatePopularityScore(baseWebsite),
+      popularity_score: 0,
       last_checked_at: new Date().toISOString(),
       is_accessible: true,
-      
+
       // SEO 元数据
       meta_title: baseWebsite.title,
       meta_description: baseWebsite.description || '',
-      
+
       // 模拟统计数据
       stats: {
-        total_visits: baseWebsite.visit_count || 0,
-        monthly_visits: Math.floor((baseWebsite.visit_count || 0) * 0.3),
-        weekly_visits: Math.floor((baseWebsite.visit_count || 0) * 0.1),
-        daily_visits: Math.floor((baseWebsite.visit_count || 0) * 0.02),
-        bounce_rate: 0.4 + Math.random() * 0.4, // 40-80%
-        avg_session_duration: 120 + Math.random() * 300 // 2-7分钟
+        total_visits: visitCount,
+        monthly_visits: Math.floor(visitCount * 0.3),
+        weekly_visits: Math.floor(visitCount * 0.1),
+        daily_visits: Math.floor(visitCount * 0.02),
+        bounce_rate: 0.4 + Math.random() * 0.4,
+        avg_session_duration: 120 + Math.random() * 300,
       },
-      
+
       // 功能特性（基于标签推断）
-      features: this.extractFeaturesFromTags(baseWebsite.tags || []),
-      
+      features: this.extractFeaturesFromTags(tags),
+
       // 定价信息（基于类型推断）
-      pricing: this.inferPricingInfo(baseWebsite)
+      pricing: this.inferPricingInfo(baseWebsite),
     };
+
+    if (categoryName) {
+      detail.category = buildFallbackCategory(
+        categoryName,
+        { createdAt, updatedAt },
+        detail.category_id
+      );
+    }
+
+    detail.popularity_score = this.calculatePopularityScore(detail);
+
+    return detail;
   }
 
   /**
    * 计算网站流行度分数
    */
-  private calculatePopularityScore(website: any): number {
-    const visitCount = website.visit_count || 0;
+  private calculatePopularityScore(website: Partial<WebsiteDetailData>): number {
+    const visitCount = website.visitCount || 0;
     const rating = website.rating || 0;
     const isFeatured = website.is_featured ? 1 : 0;
     
@@ -499,24 +626,37 @@ export class WebsiteDetailService {
   /**
    * 推断定价信息
    */
-  private inferPricingInfo(website: any): any {
-    const tags = website.tags || [];
-    const isFree = tags.some((tag: string) => tag.includes('免费'));
-    
+  private inferPricingInfo(website: WebsiteDetailSource): {
+    is_free: boolean;
+    has_paid_plans: boolean;
+    starting_price?: string;
+    currency?: string;
+  } {
+    const tags = Array.isArray(website.tags) ? website.tags : [];
+    const isFree = tags.some((tag) => tag.includes('免费'));
+
     return {
       is_free: isFree,
       has_paid_plans: !isFree,
       starting_price: isFree ? '免费' : undefined,
-      currency: 'CNY'
+      currency: 'CNY',
     };
+  }
+
+  private normalizeStatus(value: unknown): WebsiteDetailData['status'] {
+    const allowedStatuses: WebsiteDetailData['status'][] = ['active', 'inactive', 'pending', 'rejected'];
+    if (typeof value === 'string' && (allowedStatuses as string[]).includes(value)) {
+      return value as WebsiteDetailData['status'];
+    }
+    return 'active';
   }
 
   /**
    * 计算两个网站的相关性分数
    */
   private calculateRelatednessScore(
-    currentWebsite: any,
-    candidateWebsite: any,
+    currentWebsite: Partial<WebsiteDetailData>,
+    candidateWebsite: Partial<WebsiteDetailData>,
     strategy: RelatedWebsitesStrategy
   ): number {
     switch (strategy) {
@@ -538,8 +678,8 @@ export class WebsiteDetailService {
   /**
    * 基于分类的相关性分数
    */
-  private calculateCategoryScore(currentWebsite: any, candidateWebsite: any): number {
-    if (currentWebsite.category === candidateWebsite.category) {
+  private calculateCategoryScore(currentWebsite: Partial<WebsiteDetailData>, candidateWebsite: Partial<WebsiteDetailData>): number {
+    if (currentWebsite.category?.id === candidateWebsite.category?.id) {
       return 1.0;
     }
 
@@ -551,10 +691,10 @@ export class WebsiteDetailService {
       '设计社区': ['设计工具', '创意'],
     };
 
-    const currentCategory = currentWebsite.category;
-    const candidateCategory = candidateWebsite.category;
+    const currentCategory = currentWebsite.category?.name || '';
+    const candidateCategory = candidateWebsite.category?.name || '';
     
-    if (relatedCategories[currentCategory]?.includes(candidateCategory)) {
+    if (currentCategory && candidateCategory && relatedCategories[currentCategory]?.includes(candidateCategory)) {
       return 0.6;
     }
 
@@ -564,7 +704,7 @@ export class WebsiteDetailService {
   /**
    * 基于标签的相关性分数
    */
-  private calculateTagsScore(currentWebsite: any, candidateWebsite: any): number {
+  private calculateTagsScore(currentWebsite: Partial<WebsiteDetailData>, candidateWebsite: Partial<WebsiteDetailData>): number {
     const currentTags = new Set((currentWebsite.tags || []).map((tag: string) => tag.toLowerCase()));
     const candidateTags = new Set((candidateWebsite.tags || []).map((tag: string) => tag.toLowerCase()));
 
@@ -582,7 +722,7 @@ export class WebsiteDetailService {
   /**
    * 基于内容的相关性分数
    */
-  private calculateContentScore(currentWebsite: any, candidateWebsite: any): number {
+  private calculateContentScore(currentWebsite: Partial<WebsiteDetailData>, candidateWebsite: Partial<WebsiteDetailData>): number {
     const currentContent = `${currentWebsite.title} ${currentWebsite.description || ''}`.toLowerCase();
     const candidateContent = `${candidateWebsite.title} ${candidateWebsite.description || ''}`.toLowerCase();
 
@@ -603,7 +743,7 @@ export class WebsiteDetailService {
   /**
    * 混合策略的相关性分数
    */
-  private calculateMixedScore(currentWebsite: any, candidateWebsite: any): number {
+  private calculateMixedScore(currentWebsite: Partial<WebsiteDetailData>, candidateWebsite: Partial<WebsiteDetailData>): number {
     const categoryScore = this.calculateCategoryScore(currentWebsite, candidateWebsite);
     const tagsScore = this.calculateTagsScore(currentWebsite, candidateWebsite);
     const contentScore = this.calculateContentScore(currentWebsite, candidateWebsite);
@@ -658,20 +798,20 @@ export class WebsiteDetailService {
   /**
    * 提取网站卡片数据
    */
-  private extractCardData(website: any): WebsiteCardData {
+  private extractCardData(website: Partial<WebsiteDetailData>): WebsiteCardData {
     return {
-      id: website.id,
-      title: website.title,
+      id: website.id!,
+      title: website.title!,
       description: website.description,
-      url: website.url,
+      url: website.url!,
       favicon_url: website.favicon_url,
       image_url: website.screenshot_url,
       tags: website.tags || [],
-      category: website.category,
+      category: website.category?.name,
       isAd: website.isAd,
       adType: website.adType,
       rating: website.rating,
-      visit_count: website.visit_count,
+      visit_count: website.visitCount,
       is_featured: website.is_featured,
       created_at: website.created_at,
       updated_at: website.updated_at
@@ -810,9 +950,9 @@ export async function getSmartRecommendations(
     );
 
     // 基于浏览历史计算个性化分数
-    const scoredWebsites = candidates.map(website => ({
+    const scoredWebsites = candidates.map((website) => ({
       website,
-      score: calculatePersonalizedScore(currentWebsite, website, userBrowsingHistory)
+      score: calculatePersonalizedScore(currentWebsite, website, userBrowsingHistory),
     }));
 
     // 返回得分最高的网站
@@ -832,23 +972,41 @@ export async function getSmartRecommendations(
 /**
  * 提取网站卡片数据的辅助函数
  */
-function extractCardDataHelper(website: any): WebsiteCardData {
+function extractCardDataHelper(website: WebsiteCardData | WebsiteDetailData): WebsiteCardData {
+  const visitCount = 'visit_count' in website && typeof website.visit_count === 'number'
+    ? website.visit_count
+    : 'visitCount' in website && typeof website.visitCount === 'number'
+      ? website.visitCount
+      : undefined;
+
+  const imageUrl = 'image_url' in website
+    ? website.image_url
+    : 'screenshot_url' in website
+      ? website.screenshot_url
+      : undefined;
+
+  const categoryName = 'category' in website
+    ? (typeof website.category === 'string'
+        ? website.category
+        : website.category?.name)
+    : undefined;
+
   return {
     id: website.id,
     title: website.title,
     description: website.description,
     url: website.url,
     favicon_url: website.favicon_url,
-    image_url: website.screenshot_url,
+    image_url: imageUrl,
     tags: website.tags || [],
-    category: website.category,
+    category: categoryName,
     isAd: website.isAd,
     adType: website.adType,
     rating: website.rating,
-    visit_count: website.visit_count,
+    visit_count: visitCount,
     is_featured: website.is_featured,
     created_at: website.created_at,
-    updated_at: website.updated_at
+    updated_at: website.updated_at,
   };
 }
 
@@ -856,8 +1014,8 @@ function extractCardDataHelper(website: any): WebsiteCardData {
  * 计算个性化推荐分数
  */
 function calculatePersonalizedScore(
-  currentWebsite: any,
-  candidateWebsite: any,
+  _currentWebsite: WebsiteCardData,
+  candidateWebsite: WebsiteCardData,
   browsingHistory: string[]
 ): number {
   let score = 0;

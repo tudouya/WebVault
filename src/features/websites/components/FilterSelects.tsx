@@ -89,7 +89,10 @@ export const FilterSelects: React.FC = () => {
   // 处理排序选择
   const handleSortSelect = (value: string) => {
     const [field, order] = value.split('-');
-    setSorting(field as any, order as 'asc' | 'desc');
+    setSorting(
+      field as 'created_at' | 'updated_at' | 'title' | 'rating' | 'visit_count' | 'featured' | 'relevance',
+      order as 'asc' | 'desc'
+    );
   };
 
   // 获取当前选中的标签显示文本

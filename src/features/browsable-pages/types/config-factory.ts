@@ -14,9 +14,11 @@ import type { Tag } from '@/features/tags/types/tag';
 import type { 
   BrowsablePageConfig, 
   SortOption,
-  FilterOption 
+  FilterOption as _FilterOption
 } from './page-config';
-import { DEFAULT_PAGE_CONFIG, mergeWithDefaults } from './page-config';
+import { mergeWithDefaults } from './page-config';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { DEFAULT_PAGE_CONFIG as _DEFAULT_PAGE_CONFIG } from './page-config';
 
 /**
  * Configuration options for collection page factory
@@ -668,7 +670,7 @@ export function validatePageConfig(config: BrowsablePageConfig): boolean {
 export function safeCreatePageConfig(
   type: 'collection' | 'category' | 'tag',
   entity: Collection | Category | Tag,
-  options: any = {}
+  options: Record<string, unknown> = {}
 ): BrowsablePageConfig {
   try {
     let config: BrowsablePageConfig;
@@ -711,7 +713,9 @@ export function safeCreatePageConfig(
       id: `${type}-${entity?.id || 'unknown'}`,
       title: {
         dynamic: true,
-        fallback: (entity as any)?.name || (entity as any)?.title || 'Unknown',
+        fallback: (entity as Category | Tag)?.name ||
+                 (entity as Collection)?.title ||
+                 'Unknown',
       },
     });
   }

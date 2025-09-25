@@ -6,7 +6,11 @@
  */
 
 import { useCallback, useMemo, useRef, useEffect } from 'react';
-import { useDebouncedCallback } from 'use-debounce';
+
+type DebouncedFunction<T extends unknown[]> = ((...args: T) => void) & {
+  cancel: () => void;
+  flush: () => void;
+};
 
 /**
  * 性能配置接口
@@ -76,36 +80,80 @@ export function usePerformanceOptimization(config: PerformanceConfig = {}) {
   
   /**
    * 防抖函数工厂
+   * 注意：不能在返回的函数内调用 Hook，改为在外部预创建
    */
-  const createDebouncedCallback = useCallback(<T extends any[]>(
+  const createDebouncedCallback = useCallback(<T extends unknown[]>(
     callback: (...args: T) => void,
     delay?: number
-  ) => {
-    return useDebouncedCallback(callback, delay || perfConfig.debounceDelay);
+  ): DebouncedFunction<T> => {
+    const actualDelay = delay ?? perfConfig.debounceDelay;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let lastArgs: T | null = null;
+
+    const debounced = ((...args: T) => {
+      lastArgs = args;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+
+      timeoutId = setTimeout(() => {
+        timeoutId = null;
+        if (lastArgs) {
+          callback(...lastArgs);
+          lastArgs = null;
+        }
+      }, actualDelay);
+    }) as DebouncedFunction<T>;
+
+    debounced.cancel = () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+      lastArgs = null;
+    };
+
+    debounced.flush = () => {
+      if (!lastArgs) {
+        return;
+      }
+
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+
+      const args = lastArgs;
+      lastArgs = null;
+      callback(...args);
+    };
+
+    return debounced;
   }, [perfConfig.debounceDelay]);
-  
+
   /**
    * 节流函数工厂
+   * 注意：不能在返回的函数内调用 Hook
    */
-  const createThrottledCallback = useCallback(<T extends any[]>(
+  const createThrottledCallback = useCallback(<T extends unknown[]>(
     callback: (...args: T) => void,
     delay?: number
   ) => {
-    const lastCall = useRef(0);
-    const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
-    
+    let lastCall = 0;
+    let timeoutId: NodeJS.Timeout | undefined;
+
     return (...args: T) => {
       const now = Date.now();
-      const timeSinceLastCall = now - lastCall.current;
+      const timeSinceLastCall = now - lastCall;
       const throttleDelay = delay || perfConfig.throttleDelay;
-      
+
       if (timeSinceLastCall >= throttleDelay) {
-        lastCall.current = now;
+        lastCall = now;
         callback(...args);
       } else {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = setTimeout(() => {
-          lastCall.current = Date.now();
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          lastCall = Date.now();
           callback(...args);
         }, throttleDelay - timeSinceLastCall);
       }
@@ -142,7 +190,7 @@ export function usePerformanceOptimization(config: PerformanceConfig = {}) {
     
     metricsRef.current = {
       renderTime: now - renderStart,
-      memoryUsage: (performance as any).memory?.usedJSHeapSize || 0,
+      memoryUsage: (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize || 0,
       updateCount: updateCountRef.current,
       lastUpdateTime: now,
     };
@@ -164,7 +212,7 @@ export function usePerformanceOptimization(config: PerformanceConfig = {}) {
   /**
    * 性能监控包装器
    */
-  const withPerformanceMonitoring = useCallback(<T extends any[], R>(
+  const withPerformanceMonitoring = useCallback(<T extends unknown[], R>(
     fn: (...args: T) => R,
     name?: string
   ) => {
@@ -185,24 +233,23 @@ export function usePerformanceOptimization(config: PerformanceConfig = {}) {
   
   /**
    * 列表分片渲染（用于大数据集）
+   * 注意：不能在回调函数内部调用 Hook
    */
   const createChunkedRenderer = useCallback(<T>(
     items: T[],
     chunkSize: number = 20,
     renderItem: (item: T, index: number) => React.ReactNode
   ) => {
-    return useMemo(() => {
-      const chunks: T[][] = [];
-      for (let i = 0; i < items.length; i += chunkSize) {
-        chunks.push(items.slice(i, i + chunkSize));
-      }
-      
-      return chunks.map((chunk, chunkIndex) => 
-        chunk.map((item, itemIndex) => 
-          renderItem(item, chunkIndex * chunkSize + itemIndex)
-        )
-      );
-    }, [items, chunkSize, renderItem]);
+    const chunks: T[][] = [];
+    for (let i = 0; i < items.length; i += chunkSize) {
+      chunks.push(items.slice(i, i + chunkSize));
+    }
+
+    return chunks.map((chunk, chunkIndex) =>
+      chunk.map((item, itemIndex) =>
+        renderItem(item, chunkIndex * chunkSize + itemIndex)
+      )
+    );
   }, []);
   
   /**
@@ -291,11 +338,11 @@ export function useScrollPerformanceOptimization() {
  * 监控组件内存使用情况
  */
 export function useMemoryMonitoring() {
-  const memoryInfo = useRef<any>(null);
+  const memoryInfo = useRef<{ usedJSHeapSize?: number; totalJSHeapSize?: number; jsHeapSizeLimit?: number } | null>(null);
   
   useEffect(() => {
     if ('memory' in performance) {
-      memoryInfo.current = (performance as any).memory;
+      memoryInfo.current = (performance as Performance & { memory?: { usedJSHeapSize?: number; totalJSHeapSize?: number; jsHeapSizeLimit?: number } }).memory || null;
     }
   }, []);
   

@@ -4,16 +4,14 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { 
-  Globe, 
-  Loader2, 
-  Search, 
-  AlertCircle, 
-  RefreshCw, 
-  Home, 
+import {
+  Loader2,
+  Search,
+  AlertCircle,
+  RefreshCw,
+  Home,
   Folder,
-  Grid3X3,
-  Tag
+  Grid3X3
 } from "lucide-react";
 
 /**
@@ -566,7 +564,7 @@ export class CollectionErrorBoundary extends React.Component<
     error: Error | null;
   }
 > {
-  constructor(props: any) {
+  constructor(props: { children: React.ReactNode }) {
     super(props);
     this.state = {
       hasError: false,
@@ -630,7 +628,7 @@ export class CollectionErrorBoundary extends React.Component<
    默认导出所有组件
    ======================================== */
 
-export default {
+const CollectionLoadingStates = {
   CollectionLoadingSpinner,
   CollectionCardSkeleton,
   CollectionLoadingIndicator,
@@ -640,3 +638,5 @@ export default {
   CollectionEmptyStateWithLoading,
   CollectionErrorBoundary,
 };
+
+export default CollectionLoadingStates;

@@ -29,7 +29,6 @@ export function Pagination({
     currentPage, 
     totalPages, 
     totalItems, 
-    itemsPerPage,
     setPage 
   } = useHomepagePagination();
 
@@ -61,7 +60,7 @@ export function Pagination({
   const getPageRange = () => {
     const half = Math.floor(showPageNumbers / 2);
     let start = Math.max(1, safeCurrentPage - half);
-    let end = Math.min(safeTotalPages, start + showPageNumbers - 1);
+    const end = Math.min(safeTotalPages, start + showPageNumbers - 1);
     
     // 调整开始位置，确保显示足够的页码
     if (end - start + 1 < showPageNumbers) {

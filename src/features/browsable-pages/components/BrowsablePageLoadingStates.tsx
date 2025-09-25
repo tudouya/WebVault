@@ -1,8 +1,7 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Globe, Loader2, Search, Filter, Grid, Tag, FolderOpen } from "lucide-react";
+import { Globe, Loader2, Filter, Grid, Tag, FolderOpen } from "lucide-react";
 
 /**
  * BrowsablePageLoadingStates组件
@@ -544,7 +543,7 @@ export function BrowsablePageLoadingState({
    默认导出所有组件
    ======================================== */
 
-export default {
+const BrowsablePageLoadingStates = {
   BrowsablePageSkeleton,
   BrowsablePageHeaderSkeleton,
   BrowsableFilterLoadingIndicator,
@@ -553,3 +552,5 @@ export default {
   BrowsablePageEmptyStateWithLoading,
   BrowsablePageLoadingState,
 };
+
+export default BrowsablePageLoadingStates;

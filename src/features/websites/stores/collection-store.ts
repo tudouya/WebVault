@@ -12,22 +12,18 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { 
   parseAsString, 
   parseAsInteger, 
-  parseAsArrayOf,
   parseAsBoolean,
-  useQueryState,
   useQueryStates
 } from 'nuqs';
-import { 
+import {
   Collection,
   CollectionState,
   CollectionStatus,
-  CollectionSearchParams,
-  DEFAULT_COLLECTION_STATE 
+  CollectionURLParams,
 } from '../types/collection';
 import { 
   getMockCollections,
   searchMockCollections,
-  filterMockCollectionsByStatus,
   filterMockCollectionsByTags,
   getAllMockCollectionTags
 } from '../data/mockCollections';
@@ -132,7 +128,7 @@ export interface CollectionPageState extends CollectionState {
     resetAll: () => void;
     
     // URL同步方法
-    syncFromURL: (params: Record<string, any>) => void;
+    syncFromURL: (params: CollectionURLParams) => void;
     
     // 工具方法
     getFilteredCollections: () => Collection[];
@@ -273,7 +269,8 @@ export const useCollectionStore = create<CollectionPageState>()(
               // 排序应用
               if (sorting && sorting.sortBy && sorting.sortOrder) {
                 collections.sort((a, b) => {
-                  let aValue: any, bValue: any;
+                  let aValue: string | number | Date;
+                  let bValue: string | number | Date;
                   
                   switch (sorting.sortBy) {
                     case 'title':
@@ -698,7 +695,7 @@ export const useCollectionStore = create<CollectionPageState>()(
           },
           
           // URL同步方法
-          syncFromURL: (params: Record<string, any>) => {
+          syncFromURL: (params: CollectionURLParams) => {
             const {
               search = '',
               page = 1,
@@ -728,7 +725,7 @@ export const useCollectionStore = create<CollectionPageState>()(
             set(
               (state) => ({
                 ...state,
-                searchQuery: search,
+                searchQuery: search || undefined,
                 pagination: {
                   ...state.pagination,
                   currentPage: Math.max(1, parseInt(String(page)) || 1),
@@ -737,7 +734,10 @@ export const useCollectionStore = create<CollectionPageState>()(
                 filters: {
                   status: statusArray.length > 0 ? statusArray : undefined,
                   tags: tagsArray.length > 0 ? tagsArray : undefined,
-                  dateRange: (dateFrom || dateTo) ? { from: dateFrom, to: dateTo } : undefined,
+                  dateRange: (dateFrom || dateTo) ? {
+                    from: dateFrom || '',
+                    to: dateTo || ''
+                  } : undefined,
                   createdBy: createdBy || undefined,
                 },
                 sorting: {
@@ -807,12 +807,18 @@ export function useCollectionUrlSync() {
   
   // 从URL更新store状态 (组件首次加载时调用)
   const syncStoreFromUrl = () => {
-    actions.syncFromURL(urlState);
+    // 转换 urlState 以匹配 CollectionURLParams 类型
+    const params: CollectionURLParams = {
+      ...urlState,
+      sortOrder: urlState.sortOrder === 'asc' || urlState.sortOrder === 'desc' ? urlState.sortOrder : undefined,
+      view: urlState.view === 'grid' || urlState.view === 'list' ? urlState.view : undefined,
+    };
+    actions.syncFromURL(params);
   };
   
   // 从store更新URL状态 (状态变更时调用)
   const syncUrlFromStore = () => {
-    const collectionUrlState: Record<string, any> = {
+    const collectionUrlState: CollectionURLParams = {
       search: store.searchQuery || undefined,
       page: store.pagination.currentPage > 1 ? store.pagination.currentPage : undefined,
       limit: store.pagination.itemsPerPage !== 12 ? store.pagination.itemsPerPage : undefined,
@@ -820,7 +826,9 @@ export function useCollectionUrlSync() {
       tags: store.filters?.tags?.length ? store.filters.tags.join(',') : undefined,
       sortBy: store.sorting?.sortBy !== 'createdAt' ? store.sorting?.sortBy : undefined,
       sortOrder: store.sorting?.sortOrder !== 'desc' ? store.sorting?.sortOrder : undefined,
-      view: store.viewSettings?.viewMode !== 'grid' ? store.viewSettings?.viewMode : undefined,
+      view: store.viewSettings?.viewMode === 'list' || store.viewSettings?.viewMode === 'grid'
+        ? store.viewSettings?.viewMode
+        : undefined,
       groupBy: store.viewSettings?.groupBy !== 'none' ? store.viewSettings?.groupBy : undefined,
       showPreview: !store.viewSettings?.showPreview ? store.viewSettings?.showPreview : undefined,
       dateFrom: store.filters?.dateRange?.from || undefined,

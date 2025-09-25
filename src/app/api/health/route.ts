@@ -10,7 +10,7 @@ export async function GET() {
   let d1Configured = false;
   try {
     // In Pages/Edge dev/prod this should exist
-    const env = getRequestContext().env as any;
+    const env = getRequestContext().env as { DB?: unknown };
     d1Configured = Boolean(env?.DB);
   } catch {
     d1Configured = Boolean(process.env.CLOUDFLARE_DATABASE_ID);

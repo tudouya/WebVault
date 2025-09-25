@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Metadata } from 'next'
 import { Button } from '@/components/ui/button'
 import { BlogCard } from '@/features/blog/components/BlogCard'
-import { getMockBlogs, searchMockBlogs } from '@/features/blog/data/mockBlogs'
+import { getMockBlogs } from '@/features/blog/data/mockBlogs'
 import { Search, ArrowLeft, FileX, TrendingUp } from 'lucide-react'
 
 /**

@@ -84,8 +84,8 @@ export function ImagePreloader({
         img.onerror = handleError;
         
         // 使用 fetchpriority 提示浏览器
-        if ('fetchpriority' in img) {
-          (img as any).fetchpriority = priority;
+        if (typeof img.setAttribute === 'function') {
+          img.setAttribute('fetchpriority', priority);
         }
         
         img.src = imageUrl;
@@ -158,8 +158,8 @@ export function useImagePreloader() {
           img.onload = handleLoad;
           img.onerror = handleError;
           
-          if ('fetchpriority' in img) {
-            (img as any).fetchpriority = priority;
+          if (typeof img.setAttribute === 'function') {
+            img.setAttribute('fetchpriority', priority);
           }
           
           img.src = imageUrl;

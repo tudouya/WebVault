@@ -19,7 +19,7 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useBrowsablePageUrlSyncWithRecovery, useBrowsablePageStore } from '../stores/browsable-page-store';
 
 interface BrowsablePageUrlManagerProps {
@@ -60,11 +60,11 @@ export function BrowsablePageUrlManager({
   const isUrlSyncEnabled = store.meta.urlSyncEnabled;
   const isSyncingUrl = store.meta.isSyncingUrl;
   const lastUrlSync = store.meta.lastUrlSync;
-  const debugInfo = {
+  const debugInfo = useMemo(() => ({
     lastUrlState: 'N/A',
-    lastStoreState: 'N/A', 
+    lastStoreState: 'N/A',
     hasPendingSync: false,
-  };
+  }), []);
 
   // 组件挂载时初始化URL状态
   useEffect(() => {

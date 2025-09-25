@@ -27,9 +27,6 @@ interface BlogGridProps {
   /** 博客卡片点击回调 */
   onBlogClick?: (blog: BlogCardData) => void;
   
-  /** 标签点击回调 */
-  onTagClick?: (tag: string) => void;
-  
   /** 作者点击回调 */
   onAuthorClick?: (authorId: string) => void;
   
@@ -70,7 +67,6 @@ export function BlogGrid({
   emptyState,
   className,
   onBlogClick,
-  onTagClick,
   onAuthorClick,
   onRetry,
   onResetFilters,
@@ -183,7 +179,8 @@ export function BlogGrid({
         >
           <BlogCard
             blog={blog}
-            onTagClick={onTagClick}
+            animationIndex={index}
+            onBlogClick={onBlogClick}
             onAuthorClick={onAuthorClick}
           />
         </div>

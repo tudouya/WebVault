@@ -28,7 +28,7 @@ function BuggyComponent({ shouldCrash }: { shouldCrash: boolean }) {
 // 使用 HOC 包装的组件
 const BuggyComponentWithErrorBoundary = withErrorBoundary(BuggyComponent, {
   level: 'component',
-  onError: (error, errorInfo) => {
+  onError: (error) => {
     console.log('HOC ErrorBoundary 捕获到错误:', error.message);
   }
 });
@@ -74,7 +74,7 @@ export function ErrorBoundaryExample() {
             <h3 className="text-lg font-semibold mb-3">页面级错误边界</h3>
             <ErrorBoundary
               level="page"
-              onError={(error, errorInfo) => {
+              onError={(error) => {
                 console.log('页面级 ErrorBoundary:', error.message);
               }}
             >
@@ -94,7 +94,7 @@ export function ErrorBoundaryExample() {
             <h3 className="text-lg font-semibold mb-3">区块级错误边界</h3>
             <ErrorBoundary
               level="section"
-              onError={(error, errorInfo) => {
+              onError={(error) => {
                 console.log('区块级 ErrorBoundary:', error.message);
               }}
             >

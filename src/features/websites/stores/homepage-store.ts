@@ -11,21 +11,68 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { 
   parseAsString, 
   parseAsInteger, 
-  parseAsArrayOf,
   parseAsBoolean,
-  createSerializer,
-  useQueryState,
   useQueryStates
 } from 'nuqs';
 import { 
   FilterState, 
   SortField,
   SortOrder,
-  WebsitePagination,
   Category,
   PaginationState
 } from '../types';
 import { DEFAULT_FILTER_STATE } from '../types/filters';
+
+type UrlStateValue = string | number | boolean | null | undefined | string[];
+type UrlStateParams = Record<string, UrlStateValue>;
+
+function toStringValue(value: UrlStateValue, defaultValue = ''): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map(String).join(',');
+  }
+  return defaultValue;
+}
+
+function toNullableString(value: UrlStateValue): string | null {
+  const normalized = toStringValue(value, '').trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
+function toNumberValue(value: UrlStateValue, defaultValue: number): number {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : defaultValue;
+  }
+  return defaultValue;
+}
+
+function toBooleanValue(value: UrlStateValue, defaultValue: boolean): boolean {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  if (typeof value === 'number') {
+    return value !== 0;
+  }
+  if (typeof value === 'string') {
+    const normalized = value.toLowerCase();
+    if (['true', '1', 'yes', 'on'].includes(normalized)) {
+      return true;
+    }
+    if (['false', '0', 'no', 'off'].includes(normalized)) {
+      return false;
+    }
+  }
+  return defaultValue;
+}
 
 /**
  * URL搜索参数解析器配置
@@ -198,7 +245,7 @@ export interface HomepageState extends FilterState {
     updateCategories: (categories: Category[]) => void;
     
     // URL状态同步 (由组件调用)
-    syncFromURL: (params: Record<string, any>) => void;
+    syncFromURL: (params: UrlStateParams) => void;
     
     // 搜索页面特定操作方法
     searchPage: {
@@ -246,7 +293,7 @@ export interface HomepageState extends FilterState {
       resetAdvancedSearch: () => void;
       
       // 搜索页面URL同步
-      syncSearchPageFromURL: (params: Record<string, any>) => void;
+      syncSearchPageFromURL: (params: UrlStateParams) => void;
     };
   };
 }
@@ -586,7 +633,7 @@ export const useHomepageStore = create<HomepageState>()(
           },
           
           // URL状态同步方法
-          syncFromURL: (params: Record<string, any>) => {
+          syncFromURL: (params: UrlStateParams) => {
             const {
               search = '',
               category = '',
@@ -604,21 +651,29 @@ export const useHomepageStore = create<HomepageState>()(
             const tagsArray = typeof tags === 'string' && tags.trim() 
               ? tags.split(',').map(tag => tag.trim()).filter(Boolean)
               : Array.isArray(tags) ? tags : [];
+
+            const normalizedSearch = toStringValue(search, '');
+            const normalizedCategory = toNullableString(category);
+            const normalizedFeatured = toBooleanValue(featured, false);
+            const normalizedIncludeAds = toBooleanValue(includeAds, true);
+            const normalizedMinRating = toNumberValue(minRating, 0);
+            const currentPage = Math.max(1, toNumberValue(page, 1));
+            const itemsPerPage = Math.max(1, toNumberValue(limit, 12));
             
             set(
               (state) => ({
-                search,
-                categoryId: category || null,
+                search: normalizedSearch,
+                categoryId: normalizedCategory,
                 selectedTags: tagsArray,
                 sortBy: sortBy as SortField,
                 sortOrder: sortOrder as SortOrder,
-                featuredOnly: featured,
-                includeAds,
-                minRating,
+                featuredOnly: normalizedFeatured,
+                includeAds: normalizedIncludeAds,
+                minRating: normalizedMinRating,
                 pagination: {
                   ...state.pagination,
-                  currentPage: Math.max(1, parseInt(String(page)) || 1),
-                  itemsPerPage: Math.max(1, parseInt(String(limit)) || 12),
+                  currentPage,
+                  itemsPerPage,
                 },
               }),
               false,
@@ -1015,7 +1070,7 @@ export const useHomepageStore = create<HomepageState>()(
             },
             
             // 搜索页面URL同步
-            syncSearchPageFromURL: (params: Record<string, any>) => {
+            syncSearchPageFromURL: (params: UrlStateParams) => {
               const {
                 searchType = 'all',
                 searchScope = 'all',
@@ -1045,27 +1100,39 @@ export const useHomepageStore = create<HomepageState>()(
               const statusArray = typeof status === 'string' && status.trim()
                 ? status.split(',').map(s => s.trim()).filter(Boolean)
                 : [];
+
+              const normalizedDateFrom = toNullableString(dateFrom);
+              const normalizedDateTo = toNullableString(dateTo);
+              const normalizedLanguage = toNullableString(language);
+              const normalizedView = typeof view === 'string' ? view : 'grid';
+              const normalizedGroupBy = typeof groupBy === 'string' ? groupBy : 'none';
+              const normalizedSearchType = typeof searchType === 'string' ? searchType : 'all';
+              const normalizedSearchScope = typeof searchScope === 'string' ? searchScope : 'all';
+              const normalizedSearchMode = typeof searchMode === 'string' ? searchMode : 'simple';
+              const normalizedShowPreview = toBooleanValue(showPreview, true);
+              const normalizedRelevance = toBooleanValue(relevance, false);
+              const normalizedExactMatch = toBooleanValue(exactMatch, false);
               
               set(
                 (state) => ({
                   searchPage: {
                     ...state.searchPage,
-                    searchType: searchType as SearchPageState['searchType'],
-                    searchScope: searchScope as SearchPageState['searchScope'],
-                    searchMode: searchMode as SearchPageState['searchMode'],
-                    exactMatch: Boolean(exactMatch),
+                    searchType: normalizedSearchType as SearchPageState['searchType'],
+                    searchScope: normalizedSearchScope as SearchPageState['searchScope'],
+                    searchMode: normalizedSearchMode as SearchPageState['searchMode'],
+                    exactMatch: normalizedExactMatch,
                     excludeTerms: excludeTermsArray,
                     requiredTerms: requiredTermsArray,
                     dateRange: {
-                      from: dateFrom,
-                      to: dateTo,
+                      from: normalizedDateFrom,
+                      to: normalizedDateTo,
                     },
-                    language,
+                    language: normalizedLanguage,
                     status: statusArray,
-                    viewMode: view as SearchPageState['viewMode'],
-                    groupBy: groupBy as SearchPageState['groupBy'],
-                    showPreview: Boolean(showPreview),
-                    relevanceSort: Boolean(relevance),
+                    viewMode: normalizedView as SearchPageState['viewMode'],
+                    groupBy: normalizedGroupBy as SearchPageState['groupBy'],
+                    showPreview: normalizedShowPreview,
+                    relevanceSort: normalizedRelevance,
                   },
                 }),
                 false,

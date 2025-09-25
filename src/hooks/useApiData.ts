@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { JSendResponse } from '@/lib/utils/jsend';
 import { parseJSendFetch } from '@/lib/utils/jsend';
 
-export interface UseApiOptions<P = any> {
+export interface UseApiOptions<P = Record<string, unknown>> {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   immediate?: boolean;
   params?: P;
@@ -18,12 +18,12 @@ export interface UseApiState<T> {
   error: string | null;
 }
 
-export interface UseApiReturn<T, P = any> extends UseApiState<T> {
+export interface UseApiReturn<T, P = Record<string, unknown>> extends UseApiState<T> {
   execute: (override?: Partial<UseApiOptions<P>>) => Promise<JSendResponse<T>>;
   refetch: () => Promise<JSendResponse<T>>;
 }
 
-export function useApiData<T, P = any>(
+export function useApiData<T, P = Record<string, unknown>>(
   endpoint: string,
   options: UseApiOptions<P> = {}
 ): UseApiReturn<T, P> {
@@ -70,9 +70,10 @@ export function useApiData<T, P = any>(
       }
 
       return jsend;
-    } catch (err: any) {
-      setState(s => ({ ...s, loading: false, error: err?.message || 'Network error' }));
-      return { status: 'error', message: err?.message || 'Network error' } as JSendResponse<T>;
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Network error');
+      setState(s => ({ ...s, loading: false, error: error.message }));
+      return { status: 'error', message: error.message } as JSendResponse<T>;
     }
   }, [endpoint]);
 

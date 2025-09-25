@@ -1,11 +1,12 @@
 import { drizzle } from 'drizzle-orm/d1';
 import { getRequestContext } from '@cloudflare/next-on-pages';
-import { and, eq, like, sql, gte } from 'drizzle-orm';
+import { and, eq, like, sql, gte, SQL } from 'drizzle-orm';
 import { websites } from '@/lib/db/schema/websites';
+import type { CloudflareEnv } from '@/types/env';
 
 export function getD1Db() {
-  const env = getRequestContext().env as any;
-  return drizzle(env.DB as any);
+  const env = getRequestContext().env as CloudflareEnv;
+  return drizzle(env.DB);
 }
 
 export interface ListParamsD1 {
@@ -22,7 +23,7 @@ export async function listWebsitesD1(params: ListParamsD1) {
   const { page, pageSize, query, category, featured, includeAds = true, minRating } = params;
   const db = getD1Db();
 
-  const conds: any[] = [];
+  const conds: SQL[] = [];
   if (query && query.trim()) {
     const q = `%${escapeLike(query.trim())}%`;
     conds.push(
@@ -39,14 +40,14 @@ export async function listWebsitesD1(params: ListParamsD1) {
   const rows = await db
     .select()
     .from(websites)
-    .where(where as any)
+    .where(where)
     .limit(pageSize)
     .offset((page - 1) * pageSize);
 
   const [{ c: total }] = await db
     .select({ c: sql<number>`count(*)` })
     .from(websites)
-    .where(where as any);
+    .where(where);
 
   return { rows, total: Number(total) };
 }

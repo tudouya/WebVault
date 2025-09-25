@@ -246,11 +246,11 @@ export const tagParamsSchema = z.object({
 /**
  * 参数解析结果接口
  */
-export interface ParsedParams {
+export interface ParsedParams<T = unknown> {
   /** 解析是否成功 */
   success: boolean;
   /** 解析后的参数 */
-  data?: any;
+  data?: T;
   /** 错误信息 */
   error?: string;
   /** 具体的错误详情 */

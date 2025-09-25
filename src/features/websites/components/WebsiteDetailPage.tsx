@@ -45,7 +45,7 @@ import type { WebsiteCardData } from '../types/website';
 import { trackWebsiteVisit } from '../services/websiteDetailService';
 
 // 导入错误边界组件
-import { withErrorBoundary, ErrorType } from './ErrorBoundary';
+import { withErrorBoundary } from './ErrorBoundary';
 
 // 导入样式文件以确保动画和无障碍颜色可用
 import '../styles/animations.css';

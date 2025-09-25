@@ -129,7 +129,7 @@ export const MODULE_TYPE_VERSIONS = {
  */
 
 /** Generic API response wrapper */
-export type ApiResponse<T = any> = {
+export type ApiResponse<T = unknown> = {
   data: T;
   success: boolean;
   message?: string;
@@ -137,7 +137,7 @@ export type ApiResponse<T = any> = {
 };
 
 /** Generic pagination wrapper */
-export type PaginatedResponse<T = any> = {
+export type PaginatedResponse<T = unknown> = {
   items: T[];
   totalCount: number;
   currentPage: number;
@@ -179,25 +179,34 @@ export function isValidEntityId(value: unknown): value is EntityId {
 
 /** Check if value is a valid API response */
 export function isApiResponse<T>(value: unknown): value is ApiResponse<T> {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+
   return (
-    typeof value === 'object' &&
-    value !== null &&
-    'data' in value &&
-    'success' in value &&
-    typeof (value as any).success === 'boolean'
+    'data' in candidate &&
+    'success' in candidate &&
+    typeof candidate.success === 'boolean'
   );
 }
 
 /** Check if value is a valid paginated response */
 export function isPaginatedResponse<T>(value: unknown): value is PaginatedResponse<T> {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  const { items, totalCount, currentPage } = candidate;
+
   return (
-    typeof value === 'object' &&
-    value !== null &&
-    'items' in value &&
-    'totalCount' in value &&
-    'currentPage' in value &&
-    Array.isArray((value as any).items) &&
-    typeof (value as any).totalCount === 'number' &&
-    typeof (value as any).currentPage === 'number'
+    'items' in candidate &&
+    'totalCount' in candidate &&
+    'currentPage' in candidate &&
+    Array.isArray(items) &&
+    typeof totalCount === 'number' &&
+    typeof currentPage === 'number'
   );
 }
