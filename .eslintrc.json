@@ -9,13 +9,13 @@
     }],
     "react/no-unescaped-entities": "off",
     "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn",
-    "@next/next/no-img-element": "warn",
-    "jsx-a11y/alt-text": "warn",
-    "@typescript-eslint/no-empty-object-type": "warn",
-    "prefer-const": "warn",
+    "react-hooks/exhaustive-deps": "error",
+    "@next/next/no-img-element": "error",
+    "jsx-a11y/alt-text": "error",
+    "@typescript-eslint/no-empty-object-type": "error",
+    "prefer-const": "error",
     "@typescript-eslint/no-namespace": "off",
-    "import/no-anonymous-default-export": "warn",
-    "react/display-name": "warn"
+    "import/no-anonymous-default-export": "error",
+    "react/display-name": "error"
   }
 }

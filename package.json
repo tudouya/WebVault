@@ -14,11 +14,7 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "db:seed:d1": "wrangler d1 execute webvault --file scripts/seeds/d1-websites.sql",
-    "validate-seo": "node scripts/validate-seo.js"
+    "db:seed:d1": "wrangler d1 execute webvault --file scripts/seeds/d1-websites.sql"
   },
   "keywords": [],
   "author": "",
