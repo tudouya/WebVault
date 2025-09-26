@@ -20,6 +20,7 @@
   "license": "ISC",
   "description": "个人网站目录管理平台，用于收藏、分类和管理工作生活中发现的优质网站资源",
   "dependencies": {
+    "@clerk/nextjs": "^6.32.2",
     "@cloudflare/next-on-pages": "^1.13.0",
     "@hookform/resolvers": "^5.2.1",
     "@radix-ui/react-collapsible": "^1.1.12",

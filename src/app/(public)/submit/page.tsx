@@ -1,15 +1,22 @@
 "use client"
 
 import { useState } from "react"
+import { useAuth, useUser } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Globe, CheckCircle, AlertCircle } from "lucide-react"
+import { Globe, CheckCircle, AlertCircle, LogOut } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { SignOutButton } from "@clerk/nextjs"
 
 export default function SubmitPage() {
+  const { isLoaded, isSignedIn } = useAuth()
+  const { user } = useUser()
+  const router = useRouter()
+
   const [formData, setFormData] = useState({
     url: "",
     title: "",
@@ -49,9 +56,28 @@ export default function SubmitPage() {
     }, 2000)
   }
 
+  // Redirect to sign-in if not authenticated
+  if (isLoaded && !isSignedIn) {
+    router.push('/sign-in')
+    return null
+  }
+
   return (
     <div className="min-h-screen bg-background py-12 px-4">
       <div className="max-w-2xl mx-auto">
+        {/* User Info Bar */}
+        <div className="flex items-center justify-between mb-6 p-4 bg-secondary rounded-lg">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Logged in as:</span>
+            <span className="text-sm font-medium">{user?.emailAddresses[0]?.emailAddress}</span>
+          </div>
+          <SignOutButton>
+            <Button variant="ghost" size="sm">
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
+          </SignOutButton>
+        </div>
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
@@ -163,16 +189,15 @@ export default function SubmitPage() {
                 />
               </div>
 
-              {/* Submitter Email */}
+              {/* Auto-filled Submitter Email */}
               <div className="space-y-2">
-                <Label htmlFor="submitterEmail">Your Email (optional)</Label>
+                <Label htmlFor="submitterEmail">Your Email</Label>
                 <Input
                   id="submitterEmail"
                   type="email"
-                  placeholder="your@email.com"
-                  value={formData.submitterEmail}
-                  onChange={(e) => handleInputChange("submitterEmail", e.target.value)}
-                  disabled={isLoading}
+                  value={user?.emailAddresses[0]?.emailAddress || ''}
+                  disabled
+                  className="bg-secondary"
                 />
                 <p className="text-xs text-muted-foreground">
                   We&apos;ll use this to contact you about your submission status
