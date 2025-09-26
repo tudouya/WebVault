@@ -157,8 +157,12 @@ function mapWebsiteCardToDTO(source: WebsiteCardSource): WebsiteDTO {
     url: source.url,
     favicon_url: source.favicon_url || undefined,
     screenshot_url: screenshot,
-    tags: Array.isArray(source.tags) ? source.tags : [],
-    category: typeof source.category === 'string' ? source.category : undefined,
+    tags: Array.isArray((source as any).tags) ? (source as any).tags : [],
+    category: typeof (source as any).category === 'string'
+      ? (source as any).category
+      : typeof (source as any).category_id === 'string'
+        ? (source as any).category_id
+        : undefined,
     isAd: 'isAd' in source ? Boolean(source.isAd) : false,
     adType: 'adType' in source ? source.adType : undefined,
     rating: typeof source.rating === 'number' ? source.rating : undefined,
@@ -186,8 +190,8 @@ function mapDbRowToDTO(row: WebsiteDbRow): WebsiteDTO {
     url: row.url,
     favicon_url: row.faviconUrl ?? undefined,
     screenshot_url: row.screenshotUrl ?? undefined,
-    tags: row.tags ? safeParseTags(row.tags) : [],
-    category: row.category ?? undefined,
+    tags: [],
+    category: row.categoryId ?? undefined,
     isAd: coerceBool(row.isAd),
     adType: row.adType ?? undefined,
     rating: typeof row.rating === 'number' ? row.rating : undefined,
@@ -198,15 +202,6 @@ function mapDbRowToDTO(row: WebsiteDbRow): WebsiteDTO {
     created_at: createdAt,
     updated_at: updatedAt,
   };
-}
-
-function safeParseTags(val: string): string[] {
-  try {
-    const arr = JSON.parse(val);
-    return Array.isArray(arr) ? arr.filter((x) => typeof x === 'string') : [];
-  } catch {
-    return [];
-  }
 }
 
 function coerceBool(v: unknown, defaultValue = false): boolean {

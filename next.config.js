@@ -18,13 +18,6 @@ const nextConfig = {
       },
     ],
   },
-  redirects: async () => [
-    {
-      source: '/admin',
-      destination: '/admin/dashboard',
-      permanent: true,
-    },
-  ],
 }
 
 module.exports = nextConfig

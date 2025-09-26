@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useSignIn } from "@clerk/nextjs"
+import { useAuth, useSignIn } from "@clerk/nextjs"
 import { isClerkAPIResponseError } from "@clerk/nextjs/errors"
 
 import { Button } from "@/components/ui/button"
@@ -15,6 +15,7 @@ import Link from "next/link"
 export default function SignInPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { isLoaded: isAuthLoaded, isSignedIn } = useAuth()
   const { isLoaded, signIn, setActive } = useSignIn()
 
   const [email, setEmail] = useState("")
@@ -23,11 +24,17 @@ export default function SignInPage() {
   const [error, setError] = useState<string | null>(null)
 
   const redirectParam = searchParams?.get("redirect_url") ?? undefined
-  const redirectUrl = redirectParam && redirectParam.startsWith("/") ? redirectParam : "/submit"
+  const redirectUrl = redirectParam && redirectParam.startsWith("/") ? redirectParam : "/admin"
 
   useEffect(() => {
     setError(null)
   }, [email, password])
+
+  useEffect(() => {
+    if (isAuthLoaded && isSignedIn) {
+      router.replace(redirectUrl)
+    }
+  }, [isAuthLoaded, isSignedIn, redirectUrl, router])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()

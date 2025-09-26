@@ -30,7 +30,7 @@ export async function listWebsitesD1(params: ListParamsD1) {
       like(websites.title, q)
     );
   }
-  if (category) conds.push(eq(websites.category, category));
+  if (category) conds.push(eq(websites.categoryId, category));
   if (featured !== undefined) conds.push(eq(websites.isFeatured, featured));
   if (!includeAds) conds.push(eq(websites.isAd, false));
   if (typeof minRating === 'number') conds.push(gte(websites.rating, minRating));

@@ -3,9 +3,10 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Menu, X } from "lucide-react"
+import { Menu, X, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useAuth, useUser } from "@clerk/nextjs"
 
 // Logo组件
 const Logo = () => (
@@ -27,7 +28,7 @@ const navigationItems = [
   { label: "Tag", href: "/tag" },
   { label: "Blog", href: "/blog" },
   { label: "Pricing", href: "/pricing" },
-  { label: "Submit", href: "/submit" },
+  { label: "Submit", href: "/admin/submit" },
   { label: "Studio", href: "/studio" },
 ]
 
@@ -39,6 +40,10 @@ interface MobileMenuProps {
 }
 
 const MobileMenu = ({ isOpen, onClose, currentPath }: MobileMenuProps) => {
+  const { isSignedIn } = useAuth()
+  const { user } = useUser()
+  const userEmail = user?.emailAddresses?.[0]?.emailAddress
+
   if (!isOpen) return null
 
   return (
@@ -76,9 +81,18 @@ const MobileMenu = ({ isOpen, onClose, currentPath }: MobileMenuProps) => {
             )
           })}
           <div className="pt-4 border-t border-border">
-            <Button variant="default" className="w-full" asChild>
-              <Link href="/sign-in">Sign In</Link>
-            </Button>
+            {isSignedIn ? (
+              <Button variant="outline" className="w-full justify-start gap-2" asChild>
+                <Link href="/admin">
+                  <User className="h-4 w-4" />
+                  <span>{userEmail ?? "进入后台"}</span>
+                </Link>
+              </Button>
+            ) : (
+              <Button variant="default" className="w-full" asChild>
+                <Link href="/sign-in">Sign In</Link>
+              </Button>
+            )}
           </div>
         </nav>
       </div>
@@ -117,6 +131,9 @@ const DesktopNavigation = ({ currentPath }: DesktopNavigationProps) => (
 export const HeaderNavigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
   const pathname = usePathname()
+  const { isSignedIn } = useAuth()
+  const { user } = useUser()
+  const userEmail = user?.emailAddresses?.[0]?.emailAddress
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
@@ -153,14 +170,28 @@ export const HeaderNavigation = () => {
             {/* 右侧按钮区域 */}
             <div className="flex items-center space-x-4">
               {/* 桌面端登录按钮 */}
-              <Button 
-                variant="default" 
-                size="sm"
-                className="hidden md:inline-flex"
-                asChild
-              >
-                <Link href="/sign-in">Sign In</Link>
-              </Button>
+              {isSignedIn ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="hidden md:inline-flex gap-2"
+                  asChild
+                >
+                  <Link href="/admin">
+                    <User className="h-4 w-4" />
+                    <span className="max-w-[140px] truncate">{userEmail ?? "进入后台"}</span>
+                  </Link>
+                </Button>
+              ) : (
+                <Button 
+                  variant="default" 
+                  size="sm"
+                  className="hidden md:inline-flex"
+                  asChild
+                >
+                  <Link href="/sign-in">Sign In</Link>
+                </Button>
+              )}
 
               {/* 移动端菜单按钮 */}
               <Button
