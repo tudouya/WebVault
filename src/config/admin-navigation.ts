@@ -8,7 +8,6 @@ import {
   FileText,
   Settings,
   Database,
-  PlusSquare,
 } from "lucide-react"
 
 export type AdminNavItem = {
@@ -28,11 +27,6 @@ export const adminNavItems: AdminNavItem[] = [
     title: "网站管理",
     href: "/admin/websites",
     icon: Globe,
-  },
-  {
-    title: "提交网站",
-    href: "/admin/submit",
-    icon: PlusSquare,
   },
   {
     title: "分类管理",

@@ -7,6 +7,7 @@ export * from './collection'
 export * from './filters'
 export * from './search'
 export * from './detail'
+export * from './admin'
 
 
 // Export constants as values, not types

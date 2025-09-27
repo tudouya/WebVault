@@ -21,6 +21,9 @@ export {
   SeoUtils,
 } from './seoUtils';
 
+// Slug 工具
+export { generateBlogSlug } from './slug';
+
 // 类型导出
 export type {
   OpenGraphData,

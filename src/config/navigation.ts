@@ -34,11 +34,6 @@ export const navigationConfig = {
           href: "/",
           icon: "globe",
         },
-        {
-          title: "提交网站",
-          href: "/submit",
-          icon: "plus",
-        },
       ],
     },
     {

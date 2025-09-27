@@ -28,7 +28,6 @@ const navigationItems = [
   { label: "Tag", href: "/tag" },
   { label: "Blog", href: "/blog" },
   { label: "Pricing", href: "/pricing" },
-  { label: "Submit", href: "/admin/submit" },
   { label: "Studio", href: "/studio" },
 ]
 

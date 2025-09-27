@@ -289,3 +289,17 @@ export const FORM_ERROR_MESSAGES = {
     BOT_DETECTED: '检测到异常提交，请重试',
   },
 } as const;
+
+export {
+  websiteAdminCreateSchema,
+  websiteAdminUpdateSchema,
+  websiteStatusUpdateSchema,
+  websiteBulkReviewSchema,
+} from './admin'
+
+export type {
+  WebsiteAdminCreateInput,
+  WebsiteAdminUpdateInput,
+  WebsiteStatusUpdateInput,
+  WebsiteBulkReviewInput,
+} from './admin'

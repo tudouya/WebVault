@@ -44,6 +44,16 @@ export type {
 } from './detail';
 export { BlogDetailDataUtils } from './detail';
 
+// 后台管理类型
+export type {
+  BlogPostListItem,
+  BlogPostDetail,
+  BlogPostListFilters,
+  BlogPostListResult,
+  BlogPostStatus,
+} from './admin';
+export { BLOG_POST_STATUSES } from './admin';
+
 /**
  * Author information interface
  */

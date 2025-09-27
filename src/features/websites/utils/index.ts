@@ -10,3 +10,5 @@ export {
   validateWebsiteSEOData,
   generateSocialSharingUrls,
 } from './seoUtils'
+
+export { generateWebsiteSlug } from './slug'

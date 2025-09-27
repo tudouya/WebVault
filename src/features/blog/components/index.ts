@@ -38,3 +38,6 @@ export {
   type BlogErrorBoundaryProps,
   type BlogErrorFallbackProps
 } from './BlogErrorBoundary';
+
+// 后台管理组件
+export { BlogPostsAdminPage } from './admin/blog-posts-page';

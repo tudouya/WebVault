@@ -71,3 +71,6 @@ export { WebsiteDetailPage, default as WebsiteDetailPageDefault } from './Websit
 // Example Components (for development and testing)
 export { ErrorBoundaryExample, default as ErrorBoundaryExampleDefault } from './ErrorBoundaryExample'
 export { LoadingStatesExample, default as LoadingStatesExampleDefault } from './LoadingStatesExample'
+
+// Admin Pages
+export { WebsitesAdminPage } from './admin/websites-page'

@@ -78,7 +78,6 @@ const FOOTER_LINKS = {
     links: [
       { name: 'Blog', href: '/blog' },
       { name: 'Pricing', href: '/pricing' },
-      { name: 'Submit', href: '/submit' },
       { name: 'Studio', href: '/studio' }
     ]
   },

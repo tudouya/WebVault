@@ -150,19 +150,12 @@ export default function WebsiteNotFound() {
             <p className="text-sm text-muted-foreground">
               如果您认为这是一个错误，请{' '}
               <Link 
-                href="/submit" 
-                className="text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 rounded"
-              >
-                提交网站
-              </Link>
-              {' '}或{' '}
-              <Link 
                 href="/" 
                 className="text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 rounded"
               >
                 返回首页
               </Link>
-              {' '}继续探索更多优质网站资源。
+              {' '}继续探索更多优质网站资源，或通过搜索功能寻找其他内容。
             </p>
           </div>
         </div>
