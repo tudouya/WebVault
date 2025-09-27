@@ -94,6 +94,7 @@ export interface WebsiteAdminCreateInput {
   description?: string
   categoryId?: string | null
   tagIds?: string[]
+  collectionIds?: string[]
   isAd?: boolean
   adType?: AdType
   rating?: number

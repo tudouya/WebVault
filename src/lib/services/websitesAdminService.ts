@@ -252,6 +252,8 @@ export const websitesAdminService = {
       await tagsService.updateWebsiteTags(id, input.tagIds)
     }
 
+    await updateWebsiteCollections(db, id, input.collectionIds ?? [])
+
     if (input.submissionId) {
       await linkSubmission(db, input.submissionId, id, options.actorId)
     }
@@ -355,6 +357,10 @@ export const websitesAdminService = {
 
     if (input.tagIds !== undefined) {
       await tagsService.updateWebsiteTags(id, input.tagIds ?? [])
+    }
+
+    if (input.collectionIds !== undefined) {
+      await updateWebsiteCollections(db, id, input.collectionIds ?? [])
     }
 
     if (input.submissionId) {
@@ -560,6 +566,48 @@ async function loadCollections(db: ReturnType<typeof getD1Db>, websiteId: string
     .orderBy(asc(collectionItems.position), asc(collections.name))
 
   return rows.map((row) => ({ id: row.id, name: row.name, position: row.position ?? undefined }))
+}
+
+async function updateWebsiteCollections(
+  db: ReturnType<typeof getD1Db>,
+  websiteId: string,
+  collectionIds: string[]
+) {
+  const uniqueIds = Array.from(new Set(collectionIds.filter((id) => id && id.trim().length)))
+
+  if (!uniqueIds.length) {
+    await db.delete(collectionItems).where(eq(collectionItems.websiteId, websiteId))
+    return
+  }
+
+  const existingCollections = await db
+    .select({ id: collections.id })
+    .from(collections)
+    .where(inArray(collections.id, uniqueIds))
+
+  if (existingCollections.length !== uniqueIds.length) {
+    throw new Error("存在无效的收藏集 ID")
+  }
+
+  await db.delete(collectionItems).where(eq(collectionItems.websiteId, websiteId))
+
+  const now = new Date().toISOString()
+
+  await db.insert(collectionItems).values(
+    uniqueIds.map((collectionId, index) => ({
+      id: crypto.randomUUID(),
+      collectionId,
+      websiteId,
+      note: null,
+      position: index,
+      createdAt: now,
+    }))
+  )
+
+  await db
+    .update(collections)
+    .set({ updatedAt: now })
+    .where(inArray(collections.id, uniqueIds))
 }
 
 async function loadLatestSubmission(db: ReturnType<typeof getD1Db>, websiteId: string) {

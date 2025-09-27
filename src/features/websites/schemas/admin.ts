@@ -78,6 +78,19 @@ const tagIdsSchema = z
     return Array.from(new Set(normalized))
   })
 
+const collectionIdsSchema = z
+  .union([z.array(z.string().trim()), z.string().trim(), z.undefined(), z.null()])
+  .transform((value) => {
+    if (value === undefined) return undefined
+    if (value === null) return []
+    const raw = Array.isArray(value) ? value : value.split(",")
+    const normalized = raw
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0)
+
+    return Array.from(new Set(normalized))
+  })
+
 const ratingSchema = z
   .union([z.number(), z.string(), z.null(), z.undefined()])
   .transform((value) => {
@@ -119,6 +132,7 @@ const basePayloadSchema = z.object({
   description: optionalNormalizedString(2000, "网站描述"),
   categoryId: optionalIdSchema,
   tagIds: tagIdsSchema,
+  collectionIds: collectionIdsSchema,
   isAd: booleanSchema,
   adType: adTypeSchema,
   rating: ratingSchema,
@@ -147,6 +161,7 @@ export const websiteAdminCreateSchema = basePayloadSchema
   .transform((data) => ({
     ...data,
     tagIds: data.tagIds ?? [],
+    collectionIds: data.collectionIds ?? [],
     isAd: data.isAd ?? false,
     adType: data.isAd ? data.adType : undefined,
     visitCount: data.visitCount ?? 0,

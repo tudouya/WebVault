@@ -74,3 +74,6 @@ export { LoadingStatesExample, default as LoadingStatesExampleDefault } from './
 
 // Admin Pages
 export { WebsitesAdminPage } from './admin/websites-page'
+export { WebsiteCreatePage } from './admin/website-create-page'
+export { WebsiteDetailAdminPage } from './admin/website-detail-admin-page'
+export { WebsiteEditPage } from './admin/website-edit-page'

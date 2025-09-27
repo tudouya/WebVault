@@ -30,3 +30,11 @@ export {
   type CollectionNavigationConfig,
   type CollectionNavigationReturn,
 } from './useCollectionNavigation';
+
+// 管理后台表单选项
+export {
+  useWebsiteFormOptions,
+  type WebsiteFormCategoryOption,
+  type WebsiteFormTagOption,
+  type WebsiteFormCollectionOption,
+} from './useWebsiteFormOptions';

@@ -1,13 +1,12 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
 
-import type { WebsiteAdminDetail, WebsiteAdminListItem, WebsiteReviewStatus } from "@/features/websites/types/admin"
+import type { WebsiteAdminListItem, WebsiteReviewStatus } from "@/features/websites/types/admin"
 import type { WebsiteStatus } from "@/features/websites/types"
 
-import { WebsiteDetailCard } from "./website-detail-card"
 import { WebsiteFilters } from "./website-filters"
-import { WebsiteFormCard, type WebsiteFormPayload } from "./website-form-card"
 import { WebsiteTable } from "./website-table"
 
 type AdFilter = "all" | "ad" | "organic"
@@ -23,16 +22,11 @@ interface ListResponse {
   message?: string
 }
 
-interface DetailResponse {
-  data?: WebsiteAdminDetail
-  message?: string
-}
-
 const DEFAULT_PAGE_SIZE = 20
 
-type FormState = { mode: "create" } | { mode: "edit"; website: WebsiteAdminDetail }
-
 export function WebsitesAdminPage() {
+  const router = useRouter()
+
   const [search, setSearch] = useState("")
   const [status, setStatus] = useState<WebsiteStatus | "all">("all")
   const [reviewStatus, setReviewStatus] = useState<WebsiteReviewStatus | "all">("all")
@@ -45,13 +39,7 @@ export function WebsitesAdminPage() {
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [selectedDetail, setSelectedDetail] = useState<WebsiteAdminDetail | null>(null)
-  const [detailLoading, setDetailLoading] = useState(false)
-
-  const [formState, setFormState] = useState<FormState | null>(null)
-  const [formSubmitting, setFormSubmitting] = useState(false)
 
   const filtersMemo = useMemo(
     () => ({ search, status, reviewStatus, adFilter }),
@@ -85,14 +73,6 @@ export function WebsitesAdminPage() {
       if (payload.meta.page !== page) {
         setPage(payload.meta.page)
       }
-
-      if (payload.data.length && selectedId) {
-        const stillExists = payload.data.some((item) => item.id === selectedId)
-        if (!stillExists) {
-          setSelectedId(null)
-          setSelectedDetail(null)
-        }
-      }
     } catch (fetchError) {
       console.error("加载网站列表失败", fetchError)
       setError(fetchError instanceof Error ? fetchError.message : "加载网站列表失败")
@@ -101,54 +81,29 @@ export function WebsitesAdminPage() {
     } finally {
       setLoading(false)
     }
-  }, [filtersMemo, page, pageSize, selectedId])
+  }, [filtersMemo, page, pageSize])
 
   useEffect(() => {
     void fetchWebsites()
   }, [fetchWebsites])
 
-  const loadDetail = useCallback(
-    async (id: string, options?: { openForm?: boolean }) => {
-      try {
-        setDetailLoading(true)
-        setSelectedId(id)
-        const response = await fetch(`/api/admin/websites/${id}`)
-        const payload = (await response.json().catch(() => null)) as DetailResponse | null
-
-        if (!response.ok || !payload?.data) {
-          throw new Error(payload?.message ?? "加载网站详情失败")
-        }
-
-        setSelectedDetail(payload.data)
-        if (options?.openForm) {
-          setFormState({ mode: "edit", website: payload.data })
-        }
-      } catch (detailError) {
-        console.error("加载网站详情失败", detailError)
-        setSelectedDetail(null)
-      } finally {
-        setDetailLoading(false)
-      }
-    },
-    []
-  )
-
   const handleSelect = useCallback(
     (item: WebsiteAdminListItem) => {
-      void loadDetail(item.id)
+      setSelectedId(item.id)
+      router.push(`/admin/websites/${item.id}`)
     },
-    [loadDetail]
+    [router]
   )
 
   const handleEdit = useCallback(
     (item: WebsiteAdminListItem) => {
-      void loadDetail(item.id, { openForm: true })
+      router.push(`/admin/websites/${item.id}/edit`)
     },
-    [loadDetail]
+    [router]
   )
 
   const handleDelete = useCallback(
-    async (item: WebsiteAdminListItem | WebsiteAdminDetail) => {
+    async (item: WebsiteAdminListItem) => {
       if (!window.confirm(`确认删除「${item.title}」吗？此操作不可撤销。`)) {
         return
       }
@@ -160,93 +115,26 @@ export function WebsitesAdminPage() {
           throw new Error(payload?.message ?? "删除网站失败")
         }
 
-        if (selectedId === item.id) {
-          setSelectedId(null)
-          setSelectedDetail(null)
-        }
-
         await fetchWebsites()
       } catch (deleteError) {
         console.error("删除网站失败", deleteError)
         window.alert(deleteError instanceof Error ? deleteError.message : "删除网站失败")
       }
     },
-    [fetchWebsites, selectedId]
-  )
-
-  const handleReviewChange = useCallback(
-    async (detail: WebsiteAdminDetail, review: WebsiteReviewStatus) => {
-      try {
-        const response = await fetch(`/api/admin/websites/${detail.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reviewStatus: review }),
-        })
-
-        const payload = (await response.json().catch(() => null)) as DetailResponse | null
-
-        if (!response.ok || !payload?.data) {
-          throw new Error(payload?.message ?? "更新审核状态失败")
-        }
-
-        setSelectedDetail(payload.data)
-        await fetchWebsites()
-      } catch (error) {
-        console.error("更新审核状态失败", error)
-        window.alert(error instanceof Error ? error.message : "更新审核状态失败")
-      }
-    },
     [fetchWebsites]
   )
 
-  const handleSubmit = useCallback(
-    async (payload: WebsiteFormPayload) => {
-      const current = formState
-      if (!current) return
-
-      const isEdit = current.mode === "edit"
-      const endpoint = isEdit ? `/api/admin/websites/${current.website.id}` : "/api/admin/websites"
-      const method = isEdit ? "PUT" : "POST"
-
-      try {
-        setFormSubmitting(true)
-        const response = await fetch(endpoint, {
-          method,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        })
-
-        const result = (await response.json().catch(() => null)) as DetailResponse | null
-
-        if (!response.ok || !result?.data) {
-          throw new Error(result?.message ?? "保存网站失败")
-        }
-
-        setFormState(null)
-        setSelectedId(result.data.id)
-        setSelectedDetail(result.data)
-        await fetchWebsites()
-      } finally {
-        setFormSubmitting(false)
-      }
-    },
-    [fetchWebsites, formState]
-  )
-
-  const handlePageChange = useCallback(
-    (nextPage: number) => {
-      setPage(Math.max(1, nextPage))
-    },
-    []
-  )
+  const handlePageChange = useCallback((nextPage: number) => {
+    setPage(Math.max(1, nextPage))
+  }, [])
 
   const handleApplyFilters = useCallback(() => {
     setPage(1)
   }, [])
 
   const handleCreate = useCallback(() => {
-    setFormState({ mode: "create" })
-  }, [])
+    router.push("/admin/websites/new")
+  }, [router])
 
   return (
     <div className="space-y-6">
@@ -264,54 +152,26 @@ export function WebsitesAdminPage() {
         adFilter={adFilter}
         loading={loading}
         onSearchChange={setSearch}
-        onStatusChange={(value) => {
-          setStatus(value)
-        }}
-        onReviewStatusChange={(value) => {
-          setReviewStatus(value)
-        }}
-        onAdFilterChange={(value) => {
-          setAdFilter(value)
-        }}
+        onStatusChange={(value) => setStatus(value)}
+        onReviewStatusChange={(value) => setReviewStatus(value)}
+        onAdFilterChange={(value) => setAdFilter(value)}
         onApply={handleApplyFilters}
         onCreate={handleCreate}
       />
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <div className="space-y-4">
-          <WebsiteTable
-            items={items}
-            loading={loading}
-            error={error}
-            page={page}
-            pageSize={pageSize}
-            total={total}
-            selectedId={selectedId}
-            onSelect={handleSelect}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onPageChange={handlePageChange}
-          />
-        </div>
-
-        {formState ? (
-          <WebsiteFormCard
-            mode={formState.mode}
-            website={formState.mode === "edit" ? formState.website : undefined}
-            submitting={formSubmitting}
-            onCancel={() => setFormState(null)}
-            onSubmit={handleSubmit}
-          />
-        ) : (
-          <WebsiteDetailCard
-            website={selectedDetail}
-            loading={detailLoading}
-            onEdit={(detail) => setFormState({ mode: "edit", website: detail })}
-            onDelete={handleDelete}
-            onReviewChange={handleReviewChange}
-          />
-        )}
-      </div>
+      <WebsiteTable
+        items={items}
+        loading={loading}
+        error={error}
+        page={page}
+        pageSize={pageSize}
+        total={total}
+        selectedId={selectedId}
+        onSelect={handleSelect}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onPageChange={handlePageChange}
+      />
     </div>
   )
 }
