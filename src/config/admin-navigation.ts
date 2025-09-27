@@ -7,7 +7,6 @@ import {
   Bookmark,
   FileText,
   Settings,
-  Database,
 } from "lucide-react"
 
 export type AdminNavItem = {
@@ -52,10 +51,5 @@ export const adminNavItems: AdminNavItem[] = [
     title: "系统设置",
     href: "/admin/settings",
     icon: Settings,
-  },
-  {
-    title: "数据库查看",
-    href: "/admin/db-viewer",
-    icon: Database,
   },
 ]
