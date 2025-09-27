@@ -10,8 +10,8 @@
 
 import type { Collection } from '@/features/websites/types/collection';
 import type { Category } from '@/features/websites/types/category';
-import type { Tag } from '@/features/tags/types/tag';
-import type { 
+import type { TagItem } from '@/features/tags/types/tag';
+import type {
   BrowsablePageConfig, 
   SortOption,
   FilterOption as _FilterOption
@@ -19,6 +19,11 @@ import type {
 import { mergeWithDefaults } from './page-config';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { DEFAULT_PAGE_CONFIG as _DEFAULT_PAGE_CONFIG } from './page-config';
+
+type TagEntity = TagItem & {
+  trending?: boolean;
+  group?: string | null;
+};
 
 /**
  * Configuration options for collection page factory
@@ -69,7 +74,7 @@ export interface CategoryPageOptions {
  */
 export interface TagPageOptions {
   /** Tag entity data */
-  tag: Tag;
+  tag: TagEntity;
   /** Override default configuration */
   overrides?: Partial<BrowsablePageConfig>;
   /** Enable advanced features */
@@ -669,7 +674,7 @@ export function validatePageConfig(config: BrowsablePageConfig): boolean {
  */
 export function safeCreatePageConfig(
   type: 'collection' | 'category' | 'tag',
-  entity: Collection | Category | Tag,
+  entity: Collection | Category | TagEntity,
   options: Record<string, unknown> = {}
 ): BrowsablePageConfig {
   try {
@@ -690,7 +695,7 @@ export function safeCreatePageConfig(
         break;
       case 'tag':
         config = createTagPageConfig({
-          tag: entity as Tag,
+          tag: entity as TagEntity,
           ...options
         });
         break;
@@ -713,9 +718,10 @@ export function safeCreatePageConfig(
       id: `${type}-${entity?.id || 'unknown'}`,
       title: {
         dynamic: true,
-        fallback: (entity as Category | Tag)?.name ||
-                 (entity as Collection)?.title ||
-                 'Unknown',
+        fallback:
+          (entity as Category | TagEntity)?.name ||
+          (entity as Collection)?.title ||
+          'Unknown',
       },
     });
   }

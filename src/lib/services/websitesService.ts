@@ -1,7 +1,9 @@
-import type { InferSelectModel } from 'drizzle-orm';
+import { eq, inArray, type InferSelectModel } from 'drizzle-orm';
 import { mockWebsites } from '@/features/websites/data/mockWebsites';
 import type { WebsiteCardData } from '@/features/websites/types/website';
 import { websites } from '@/lib/db/schema/websites';
+import { websiteTags } from '@/lib/db/schema/website-tags';
+import { tags as tagsTable } from '@/lib/db/schema/tags';
 import { WebsiteDTOSchema, type WebsiteDTO } from '@/lib/validations/websites';
 
 export interface ListParams {
@@ -39,7 +41,10 @@ export const websitesService = {
           includeAds,
           minRating,
         });
-        const dtoItems = rows.map(mapDbRowToDTO).map(validateDTO);
+        const tagMap = await loadTagsForWebsites(adapter, rows.map((row) => String(row.id)));
+        const dtoItems = rows
+          .map((row) => mapDbRowToDTO(row, tagMap.get(String(row.id))))
+          .map(validateDTO);
         console.log('D1 database query successful, returned', dtoItems.length, 'items');
         return { items: dtoItems, page, pageSize, total: Number(total ?? dtoItems.length) };
       } catch (error) {
@@ -103,7 +108,8 @@ export const websitesService = {
           return null;
         }
         console.log('D1 database query successful for id:', id);
-        return validateDTO(mapDbRowToDTO(row));
+        const tagMap = await loadTagsForWebsites(adapter, [String(row.id)]);
+        return validateDTO(mapDbRowToDTO(row, tagMap.get(String(row.id))));
       } catch (error) {
         console.log('D1 database query failed for id:', id, error);
       }
@@ -175,7 +181,7 @@ function validateDTO(dto: WebsiteDTO): WebsiteDTO {
   return WebsiteDTOSchema.parse(dto);
 }
 
-function mapDbRowToDTO(row: WebsiteDbRow): WebsiteDTO {
+function mapDbRowToDTO(row: WebsiteDbRow, tagNames?: string[]): WebsiteDTO {
   const createdAt = row.createdAt ?? new Date().toISOString();
   const updatedAt = row.updatedAt ?? createdAt;
 
@@ -186,7 +192,7 @@ function mapDbRowToDTO(row: WebsiteDbRow): WebsiteDTO {
     url: row.url,
     favicon_url: row.faviconUrl ?? undefined,
     screenshot_url: row.screenshotUrl ?? undefined,
-    tags: [],
+    tags: Array.isArray(tagNames) ? [...new Set(tagNames.filter((tag): tag is string => Boolean(tag)))] : [],
     category: row.categoryId ?? undefined,
     isAd: coerceBool(row.isAd),
     adType: row.adType ?? undefined,
@@ -249,5 +255,37 @@ async function tryImportD1Adapter(): Promise<D1AdapterModule | null> {
   } catch (e) {
     console.log('Adapter import failed:', e);
     return null;
+  }
+}
+
+async function loadTagsForWebsites(adapter: D1AdapterModule, websiteIds: string[]): Promise<Map<string, string[]>> {
+  if (!adapter?.getD1Db || !websiteIds.length) {
+    return new Map();
+  }
+
+  try {
+    const db = adapter.getD1Db();
+    const rows = await db
+      .select({
+        websiteId: websiteTags.websiteId,
+        tagName: tagsTable.name,
+      })
+      .from(websiteTags)
+      .innerJoin(tagsTable, eq(tagsTable.id, websiteTags.tagId))
+      .where(inArray(websiteTags.websiteId, websiteIds));
+
+    const map = new Map<string, string[]>();
+    for (const row of rows) {
+      const key = String(row.websiteId);
+      const list = map.get(key) ?? [];
+      if (row.tagName && !list.includes(row.tagName)) {
+        list.push(row.tagName);
+      }
+      map.set(key, list);
+    }
+    return map;
+  } catch (error) {
+    console.log('loadTagsForWebsites failed', error);
+    return new Map();
   }
 }
