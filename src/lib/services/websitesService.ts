@@ -157,12 +157,8 @@ function mapWebsiteCardToDTO(source: WebsiteCardSource): WebsiteDTO {
     url: source.url,
     favicon_url: source.favicon_url || undefined,
     screenshot_url: screenshot,
-    tags: Array.isArray((source as any).tags) ? (source as any).tags : [],
-    category: typeof (source as any).category === 'string'
-      ? (source as any).category
-      : typeof (source as any).category_id === 'string'
-        ? (source as any).category_id
-        : undefined,
+    tags: extractTags(source),
+    category: extractCategory(source),
     isAd: 'isAd' in source ? Boolean(source.isAd) : false,
     adType: 'adType' in source ? source.adType : undefined,
     rating: typeof source.rating === 'number' ? source.rating : undefined,
@@ -217,6 +213,29 @@ function coerceBool(v: unknown, defaultValue = false): boolean {
     }
   }
   return defaultValue;
+}
+
+type MaybeTaggedSource = {
+  tags?: unknown
+  category?: unknown
+  category_id?: unknown
+}
+
+function extractTags(source: WebsiteCardSource): string[] {
+  const candidate = (source as MaybeTaggedSource).tags
+  if (!Array.isArray(candidate)) return []
+  return candidate.filter((item): item is string => typeof item === 'string')
+}
+
+function extractCategory(source: WebsiteCardSource): string | undefined {
+  const withCategory = source as MaybeTaggedSource
+  if (typeof withCategory.category === 'string') {
+    return withCategory.category
+  }
+  if (typeof withCategory.category_id === 'string') {
+    return withCategory.category_id
+  }
+  return undefined
 }
 
 type D1AdapterModule = typeof import('@/lib/db/adapters/d1');

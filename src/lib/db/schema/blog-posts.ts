@@ -1,4 +1,4 @@
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const blogPosts = sqliteTable('blog_posts', {
   id: text('id').primaryKey(),
@@ -14,4 +14,3 @@ export const blogPosts = sqliteTable('blog_posts', {
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
 });
-

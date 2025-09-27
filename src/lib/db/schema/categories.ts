@@ -9,7 +9,7 @@ export const categories = sqliteTable('categories', {
   displayOrder: integer('display_order').notNull().default(0),
   icon: text('icon'),
   isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  status: text('status').notNull().default('active'),
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
 });
-

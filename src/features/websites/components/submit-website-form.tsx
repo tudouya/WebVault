@@ -2,15 +2,13 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useAuth, useUser } from "@clerk/nextjs"
-import { CheckCircle, AlertCircle } from "lucide-react"
+import { useAuth } from "@clerk/nextjs"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export interface SubmitWebsiteFormProps {
   title?: string
@@ -24,7 +22,6 @@ export function SubmitWebsiteForm({
   redirectOnUnauthed = true,
 }: SubmitWebsiteFormProps) {
   const { isLoaded, isSignedIn } = useAuth()
-  const { user } = useUser()
   const router = useRouter()
 
   const [formData, setFormData] = useState({
@@ -35,7 +32,6 @@ export function SubmitWebsiteForm({
     tags: "",
   })
   const [isLoading, setIsLoading] = useState(false)
-  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle")
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -44,7 +40,6 @@ export function SubmitWebsiteForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setSubmitStatus("idle")
 
     // TODO: 接入真实的提交逻辑
     console.log("Submitting website:", formData)
@@ -52,7 +47,6 @@ export function SubmitWebsiteForm({
     // 模拟 API 调用
     setTimeout(() => {
       setIsLoading(false)
-      setSubmitStatus("success")
       setFormData({
         url: "",
         title: "",
@@ -70,6 +64,10 @@ export function SubmitWebsiteForm({
 
   return (
     <div className="space-y-8">
+      <header className="space-y-2">
+        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+      </header>
       <Card>
         <CardHeader>
           <CardTitle>Website Information</CardTitle>
