@@ -32,46 +32,41 @@ export function Pagination({
     setPage 
   } = useHomepagePagination();
 
-  // 确保有合理的默认值
-  const safeTotalPages = Math.max(totalPages, 2); // 至少显示2页用于演示
-  const safeTotalItems = Math.max(totalItems, 24); // 至少24个项目
-  const safeCurrentPage = Math.max(Math.min(currentPage, safeTotalPages), 1);
+  const clampedCurrentPage = Math.max(Math.min(currentPage, totalPages || 1), 1);
 
-  // 为了演示效果，暂时总是显示分页组件
-  // 如果只有一页或没有数据，不显示分页
-  // if (totalPages <= 1 || totalItems === 0) {
-  //   return null;
-  // }
+  if (totalPages <= 1 || totalItems === 0) {
+    return null;
+  }
 
   const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= safeTotalPages && page !== safeCurrentPage) {
+    if (page >= 1 && page <= totalPages && page !== clampedCurrentPage) {
       setPage(page);
       onPageChange?.(page);
     }
   };
 
   const handleNextPage = () => {
-    if (safeCurrentPage < safeTotalPages) {
-      handlePageChange(safeCurrentPage + 1);
+    if (clampedCurrentPage < totalPages) {
+      handlePageChange(clampedCurrentPage + 1);
     }
   };
 
   // 计算显示的页码范围
   const getPageRange = () => {
     const half = Math.floor(showPageNumbers / 2);
-    let start = Math.max(1, safeCurrentPage - half);
-    const end = Math.min(safeTotalPages, start + showPageNumbers - 1);
+    let start = Math.max(1, clampedCurrentPage - half);
+    const end = Math.min(totalPages, start + showPageNumbers - 1);
     
     // 调整开始位置，确保显示足够的页码
     if (end - start + 1 < showPageNumbers) {
       start = Math.max(1, end - showPageNumbers + 1);
     }
-    
+
     return Array.from({ length: end - start + 1 }, (_, i) => start + i);
   };
 
   const pageRange = getPageRange();
-  const isLastPage = safeCurrentPage >= safeTotalPages;
+  const isLastPage = clampedCurrentPage >= totalPages;
 
   return (
     <div 
@@ -110,41 +105,41 @@ export function Pagination({
         {pageRange.map((page) => (
           <Button
             key={page}
-            variant={page === safeCurrentPage ? "default" : "ghost"}
+            variant={page === clampedCurrentPage ? "default" : "ghost"}
             size="sm"
             onClick={() => handlePageChange(page)}
             className={cn(
               "w-10 h-10 p-0 text-sm font-medium",
-              page === safeCurrentPage
+              page === clampedCurrentPage
                 ? "bg-primary text-primary-foreground hover:bg-primary/90" 
                 : "hover:bg-accent hover:text-accent-foreground",
               "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             )}
-            aria-label={page === safeCurrentPage ? `当前页 ${page}` : `转到第${page}页`}
-            aria-current={page === safeCurrentPage ? "page" : undefined}
+            aria-label={page === clampedCurrentPage ? `当前页 ${page}` : `转到第${page}页`}
+            aria-current={page === clampedCurrentPage ? "page" : undefined}
           >
             {page}
           </Button>
         ))}
 
         {/* 显示最后一页（如果不在当前范围内） */}
-        {pageRange[pageRange.length - 1] < safeTotalPages && (
+        {pageRange[pageRange.length - 1] < totalPages && (
           <>
-            {pageRange[pageRange.length - 1] < safeTotalPages - 1 && (
+            {pageRange[pageRange.length - 1] < totalPages - 1 && (
               <span className="px-2 text-muted-foreground text-sm">...</span>
             )}
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => handlePageChange(safeTotalPages)}
+              onClick={() => handlePageChange(totalPages)}
               className={cn(
                 "w-10 h-10 p-0 text-sm font-medium",
                 "hover:bg-accent hover:text-accent-foreground",
                 "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               )}
-              aria-label={`转到第${safeTotalPages}页`}
+              aria-label={`转到第${totalPages}页`}
             >
-              {safeTotalPages}
+              {totalPages}
             </Button>
           </>
         )}
@@ -169,9 +164,9 @@ export function Pagination({
 
       {/* 页面信息（移动端隐藏） */}
       <div className="hidden sm:flex items-center ml-4 text-sm text-muted-foreground">
-        第 {safeCurrentPage} 页，共 {safeTotalPages} 页
+        第 {clampedCurrentPage} 页，共 {totalPages} 页
         <span className="mx-2">•</span>
-        共 {safeTotalItems.toLocaleString()} 项
+        共 {totalItems.toLocaleString()} 项
       </div>
     </div>
   );

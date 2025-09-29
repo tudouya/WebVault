@@ -6,6 +6,9 @@ import { websiteTags } from '@/lib/db/schema/website-tags';
 import { tags as tagsTable } from '@/lib/db/schema/tags';
 import { WebsiteDTOSchema, type WebsiteDTO } from '@/lib/validations/websites';
 
+const DEFAULT_PAGE_SIZE = 12;
+const MAX_PAGE_SIZE = 48;
+
 export interface ListParams {
   page?: number;
   pageSize?: number;
@@ -23,18 +26,25 @@ export interface ListResult {
   total: number;
 }
 
+export interface ListOptions {
+  allowMockFallback?: boolean;
+}
+
 export const websitesService = {
-  async list(params: ListParams = {}): Promise<ListResult> {
-    const { page = 1, pageSize = 12, query, category, featured, includeAds = true, minRating } = params;
+  async list(params: ListParams = {}, options: ListOptions = {}): Promise<ListResult> {
+    const { allowMockFallback = true } = options;
+    const { page = 1, pageSize = DEFAULT_PAGE_SIZE, query, category, featured, includeAds = true, minRating } = params;
+    const normalizedPageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, pageSize));
+    const normalizedPage = Math.max(1, page);
     // Force D1 adapter usage - try D1 first regardless of environment detection
     const adapter = await tryImportD1Adapter();
     console.log('D1 adapter import result:', !!adapter, !!adapter?.listWebsitesD1);
     if (adapter?.listWebsitesD1) {
       try {
         console.log('Attempting to use D1 database for websites list');
-        const { rows, total } = await adapter.listWebsitesD1({
-          page,
-          pageSize,
+        const { rows, total, resolvedPage, pageSize: effectivePageSize } = await adapter.listWebsitesD1({
+          page: normalizedPage,
+          pageSize: normalizedPageSize,
           query,
           category,
           featured,
@@ -46,15 +56,23 @@ export const websitesService = {
           .map((row) => mapDbRowToDTO(row, tagMap.get(String(row.id))))
           .map(validateDTO);
         console.log('D1 database query successful, returned', dtoItems.length, 'items');
-        return { items: dtoItems, page, pageSize, total: Number(total ?? dtoItems.length) };
+        const effectivePage = typeof resolvedPage === 'number' ? resolvedPage : normalizedPage;
+        const finalPageSize = typeof effectivePageSize === 'number' ? effectivePageSize : normalizedPageSize;
+        return { items: dtoItems, page: effectivePage, pageSize: finalPageSize, total: Number(total ?? dtoItems.length) };
       } catch (error) {
         console.log('D1 database query failed, falling back to mock:', error);
+        if (!allowMockFallback) {
+          throw error instanceof Error ? error : new Error('Failed to load websites from database');
+        }
       }
     }
 
     // SQLite 分支已移除（D1-only）
 
     // Fallback to mocks
+    if (!allowMockFallback) {
+      throw new Error('Unable to load websites from database');
+    }
     let items = mockWebsites.slice();
 
     if (query) {
@@ -83,15 +101,26 @@ export const websitesService = {
     }
 
     const total = items.length;
-    const start = (page - 1) * pageSize;
-    const pageItems = items.slice(start, start + pageSize);
+    if (total === 0) {
+      return {
+        items: [],
+        page: 1,
+        pageSize: normalizedPageSize,
+        total: 0,
+      };
+    }
+
+    const totalPages = Math.ceil(total / normalizedPageSize);
+    const resolvedPage = Math.min(normalizedPage, totalPages);
+    const start = (resolvedPage - 1) * normalizedPageSize;
+    const pageItems = items.slice(start, start + normalizedPageSize);
 
     const dtoItems = pageItems.map(mapWebsiteCardToDTO).map(validateDTO);
 
     return {
       items: dtoItems,
-      page,
-      pageSize,
+      page: resolvedPage,
+      pageSize: normalizedPageSize,
       total,
     };
   },

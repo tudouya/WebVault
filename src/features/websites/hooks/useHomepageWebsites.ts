@@ -1,0 +1,245 @@
+'use client';
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import type { WebsiteCardData } from '../types/website';
+import type { WebsiteDTO } from '@/lib/validations/websites';
+
+interface UseHomepageWebsitesOptions {
+  page: number;
+  pageSize: number;
+  search?: string;
+  categoryId?: string | null;
+  featuredOnly?: boolean;
+  includeAds?: boolean;
+  minRating?: number;
+  enabled?: boolean;
+}
+
+interface UseHomepageWebsitesResult {
+  websites: WebsiteCardData[];
+  isLoading: boolean;
+  error: string | null;
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+  hasMore: boolean;
+  refresh: () => void;
+}
+
+interface ApiSuccessPayload {
+  code: number;
+  message: string;
+  data: WebsiteDTO[];
+  meta?: {
+    page?: number;
+    per_page?: number;
+    total?: number;
+    total_pages?: number;
+    has_more?: boolean;
+  };
+}
+
+export function useHomepageWebsites(options: UseHomepageWebsitesOptions): UseHomepageWebsitesResult {
+  const {
+    page,
+    pageSize,
+    search,
+    categoryId,
+    featuredOnly,
+    includeAds = true,
+    minRating,
+    enabled = true,
+  } = options;
+
+  const [websites, setWebsites] = useState<WebsiteCardData[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState(0);
+
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [resolvedPage, setResolvedPage] = useState(page);
+  const [resolvedPageSize, setResolvedPageSize] = useState(pageSize);
+  const [hasMore, setHasMore] = useState(false);
+
+  const abortRef = useRef<AbortController | null>(null);
+  const requestIdRef = useRef(0);
+
+  const refresh = useCallback(() => {
+    setRefreshToken((token) => token + 1);
+  }, []);
+
+  useEffect(() => {
+    if (!enabled) {
+      setIsLoading(false);
+      return () => {
+        abortRef.current?.abort();
+        abortRef.current = null;
+      };
+    }
+
+    const controller = new AbortController();
+    abortRef.current?.abort();
+    abortRef.current = controller;
+    const requestId = ++requestIdRef.current;
+
+    const params = new URLSearchParams();
+    params.set('page', String(page));
+    params.set('pageSize', String(pageSize));
+
+    if (search && search.trim().length > 0) {
+      params.set('query', search.trim());
+    }
+
+    if (categoryId) {
+      params.set('category', categoryId);
+    }
+
+    if (typeof featuredOnly === 'boolean') {
+      params.set('featured', String(featuredOnly));
+    }
+
+    if (typeof includeAds === 'boolean') {
+      params.set('includeAds', String(includeAds));
+    }
+
+    if (typeof minRating === 'number' && Number.isFinite(minRating)) {
+      params.set('minRating', String(minRating));
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    const fetchWebsites = async () => {
+      try {
+        const response = await fetch(`/api/websites?${params.toString()}`, {
+          signal: controller.signal,
+          cache: 'no-store',
+        });
+
+        if (!response.headers.get('content-type')?.includes('application/json')) {
+          throw new Error('响应格式无效');
+        }
+
+        const payload = (await response.json()) as ApiSuccessPayload | Record<string, unknown>;
+
+        if ('code' in payload && payload.code === 0 && Array.isArray(payload.data)) {
+          if (requestIdRef.current !== requestId) {
+            return;
+          }
+          setWebsites(payload.data.map(mapWebsiteDtoToCard));
+
+          const rawMeta = (payload.meta ?? {}) as Record<string, unknown>;
+          const rawPage = typeof rawMeta.page === 'number' ? rawMeta.page : page;
+          const nextPageSize = typeof rawMeta.per_page === 'number' ? rawMeta.per_page : pageSize;
+          const nextTotal = typeof rawMeta.total === 'number' ? rawMeta.total : payload.data.length;
+          const nextTotalPages = typeof rawMeta.total_pages === 'number'
+            ? rawMeta.total_pages
+            : nextPageSize > 0
+              ? Math.ceil(nextTotal / nextPageSize)
+              : 0;
+          const boundedPage = Math.min(
+            Math.max(rawPage, 1),
+            nextTotalPages > 0 ? nextTotalPages : 1
+          );
+          const nextHasMore = typeof rawMeta.has_more === 'boolean'
+            ? rawMeta.has_more
+            : nextTotalPages > 0 && boundedPage < nextTotalPages;
+
+          setResolvedPage(boundedPage);
+          setResolvedPageSize(nextPageSize);
+          setTotal(nextTotal);
+          setTotalPages(nextTotalPages);
+          setHasMore(nextHasMore);
+          setError(null);
+        } else {
+          const message = extractMessage(payload) ?? '网站数据加载失败';
+          throw new Error(message);
+        }
+      } catch (err) {
+        if (controller.signal.aborted) {
+          return;
+        }
+        if (requestIdRef.current !== requestId) {
+          return;
+        }
+        const message = err instanceof Error ? err.message : '网站数据加载失败';
+        setWebsites([]);
+        setTotal(0);
+        setTotalPages(0);
+        setHasMore(false);
+        setError(message);
+      } finally {
+        if (!controller.signal.aborted && requestIdRef.current === requestId) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchWebsites();
+
+    return () => {
+      controller.abort();
+      abortRef.current = null;
+    };
+  }, [page, pageSize, search, categoryId, featuredOnly, includeAds, minRating, refreshToken, enabled]);
+
+  return useMemo(() => ({
+    websites,
+    isLoading,
+    error,
+    page: resolvedPage,
+    pageSize: resolvedPageSize,
+    total,
+    totalPages,
+    hasMore,
+    refresh,
+  }), [websites, isLoading, error, resolvedPage, resolvedPageSize, total, totalPages, hasMore, refresh]);
+}
+
+const VALID_AD_TYPES: WebsiteCardData['adType'][] = ['banner', 'sponsored', 'featured', 'premium'];
+
+function mapWebsiteDtoToCard(dto: WebsiteDTO): WebsiteCardData {
+  const adType = typeof dto.adType === 'string' && (VALID_AD_TYPES as string[]).includes(dto.adType)
+    ? (dto.adType as WebsiteCardData['adType'])
+    : undefined;
+
+  return {
+    id: dto.id,
+    title: dto.title,
+    description: dto.description,
+    url: dto.url,
+    favicon_url: dto.favicon_url || undefined,
+    image_url: dto.screenshot_url || undefined,
+    tags: Array.isArray(dto.tags) ? dto.tags : [],
+    category: dto.category,
+    isAd: dto.isAd,
+    adType,
+    rating: dto.rating,
+    visit_count: dto.visit_count,
+    is_featured: dto.is_featured,
+    created_at: dto.created_at,
+    updated_at: dto.updated_at,
+  };
+}
+
+function extractMessage(data: unknown): string | null {
+  if (!data || typeof data !== 'object') return null;
+  const record = data as Record<string, unknown>;
+
+  if (typeof record.message === 'string') return record.message;
+  if (typeof record.error === 'string') return record.error;
+
+  if (record.errors && typeof record.errors === 'object') {
+    const errorMap = record.errors as Record<string, unknown>;
+    for (const value of Object.values(errorMap)) {
+      if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'string') {
+        return value[0];
+      }
+    }
+  }
+
+  return null;
+}

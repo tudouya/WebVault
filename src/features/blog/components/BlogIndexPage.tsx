@@ -4,17 +4,16 @@
  * BlogIndexPage 组件
  * 
  * 博客索引页面的主要组件，集成导航栏、标题区域、分类筛选、博客展示和页脚
- * 提供完整的博客浏览体验，包括品牌展示、文章展示、分页导航和Newsletter订阅
+ * 提供完整的博客浏览体验，包括品牌展示、文章展示和分页导航
  * 
  * 需求引用:
  * - 1.1-1.5: 页面导航和品牌一致性 - HeaderNavigation组件集成
  * - 2.1-2.5: 分类筛选系统 - CategoryFilter组件集成
  * - 3.1-3.7: 分页导航系统 - Pagination组件集成
- * - 6.1-6.5: Newsletter订阅功能 - NewsletterSection组件集成
  * 
  * 设计模式:
  * - 复用CollectionIndexPage的页面结构模式和布局系统
- * - 集成现有的HeaderNavigation、Footer和NewsletterSection组件
+ * - 集成现有的HeaderNavigation、Footer组件
  * - 基于Feature First Architecture实现模块化组件组织
  */
 
@@ -27,7 +26,6 @@ import type { BlogCardData, BlogCategoryType } from '../types';
 // 导入已存在的通用组件
 import { HeaderNavigation } from '@/features/websites/components/HeaderNavigation';
 import { Footer } from '@/features/websites/components/Footer';
-import { NewsletterSection } from '@/features/websites/components/NewsletterSection';
 import { Pagination } from '@/features/browsable-pages/components/Pagination';
 
 // 导入博客专用组件
@@ -69,12 +67,6 @@ export interface BlogIndexPageProps {
   showContentSection?: boolean;
   
   /**
-   * 是否显示Newsletter区域
-   * @default true
-   */
-  showNewsletterSection?: boolean;
-  
-  /**
    * 是否显示页脚区域
    * @default true
    */
@@ -95,7 +87,6 @@ export function BlogIndexPage({
   isLoading = false,
   showNavigation = true,
   showContentSection = true,
-  showNewsletterSection = true,
   showFooter = true,
 }: BlogIndexPageProps) {
   
@@ -306,20 +297,6 @@ export function BlogIndexPage({
       </main>
       
       {/* Newsletter订阅区域 */}
-      {showNewsletterSection && (
-        <div 
-          className="transition-all duration-300 ease-in-out"
-          style={{
-            opacity: isLoading ? 0.7 : 1,
-            transform: isLoading ? 'translateY(10px)' : 'translateY(0px)'
-          }}
-        >
-          <NewsletterSection 
-            className="transition-all duration-500 ease-in-out"
-          />
-        </div>
-      )}
-      
       {/* 页脚区域 - 支持平滑动画过渡 */}
       {showFooter && (
         <div 

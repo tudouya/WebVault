@@ -8,6 +8,7 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import { useCallback } from 'react';
 import { 
   parseAsString, 
   parseAsInteger, 
@@ -334,8 +335,8 @@ const DEFAULT_SEARCH_PAGE_STATE: SearchPageState = {
 const DEFAULT_PAGINATION: PaginationState = {
   currentPage: 1,
   itemsPerPage: 12,
-  totalItems: 24, // 模拟总数据量，支持多页显示
-  totalPages: 2,  // 计算得出的总页数 (24/12 = 2)
+  totalItems: 0,
+  totalPages: 0,
 };
 
 /**
@@ -378,14 +379,24 @@ export const useHomepageStore = create<HomepageState>()(
         actions: {
           // 搜索相关方法
           setSearch: (query: string) => {
+            let shouldResetPage = false;
             set(
-              (state) => ({
-                search: query,
-                pagination: { ...state.pagination, currentPage: 1 },
-              }),
+              (state) => {
+                const normalizedQuery = query;
+                shouldResetPage = state.search !== normalizedQuery;
+                return {
+                  search: normalizedQuery,
+                  pagination: shouldResetPage
+                    ? { ...state.pagination, currentPage: 1 }
+                    : state.pagination,
+                };
+              },
               false,
               'setSearch'
             );
+            if (process.env.NODE_ENV === 'development' && shouldResetPage) {
+              console.debug('[homepage-store] setSearch -> reset page (new query):', query);
+            }
           },
           
           clearSearch: () => {
@@ -486,11 +497,14 @@ export const useHomepageStore = create<HomepageState>()(
           setPage: (page: number) => {
             set(
               (state) => ({
-                pagination: { ...state.pagination, currentPage: page },
+                pagination: { ...state.pagination, currentPage: Math.max(1, page) },
               }),
               false,
               'setPage'
             );
+            if (process.env.NODE_ENV === 'development') {
+              console.debug('[homepage-store] setPage', page);
+            }
           },
           
           setItemsPerPage: (limit: number) => {
@@ -1181,62 +1195,21 @@ export const useHomepageStore = create<HomepageState>()(
  * 这个hook应该在页面组件中使用来保持URL和状态的同步
  */
 export function useHomepageUrlSync() {
-  const store = useHomepageStore();
-  const { actions } = store;
-  
-  // 使用nuqs管理所有URL参数
-  const [urlState, setUrlState] = useQueryStates(searchParamsParsers);
-  
-  // 从URL更新store状态 (组件首次加载时)
-  const syncStoreFromUrl = () => {
-    actions.syncFromURL(urlState);
-  };
-  
-  // 从store更新URL状态 (支持搜索页面参数)
-  const syncUrlFromStore = (includeSearchPageParams = false) => {
-    const baseUrlState = {
-      search: store.search || undefined,
-      category: store.categoryId || undefined,
-      tags: store.selectedTags.length > 0 ? store.selectedTags.join(',') : undefined,
-      sortBy: store.sortBy !== 'created_at' ? store.sortBy : undefined,
-      sortOrder: store.sortOrder !== 'desc' ? store.sortOrder : undefined,
-      page: store.pagination.currentPage > 1 ? store.pagination.currentPage : undefined,
-      limit: store.pagination.itemsPerPage !== 12 ? store.pagination.itemsPerPage : undefined,
-      featured: store.featuredOnly || undefined,
-      includeAds: !store.includeAds ? store.includeAds : undefined,
-      minRating: store.minRating && store.minRating > 0 ? store.minRating : undefined,
-    };
+  const actions = useHomepageStore((state) => state.actions);
+  const [urlState, setUrlStateInternal] = useQueryStates(searchParamsParsers);
 
-    // 如果需要包含搜索页面参数
-    if (includeSearchPageParams) {
-      const searchPageUrlState = {
-        searchType: store.searchPage.searchType !== 'all' ? store.searchPage.searchType : undefined,
-        searchScope: store.searchPage.searchScope !== 'all' ? store.searchPage.searchScope : undefined,
-        searchMode: store.searchPage.searchMode !== 'simple' ? store.searchPage.searchMode : undefined,
-        exactMatch: store.searchPage.exactMatch || undefined,
-        excludeTerms: store.searchPage.excludeTerms.length > 0 ? store.searchPage.excludeTerms.join(',') : undefined,
-        requiredTerms: store.searchPage.requiredTerms.length > 0 ? store.searchPage.requiredTerms.join(',') : undefined,
-        dateFrom: store.searchPage.dateRange.from || undefined,
-        dateTo: store.searchPage.dateRange.to || undefined,
-        language: store.searchPage.language || undefined,
-        status: store.searchPage.status.length > 0 ? store.searchPage.status.join(',') : undefined,
-        view: store.searchPage.viewMode !== 'grid' ? store.searchPage.viewMode : undefined,
-        groupBy: store.searchPage.groupBy !== 'none' ? store.searchPage.groupBy : undefined,
-        showPreview: !store.searchPage.showPreview ? store.searchPage.showPreview : undefined,
-        relevance: store.searchPage.relevanceSort || undefined,
-      };
-      
-      setUrlState({ ...baseUrlState, ...searchPageUrlState });
-    } else {
-      setUrlState(baseUrlState);
-    }
-  };
-  
+  const syncStoreFromUrl = useCallback(() => {
+    actions.syncFromURL(urlState);
+  }, [actions, urlState]);
+
+  const setUrlState = useCallback((nextState: Record<string, unknown>) => {
+    setUrlStateInternal(nextState);
+  }, [setUrlStateInternal]);
+
   return {
     urlState,
-    setUrlState,
     syncStoreFromUrl,
-    syncUrlFromStore,
+    setUrlState,
   };
 }
 

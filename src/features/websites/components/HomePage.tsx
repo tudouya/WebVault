@@ -10,7 +10,6 @@
  * - 3.0: 分类导航系统 - SidebarFilters组件集成
  * - 5.0: 网站卡片展示 - WebsiteGrid组件集成
  * - 6.0: 分页导航 - Pagination组件集成
- * - 7.0: 社区订阅功能 - NewsletterSection组件集成
  * - 8.0: 页脚信息展示 - Footer组件集成
  * - 9.0: 精确配色系统 - 使用HSL主题色彩
  * - 11.0: 布局和间距系统 - 响应式布局设计
@@ -21,6 +20,7 @@
 'use client';
 
 import React from 'react';
+import type { CategoryNode } from '@/features/categories/types';
 import { cn } from '@/lib/utils';
 
 // 导入已存在的组件
@@ -29,14 +29,14 @@ import { HeroSection } from './HeroSection';
 import { SidebarFilters } from './SidebarFilters';
 import { WebsiteGrid } from './WebsiteGrid';
 import { Pagination } from './Pagination';
-import { NewsletterSection } from './NewsletterSection';
 import { Footer } from './Footer';
 
 // 导入hooks和类型
 // TODO: 暂时禁用，等 nuqs 配置完成后恢复
 // import { useHomepageStore, useHomepageUrlSync } from '../stores/homepage-store';
-import { WebsiteCardData } from '../types/website';
-import { getMockWebsites } from '../data/mockWebsites';
+import { WebsiteCardData, PaginationState } from '../types/website';
+import { useHomepageCategoryTree, useHomepageWebsites } from '../hooks';
+import { useHomepageFilters, useHomepagePagination, useHomepageUrlSync } from '../stores/homepage-store';
 
 /**
  * HomePage组件属性接口
@@ -76,12 +76,6 @@ export interface HomePageProps {
   showContentSection?: boolean;
   
   /**
-   * 是否显示Newsletter订阅区域
-   * @default true
-   */
-  showNewsletterSection?: boolean;
-  
-  /**
    * 是否显示页脚区域
    * @default true
    */
@@ -107,10 +101,6 @@ export interface HomePageProps {
    */
   onPageChange?: (page: number) => void;
   
-  /**
-   * Newsletter订阅成功回调
-   */
-  onNewsletterSubscribe?: (email: string) => void;
 }
 
 /**
@@ -127,36 +117,174 @@ export function HomePage({
   showHeroSection = true,
   websites,
   showContentSection = true,
-  showNewsletterSection = true,
   showFooter = true,
   websitesError,
   onWebsiteVisit,
   onTagClick,
   onPageChange,
-  onNewsletterSubscribe,
 }: HomePageProps) {
   // TODO: 暂时禁用状态管理 hooks，等 nuqs 配置完成后恢复
   // const { ui } = useHomepageStore();
-  // const { syncStoreFromUrl } = useHomepageUrlSync();
+  const { syncStoreFromUrl, setUrlState, urlState } = useHomepageUrlSync();
 
-  // 使用模拟数据作为默认值，如果没有提供 websites prop
-  const displayWebsites = websites || getMockWebsites(12);
+  const {
+    categories: sidebarCategories,
+    isLoading: isCategoriesLoading,
+    error: categoriesError,
+  } = useHomepageCategoryTree();
 
-  // 更新分页状态以反映当前数据
+  const {
+    search,
+    categoryId,
+    includeAds,
+    featuredOnly,
+    minRating,
+    selectedTags,
+    sortBy,
+    sortOrder,
+    setCategory,
+  } = useHomepageFilters();
+
+  const {
+    currentPage,
+    itemsPerPage,
+    totalItems,
+    totalPages: paginationTotalPages,
+    updatePagination,
+  } = useHomepagePagination();
+
+  const shouldFetchWebsites = !websites;
+
+  const {
+    websites: fetchedWebsites,
+    isLoading: websitesLoading,
+    error: fetchedError,
+    total: fetchedTotal,
+    totalPages: fetchedTotalPages,
+    page: resolvedPage,
+    pageSize: resolvedPageSize,
+  } = useHomepageWebsites({
+    page: currentPage,
+    pageSize: itemsPerPage,
+    search,
+    categoryId,
+    featuredOnly,
+    includeAds,
+    minRating,
+    enabled: shouldFetchWebsites,
+  });
+
   React.useEffect(() => {
-    if (displayWebsites) {
-      // 这里可以添加更新分页总数的逻辑
-      // 暂时使用静态值，后续可以根据实际数据动态计算
+    if (!categoryId) return;
+    if (!hasCategory(sidebarCategories, categoryId)) {
+      setCategory(null);
     }
-  }, [displayWebsites]);
+  }, [categoryId, sidebarCategories, setCategory]);
 
-  // 移动端侧边栏状态
+  const sidebarLoading = isLoading || isCategoriesLoading;
+
+  const skipNextUrlSyncRef = React.useRef(false);
+  const lastSerializedUrlStateRef = React.useRef<string>('');
+  const lastAppliedUrlStateRef = React.useRef<string>('');
+
+  React.useEffect(() => {
+    const serialized = JSON.stringify(urlState);
+    if (lastAppliedUrlStateRef.current === serialized) {
+      return;
+    }
+    lastAppliedUrlStateRef.current = serialized;
+    skipNextUrlSyncRef.current = true;
+    syncStoreFromUrl();
+  }, [urlState, syncStoreFromUrl]);
+
+  const baseUrlState = React.useMemo(() => {
+    return {
+      search: search || undefined,
+      category: categoryId || undefined,
+      tags: selectedTags.length > 0 ? selectedTags.join(',') : undefined,
+      sortBy: sortBy !== 'created_at' ? sortBy : undefined,
+      sortOrder: sortOrder !== 'desc' ? sortOrder : undefined,
+      page: currentPage > 1 ? currentPage : undefined,
+      limit: itemsPerPage !== 12 ? itemsPerPage : undefined,
+      featured: featuredOnly ? true : undefined,
+      includeAds: includeAds === false ? false : undefined,
+      minRating: minRating && minRating > 0 ? minRating : undefined,
+    };
+  }, [
+    search,
+    categoryId,
+    selectedTags,
+    sortBy,
+    sortOrder,
+    currentPage,
+    itemsPerPage,
+    featuredOnly,
+    includeAds,
+    minRating,
+  ]);
+
+  React.useEffect(() => {
+    const serialized = JSON.stringify(baseUrlState);
+    if (skipNextUrlSyncRef.current) {
+      skipNextUrlSyncRef.current = false;
+      lastSerializedUrlStateRef.current = serialized;
+      return;
+    }
+    if (lastSerializedUrlStateRef.current === serialized) {
+      return;
+    }
+    lastSerializedUrlStateRef.current = serialized;
+    setUrlState(baseUrlState);
+  }, [baseUrlState, setUrlState]);
+
+  React.useEffect(() => {
+    if (!shouldFetchWebsites) return;
+    if (websitesLoading || fetchedError) return;
+
+    const updates: Partial<PaginationState> = {};
+
+    if (totalItems !== fetchedTotal) {
+      updates.totalItems = fetchedTotal;
+    }
+
+    if (paginationTotalPages !== fetchedTotalPages) {
+      updates.totalPages = fetchedTotalPages;
+    }
+
+    if (itemsPerPage !== resolvedPageSize) {
+      updates.itemsPerPage = resolvedPageSize;
+    }
+
+    if (currentPage !== resolvedPage) {
+      updates.currentPage = resolvedPage;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      updatePagination(updates);
+    }
+  }, [
+    shouldFetchWebsites,
+    websitesLoading,
+    fetchedError,
+    fetchedTotal,
+    fetchedTotalPages,
+    resolvedPage,
+    resolvedPageSize,
+    totalItems,
+    paginationTotalPages,
+    itemsPerPage,
+    currentPage,
+    updatePagination,
+  ]);
+
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = React.useState(false);
 
-  // TODO: 暂时禁用URL状态同步
-  // React.useEffect(() => {
-  //   syncStoreFromUrl();
-  // }, [syncStoreFromUrl]);
+  const websitesErrorMessage = websitesError ?? (shouldFetchWebsites ? fetchedError : null);
+  const isWebsitesLoading = shouldFetchWebsites && websitesLoading;
+  const displayWebsites = websites ?? fetchedWebsites;
+  const combinedLoading = isLoading || isWebsitesLoading;
+  const gridLoading = combinedLoading && displayWebsites.length === 0;
+  const gridError = websitesErrorMessage ?? undefined;
 
   // 滚动时的导航栏固定效果
   const [isScrolled, setIsScrolled] = React.useState(false);
@@ -186,17 +314,26 @@ export function HomePage({
     setIsMobileSidebarOpen(prev => !prev);
   };
 
+  const handleCategoryChange = React.useCallback(
+    (nextCategoryId: string | null) => {
+      setCategory(nextCategoryId);
+      setIsMobileSidebarOpen(false);
+      onPageChange?.(1);
+    },
+    [setCategory, onPageChange]
+  );
+
   // 处理网站卡片点击
-  const handleWebsiteVisit = (website: WebsiteCardData) => {
+  const handleWebsiteVisit = React.useCallback((website: WebsiteCardData) => {
     onWebsiteVisit?.(website);
     // 可以在这里添加访问统计逻辑
-  };
+  }, [onWebsiteVisit]);
 
   // 处理标签点击
-  const handleTagClick = (tag: string) => {
+  const handleTagClickInternal = React.useCallback((tag: string) => {
     onTagClick?.(tag);
     // 可以在这里添加标签筛选逻辑
-  };
+  }, [onTagClick]);
 
   return (
     <div 
@@ -225,7 +362,7 @@ export function HomePage({
         {/* Hero Section - 品牌展示和搜索 */}
         {showHeroSection && (
           <HeroSection 
-            isLoading={isLoading}
+            isLoading={combinedLoading}
             className="border-b border-border"
           />
         )}
@@ -240,9 +377,13 @@ export function HomePage({
                 {/* 左侧筛选面板 */}
                 <div className="lg:w-64 lg:flex-shrink-0">
                   <SidebarFilters
+                    categories={sidebarCategories}
+                    selectedCategoryId={categoryId}
+                    onSelectCategory={handleCategoryChange}
+                    errorMessage={categoriesError}
                     isMobileCollapsed={!isMobileSidebarOpen}
                     onMobileToggle={handleMobileSidebarToggle}
-                    isLoading={isLoading}
+                    isLoading={sidebarLoading}
                   />
                 </div>
 
@@ -270,17 +411,17 @@ export function HomePage({
                   <div 
                     className={cn(
                       "mb-8 pagination-transition",
-                      isLoading && "loading"
+                      combinedLoading && "loading"
                     )} 
                     aria-label="网站展示区域"
                   >
                     <WebsiteGrid
                       websites={displayWebsites}
-                      isLoading={isLoading && !displayWebsites?.length}
-                      isError={!!websitesError}
-                      error={websitesError}
+                      isLoading={gridLoading}
+                      isError={Boolean(gridError)}
+                      error={gridError}
                       onVisitWebsite={handleWebsiteVisit}
-                      onTagClick={handleTagClick}
+                      onTagClick={handleTagClickInternal}
                       className={cn(
                         // 确保网格正确响应式布局
                         'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
@@ -293,7 +434,7 @@ export function HomePage({
                   </div>
 
                   {/* 分页导航 - 增强切换动画 */}
-                  {!isLoading && displayWebsites && displayWebsites.length > 0 && (
+                  {!combinedLoading && displayWebsites.length > 0 && (
                     <div 
                       className={cn(
                         "mt-8 transition-all duration-300 ease-in-out",
@@ -316,22 +457,6 @@ export function HomePage({
           </div>
         )}
         
-        {/* Newsletter订阅区域 - 支持平滑动画过渡 */}
-        {showNewsletterSection && (
-          <div 
-            className="transition-all duration-300 ease-in-out"
-            style={{
-              opacity: isLoading ? 0.7 : 1,
-              transform: isLoading ? 'translateY(10px)' : 'translateY(0px)'
-            }}
-          >
-            <NewsletterSection
-              isLoading={isLoading}
-              onSubscribeSuccess={onNewsletterSubscribe}
-              className="transition-all duration-500 ease-in-out"
-            />
-          </div>
-        )}
       </main>
       
       {/* 页脚区域 - 支持平滑动画过渡 */}
@@ -339,8 +464,8 @@ export function HomePage({
         <div 
           className="transition-all duration-300 ease-in-out"
           style={{
-            opacity: isLoading ? 0.7 : 1,
-            transform: isLoading ? 'translateY(10px)' : 'translateY(0px)'
+            opacity: combinedLoading ? 0.7 : 1,
+            transform: combinedLoading ? 'translateY(10px)' : 'translateY(0px)'
           }}
         >
           <Footer 
@@ -350,7 +475,7 @@ export function HomePage({
       )}
       
       {/* 全局加载状态覆盖层 - 增强subtile加载动画 */}
-      {isLoading && (
+      {combinedLoading && (
         <div 
           className={cn(
             "fixed inset-0 bg-background/80 backdrop-blur-sm z-50",
@@ -381,6 +506,18 @@ export function HomePage({
       )}
     </div>
   );
+}
+
+function hasCategory(nodes: CategoryNode[], id: string): boolean {
+  for (const node of nodes) {
+    if (node.id === id) {
+      return true;
+    }
+    if (node.children && hasCategory(node.children, id)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**

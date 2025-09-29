@@ -1,128 +1,94 @@
-/**
- * SidebarFilters Component
- * 
- * 基于设计图重新实现的筛选面板组件
- * - 桌面端：左侧筛选面板，显示分类、标签和排序选项
- * - 移动端：可收缩的筛选抽屉
- * 
- * 符合设计图要求：
- * - "All Categories" 紫色按钮
- * - 分类层次结构展示
- * - 简洁的筛选控件
- */
+'use client'
 
-'use client';
+import React from 'react'
 
-import React from 'react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
-import { ChevronDown, X } from 'lucide-react';
+import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import type { CategoryNode } from '@/features/categories/types'
+import { cn } from '@/lib/utils'
+import { ChevronDown, X } from 'lucide-react'
 
 interface SidebarFiltersProps {
-  /**
-   * 是否在移动端折叠
-   */
-  isMobileCollapsed?: boolean;
-  
-  /**
-   * 移动端切换回调
-   */
-  onMobileToggle?: () => void;
-  
-  /**
-   * 是否正在加载
-   */
-  isLoading?: boolean;
-  
-  /**
-   * 自定义类名
-   */
-  className?: string;
+  /** 分类树数据 */
+  categories?: CategoryNode[]
+  /** 当前选中分类 ID，null 表示全部分类 */
+  selectedCategoryId?: string | null
+  /** 分类选择回调 */
+  onSelectCategory?: (categoryId: string | null) => void
+  /** 分类加载错误 */
+  errorMessage?: string | null
+  /** 是否在移动端折叠 */
+  isMobileCollapsed?: boolean
+  /** 移动端折叠切换 */
+  onMobileToggle?: () => void
+  /** 加载状态 */
+  isLoading?: boolean
+  /** 自定义类名 */
+  className?: string
 }
 
-/**
- * 分类数据结构（示例数据）
- */
-const mockCategories = [
-  {
-    id: 'group1',
-    name: 'Group 1',
-    children: [
-      { id: 'finance', name: 'Finance' },
-      { id: 'travel', name: 'Travel' }
-    ]
-  },
-  {
-    id: 'group2',
-    name: 'Group 2',
-    children: [
-      { id: 'education', name: 'Education' },
-      { id: 'sports', name: 'Sports' }
-    ]
-  },
-  {
-    id: 'group3',
-    name: 'Group 3',
-    children: [
-      { id: 'business', name: 'Business' },
-      { id: 'games', name: 'Games' }
-    ]
-  },
-  {
-    id: 'group4',
-    name: 'Group 4',
-    children: [
-      { id: 'entertainment', name: 'Entertainment' },
-      { id: 'lifestyle', name: 'Lifestyle' }
-    ]
-  },
-  {
-    id: 'group5',
-    name: 'Group 5',
-    children: [
-      { id: 'productivity', name: 'Productivity' },
-      { id: 'design', name: 'Design' }
-    ]
-  }
-];
-
 export function SidebarFilters({
+  categories: rawCategories,
+  selectedCategoryId = null,
+  onSelectCategory,
+  errorMessage,
   isMobileCollapsed = true,
   onMobileToggle,
   isLoading = false,
-  className
+  className,
 }: SidebarFiltersProps) {
-  const [selectedCategory, setSelectedCategory] = React.useState<string>('all');
-  const [expandedGroups, setExpandedGroups] = React.useState<Set<string>>(new Set(['group1']));
+  const categories = React.useMemo(
+    () => (Array.isArray(rawCategories) ? rawCategories : []),
+    [rawCategories],
+  )
 
-  // 切换分组展开/折叠
+  const [expandedGroups, setExpandedGroups] = React.useState<Set<string>>(new Set())
+
+  React.useEffect(() => {
+    setExpandedGroups((prev) => {
+      const next = new Set<string>()
+
+      categories.forEach((category) => {
+        if (prev.has(category.id)) {
+          next.add(category.id)
+        }
+      })
+
+      if (next.size === 0 && categories[0]) {
+        next.add(categories[0].id)
+      }
+
+      return next
+    })
+  }, [categories])
+
   const toggleGroup = (groupId: string) => {
-    const newExpanded = new Set(expandedGroups);
-    if (newExpanded.has(groupId)) {
-      newExpanded.delete(groupId);
-    } else {
-      newExpanded.add(groupId);
-    }
-    setExpandedGroups(newExpanded);
-  };
+    setExpandedGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(groupId)) {
+        next.delete(groupId)
+      } else {
+        next.add(groupId)
+      }
+      return next
+    })
+  }
 
-  // 选择分类
-  const handleCategorySelect = (categoryId: string) => {
-    setSelectedCategory(categoryId);
-  };
+  const handleCategorySelect = (categoryId: string | null) => {
+    onSelectCategory?.(categoryId)
+  }
 
   return (
-    <div className={cn("relative", className)}>
+    <div className={cn('relative', className)}>
       {/* 移动端遮罩层 */}
       {!isMobileCollapsed && (
-        <div 
+        <div
           className="fixed inset-0 z-20 bg-background/80 backdrop-blur-sm lg:hidden"
           onClick={onMobileToggle}
           aria-hidden="true"
@@ -130,29 +96,20 @@ export function SidebarFilters({
       )}
 
       {/* 筛选面板主体 */}
-      <div 
+      <div
         className={cn(
-          // 桌面端：正常的筛选面板
           'lg:block lg:space-y-6',
-          // 移动端：固定定位的抽屉
           'fixed left-0 top-0 z-30 h-full w-80 transform transition-transform duration-300 ease-in-out',
           'lg:relative lg:w-full lg:h-auto lg:transform-none',
-          // 移动端背景和边框
           'bg-background border-r border-border lg:bg-transparent lg:border-r-0',
-          // 移动端折叠状态
-          isMobileCollapsed ? '-translate-x-full lg:translate-x-0' : 'translate-x-0'
+          isMobileCollapsed ? '-translate-x-full lg:translate-x-0' : 'translate-x-0',
         )}
         aria-label="筛选和分类导航"
       >
         {/* 移动端头部 */}
         <div className="flex items-center justify-between p-4 border-b border-border lg:hidden">
           <h3 className="text-lg font-semibold">筛选器</h3>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onMobileToggle}
-            aria-label="关闭筛选面板"
-          >
+          <Button variant="ghost" size="icon" onClick={onMobileToggle} aria-label="关闭筛选面板">
             <X className="h-5 w-5" />
           </Button>
         </div>
@@ -162,93 +119,141 @@ export function SidebarFilters({
           {/* All Categories 按钮 */}
           <div>
             <Button
-              variant={selectedCategory === 'all' ? "default" : "outline"}
+              variant={selectedCategoryId === null ? 'default' : 'outline'}
               className={cn(
                 'w-full justify-start text-left h-auto py-3 px-4',
-                selectedCategory === 'all' 
+                selectedCategoryId === null
                   ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                  : 'border-border hover:bg-muted'
+                  : 'border-border hover:bg-muted',
               )}
-              onClick={() => handleCategorySelect('all')}
+              onClick={() => handleCategorySelect(null)}
               disabled={isLoading}
             >
               All Categories
             </Button>
           </div>
 
-          {/* 分类层次结构 - 改进版 */}
+          {/* 分类层次结构 */}
           <div className="space-y-1">
-            {mockCategories.map((group) => (
-              <div key={group.id} className="space-y-1">
-                {/* 分组标题 - 更现代的卡片式设计 */}
-                <button
-                  className={cn(
-                    "group flex w-full items-center justify-between py-3 px-4 text-sm font-semibold",
-                    "bg-muted/30 hover:bg-muted/60 rounded-lg transition-all duration-200",
-                    "border border-transparent hover:border-border/50",
-                    expandedGroups.has(group.id) 
-                      ? "text-foreground bg-muted/60 border-border/50 shadow-sm" 
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                  onClick={() => toggleGroup(group.id)}
-                  disabled={isLoading}
-                >
-                  <span className="flex items-center gap-2">
-                    {/* 分组图标 */}
-                    <div className={cn(
-                      "w-2 h-2 rounded-full transition-colors duration-200",
-                      expandedGroups.has(group.id) ? "bg-primary" : "bg-muted-foreground/40"
-                    )} />
-                    {group.name}
-                  </span>
-                  <div className={cn(
-                    "transition-transform duration-200",
-                    expandedGroups.has(group.id) && "rotate-180"
-                  )}>
-                    <ChevronDown className={cn(
-                      "h-4 w-4 transition-colors duration-200",
-                      expandedGroups.has(group.id) ? "text-foreground" : "text-muted-foreground"
-                    )} />
-                  </div>
-                </button>
+            {categories.map((group) => {
+              const children = group.children ?? []
+              const hasChildren = children.length > 0
+              const isExpanded = expandedGroups.has(group.id)
 
-                {/* 子分类 - 更精致的子项设计 */}
-                {expandedGroups.has(group.id) && (
-                  <div className="ml-2 space-y-1 animate-in slide-in-from-top-2 duration-200">
-                    {group.children.map((child, index) => (
-                      <button
-                        key={child.id}
+              return (
+                <div key={group.id} className="space-y-1">
+                  <button
+                    className={cn(
+                      'group flex w-full items-center justify-between py-3 px-4 text-sm font-semibold',
+                      'bg-muted/30 hover:bg-muted/60 rounded-lg transition-all duration-200',
+                      'border border-transparent hover:border-border/50',
+                      hasChildren && isExpanded
+                        ? 'text-foreground bg-muted/60 border-border/50 shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground',
+                    )}
+                    onClick={() => {
+                      if (hasChildren) {
+                        toggleGroup(group.id)
+                      } else {
+                        handleCategorySelect(group.id)
+                      }
+                    }}
+                    disabled={isLoading}
+                  >
+                    <span className="flex items-center gap-2">
+                      <div
                         className={cn(
-                          "flex w-full items-center gap-3 py-2.5 px-4 text-sm",
-                          "rounded-md transition-all duration-200 text-left group relative",
-                          selectedCategory === child.id 
-                            ? "text-primary font-medium bg-primary/10 border-l-2 border-primary shadow-sm" 
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                          'w-2 h-2 rounded-full transition-colors duration-200',
+                          hasChildren && isExpanded ? 'bg-primary' : 'bg-muted-foreground/40',
                         )}
-                        onClick={() => handleCategorySelect(child.id)}
+                      />
+                      {group.name}
+                    </span>
+                    {hasChildren ? (
+                      <div className={cn('transition-transform duration-200', isExpanded && 'rotate-180')}>
+                        <ChevronDown
+                          className={cn(
+                            'h-4 w-4 transition-colors duration-200',
+                            isExpanded ? 'text-foreground' : 'text-muted-foreground',
+                          )}
+                        />
+                      </div>
+                    ) : null}
+                  </button>
+
+                  {hasChildren ? (
+                    isExpanded && (
+                      <div className="ml-2 space-y-1 animate-in slide-in-from-top-2 duration-200">
+                        {children.map((child, index) => (
+                          <button
+                            key={child.id}
+                            className={cn(
+                              'flex w-full items-center gap-3 py-2.5 px-4 text-sm',
+                              'rounded-md transition-all duration-200 text-left group relative',
+                              selectedCategoryId === child.id
+                                ? 'text-primary font-medium bg-primary/10 border-l-2 border-primary shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground hover:bg-muted/40',
+                            )}
+                            onClick={() => handleCategorySelect(child.id)}
+                            disabled={isLoading}
+                            style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
+                          >
+                            <div
+                              className={cn(
+                                'w-3 h-px bg-border transition-colors duration-200',
+                                selectedCategoryId === child.id ? 'bg-primary/30' : 'group-hover:bg-border',
+                              )}
+                            />
+                            <span className="flex-1">{child.name}</span>
+                            {selectedCategoryId === child.id && (
+                              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )
+                  ) : (
+                    <div className="ml-2">
+                      <button
+                        className={cn(
+                          'flex w-full items-center gap-3 py-2.5 px-4 text-sm',
+                          'rounded-md transition-all duration-200 text-left group',
+                          selectedCategoryId === group.id
+                            ? 'text-primary font-medium bg-primary/10 border-l-2 border-primary shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/40',
+                        )}
+                        onClick={() => handleCategorySelect(group.id)}
                         disabled={isLoading}
-                        style={{ 
-                          animationDelay: `${index * 50}ms`,
-                          animationFillMode: 'both'
-                        }}
                       >
-                        {/* 连接线效果 */}
-                        <div className={cn(
-                          "w-3 h-px bg-border transition-colors duration-200",
-                          selectedCategory === child.id ? "bg-primary/30" : "group-hover:bg-border"
-                        )} />
-                        <span className="flex-1">{child.name}</span>
-                        {/* 项目计数 - 可选 */}
-                        {selectedCategory === child.id && (
+                        <div
+                          className={cn(
+                            'w-3 h-px bg-border transition-colors duration-200',
+                            selectedCategoryId === group.id ? 'bg-primary/30' : 'group-hover:bg-border',
+                          )}
+                        />
+                        <span className="flex-1">{group.name}</span>
+                        {selectedCategoryId === group.id && (
                           <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                         )}
                       </button>
-                    ))}
-                  </div>
-                )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+
+            {!isLoading && categories.length === 0 && !errorMessage && (
+              <div className="rounded-md border border-dashed border-muted-foreground/40 px-4 py-6 text-center text-sm text-muted-foreground">
+                暂无可用分类
               </div>
-            ))}
+            )}
           </div>
+
+          {errorMessage && !isLoading && (
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {errorMessage}
+            </div>
+          )}
 
           {/* 标签筛选 */}
           <div className="space-y-3">
@@ -284,23 +289,28 @@ export function SidebarFilters({
           </div>
 
           {/* 重置按钮 */}
-          <div className="pt-4 border-t border-border">
-            <Button 
-              variant="outline" 
-              className="w-full"
-              onClick={() => {
-                setSelectedCategory('all');
-                setExpandedGroups(new Set(['group1']));
-              }}
-              disabled={isLoading}
-            >
-              Reset
-            </Button>
+        <div className="pt-4 border-t border-border">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => {
+                handleCategorySelect(null)
+                setExpandedGroups(() => {
+                  if (categories[0]) {
+                    return new Set([categories[0].id])
+                  }
+                  return new Set()
+                })
+            }}
+            disabled={isLoading}
+          >
+            Reset
+          </Button>
           </div>
         </div>
       </div>
     </div>
-  );
+  )
 }
 
-export default SidebarFilters;
+export default SidebarFilters

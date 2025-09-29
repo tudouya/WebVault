@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
-import { useHomepageStore, useHomepageUrlSync } from '../stores/homepage-store';
+import { useHomepageStore } from '../stores/homepage-store';
 import type { SearchSuggestion } from '../types/filters';
 
 /**
@@ -98,7 +98,6 @@ export function useWebsiteSearch(config: SearchConfig = {}) {
   
   // 获取状态管理
   const store = useHomepageStore();
-  const { syncUrlFromStore } = useHomepageUrlSync();
   
   // 内部状态引用
   const searchInputRef = useRef<string>(store.search);
@@ -198,9 +197,6 @@ export function useWebsiteSearch(config: SearchConfig = {}) {
         // 更新store状态
         setSearch(query.trim());
         
-        // 同步URL状态
-        syncUrlFromStore();
-        
         console.log('执行搜索:', query.trim() || '(清空搜索)');
       } catch (error) {
         console.error('搜索执行失败:', error);
@@ -248,12 +244,11 @@ export function useWebsiteSearch(config: SearchConfig = {}) {
     
     try {
       setSearch(searchQuery.trim());
-      syncUrlFromStore();
       console.log('立即执行搜索:', searchQuery.trim() || '(清空搜索)');
     } catch (error) {
       console.error('搜索执行失败:', error);
     }
-  }, [setSearch, syncUrlFromStore, validateSearch, debouncedExecuteSearch]);
+  }, [setSearch, validateSearch, debouncedExecuteSearch]);
 
   /**
    * 清除搜索
@@ -265,12 +260,11 @@ export function useWebsiteSearch(config: SearchConfig = {}) {
     
     try {
       storeClearSearch();
-      syncUrlFromStore();
       console.log('清除搜索');
     } catch (error) {
       console.error('清除搜索失败:', error);
     }
-  }, [storeClearSearch, syncUrlFromStore, debouncedExecuteSearch, debouncedFetchSuggestions]);
+  }, [storeClearSearch, debouncedExecuteSearch, debouncedFetchSuggestions]);
 
   /**
    * 选择搜索建议
@@ -281,12 +275,11 @@ export function useWebsiteSearch(config: SearchConfig = {}) {
     
     try {
       setSearch(query);
-      syncUrlFromStore();
       console.log('选择搜索建议:', suggestion);
     } catch (error) {
       console.error('选择搜索建议失败:', error);
     }
-  }, [setSearch, syncUrlFromStore]);
+  }, [setSearch]);
 
   /**
    * 重置搜索状态

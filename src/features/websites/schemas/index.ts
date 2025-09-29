@@ -75,83 +75,6 @@ export const searchFormSchema = z.object({
 });
 
 /**
- * 邮箱订阅表单验证Schema
- * 
- * 用于首页底部社区订阅功能的邮箱验证
- * 需求引用: 7.0 (订阅邮箱验证)
- */
-export const subscriptionFormSchema = z.object({
-  /**
-   * 邮箱地址
-   * - 必填字段
-   * - 验证邮箱格式
-   * - 最大长度320字符（RFC标准）
-   * - 包含XSS防护
-   * - 检查常见的一次性邮箱域名
-   */
-  email: z
-    .string({ message: '请输入邮箱地址' })
-    .trim()
-    .min(1, '请输入邮箱地址')
-    .max(320, '邮箱地址不能超过320个字符')
-    .email('请输入有效的邮箱地址')
-    .refine(
-      (value) => !detectMaliciousContent(value),
-      {
-        message: '邮箱地址包含不安全的字符',
-      }
-    )
-    .refine(
-      (email) => {
-        // 检查是否为一次性邮箱（可根据需要扩展黑名单）
-        const disposableEmailDomains = [
-          '10minutemail.com',
-          'tempmail.org',
-          'guerrillamail.com',
-          'mailinator.com',
-          'throwaway.email',
-        ];
-        
-        const domain = email.split('@')[1]?.toLowerCase();
-        return !disposableEmailDomains.includes(domain);
-      },
-      {
-        message: '请使用常用邮箱地址，不支持临时邮箱',
-      }
-    ),
-
-  /**
-   * 订阅偏好（可选）
-   * 用于将来扩展订阅类型选择
-   */
-  preferences: z
-    .array(z.enum(['weekly_digest', 'new_websites', 'featured_collections', 'blog_updates']))
-    .optional()
-    .default(['weekly_digest']),
-
-  /**
-   * 隐私政策同意确认
-   * GDPR合规要求
-   */
-  agreeToPrivacy: z
-    .boolean()
-    .refine((value) => value === true, {
-      message: '请同意隐私政策后继续',
-    }),
-
-  /**
-   * 蜜罐字段（反机器人）
-   * 这个字段对用户不可见，如果被填写说明是机器人提交
-   */
-  honeypot: z
-    .string()
-    .optional()
-    .refine((value) => !value || value === '', {
-      message: '检测到异常提交',
-    }),
-});
-
-/**
  * 快速搜索建议验证Schema（未来增强功能）
  * 用于实时搜索建议的输入验证
  */
@@ -188,7 +111,6 @@ export const searchSuggestionSchema = z.object({
  * 为组件提供类型安全的表单数据类型
  */
 export type SearchFormData = z.infer<typeof searchFormSchema>;
-export type SubscriptionFormData = z.infer<typeof subscriptionFormSchema>;
 export type SearchSuggestionData = z.infer<typeof searchSuggestionSchema>;
 
 /**
@@ -196,7 +118,6 @@ export type SearchSuggestionData = z.infer<typeof searchSuggestionSchema>;
  * 与React Hook Form集成使用
  */
 export const searchFormResolver = zodResolver(searchFormSchema);
-export const subscriptionFormResolver = zodResolver(subscriptionFormSchema);
 export const searchSuggestionResolver = zodResolver(searchSuggestionSchema);
 
 /**
@@ -208,13 +129,6 @@ export const searchFormDefaults: SearchFormData = {
   searchType: 'all',
 };
 
-export const subscriptionFormDefaults: SubscriptionFormData = {
-  email: '',
-  preferences: ['weekly_digest'],
-  agreeToPrivacy: false,
-  honeypot: '',
-};
-
 /**
  * 验证工具函数
  * 提供独立的验证函数，可在组件外使用
@@ -222,15 +136,6 @@ export const subscriptionFormDefaults: SubscriptionFormData = {
 export const validateSearchQuery = (query: string): boolean => {
   try {
     searchFormSchema.parse({ query });
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-export const validateEmail = (email: string): boolean => {
-  try {
-    subscriptionFormSchema.pick({ email: true }).parse({ email });
     return true;
   } catch {
     return false;
@@ -280,13 +185,6 @@ export const FORM_ERROR_MESSAGES = {
     TOO_LONG: '搜索关键词过长',
     UNSAFE_CONTENT: '搜索内容包含不安全的字符',
     INVALID_FORMAT: '搜索格式无效',
-  },
-  SUBSCRIPTION: {
-    EMAIL_REQUIRED: '请输入邮箱地址',
-    EMAIL_INVALID: '请输入有效的邮箱地址',
-    EMAIL_DISPOSABLE: '请使用常用邮箱地址',
-    PRIVACY_REQUIRED: '请同意隐私政策',
-    BOT_DETECTED: '检测到异常提交，请重试',
   },
 } as const;
 

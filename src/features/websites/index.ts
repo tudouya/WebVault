@@ -22,7 +22,6 @@ export {
   FilterSelects, FilterSelectsDefault,
   SearchFilters, SearchFiltersDefault,
   Pagination, PaginationDefault,
-  NewsletterSection, NewsletterSectionDefault,
   Footer, FooterDefault,
   ResponsiveLayout, ResponsiveLayoutDefault,
   ErrorBoundary, ErrorBoundaryDefault, withErrorBoundary, useErrorHandler,

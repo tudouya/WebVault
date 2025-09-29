@@ -1,8 +1,10 @@
 import { drizzle } from 'drizzle-orm/d1';
 import { getRequestContext } from '@cloudflare/next-on-pages';
-import { and, eq, like, sql, gte, SQL } from 'drizzle-orm';
+import { and, desc, eq, gte, like, sql, SQL } from 'drizzle-orm';
 import { websites } from '@/lib/db/schema/websites';
 import type { CloudflareEnv } from '@/types/env';
+
+const MAX_PAGE_SIZE = 48;
 
 export function getD1Db() {
   const env = getRequestContext().env as CloudflareEnv;
@@ -23,6 +25,9 @@ export async function listWebsitesD1(params: ListParamsD1) {
   const { page, pageSize, query, category, featured, includeAds = true, minRating } = params;
   const db = getD1Db();
 
+  const safePageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, pageSize));
+  const requestedPage = Math.max(1, page);
+
   const conds: SQL[] = [];
   if (query && query.trim()) {
     const q = `%${escapeLike(query.trim())}%`;
@@ -37,19 +42,30 @@ export async function listWebsitesD1(params: ListParamsD1) {
 
   const where = conds.length ? and(...conds) : undefined;
 
-  const rows = await db
-    .select()
-    .from(websites)
-    .where(where)
-    .limit(pageSize)
-    .offset((page - 1) * pageSize);
-
   const [{ c: total }] = await db
     .select({ c: sql<number>`count(*)` })
     .from(websites)
     .where(where);
 
-  return { rows, total: Number(total) };
+  const totalCount = Number(total ?? 0);
+
+  if (totalCount === 0) {
+    return { rows: [] as Array<typeof websites.$inferSelect>, total: 0, resolvedPage: 1, pageSize: safePageSize };
+  }
+
+  const totalPages = Math.ceil(totalCount / safePageSize);
+  const resolvedPage = Math.min(requestedPage, totalPages);
+  const offset = (resolvedPage - 1) * safePageSize;
+
+  const rows = await db
+    .select()
+    .from(websites)
+    .where(where)
+    .orderBy(desc(websites.createdAt), desc(websites.id))
+    .limit(safePageSize)
+    .offset(offset);
+
+  return { rows, total: totalCount, resolvedPage, pageSize: safePageSize };
 }
 
 export async function getWebsiteByIdD1(id: string) {

@@ -19,7 +19,6 @@ export { CollectionPagination, default as CollectionPaginationDefault } from './
 export { FilterSelects, default as FilterSelectsDefault } from './FilterSelects'
 export { SearchFilters, default as SearchFiltersDefault } from './SearchFilters'
 export { Pagination, default as PaginationDefault } from './Pagination'
-export { NewsletterSection, default as NewsletterSectionDefault } from './NewsletterSection'
 export { Footer, default as FooterDefault } from './Footer'
 export { ResponsiveLayout, default as ResponsiveLayoutDefault } from './ResponsiveLayout'
 export { ErrorBoundary, default as ErrorBoundaryDefault, withErrorBoundary, useErrorHandler } from './ErrorBoundary'

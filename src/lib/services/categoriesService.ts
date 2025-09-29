@@ -21,6 +21,10 @@ export interface CategoryListResponse {
   stats: CategoryStatsSummary
 }
 
+export interface CategoryListOptions {
+  allowMockFallback?: boolean
+}
+
 export interface CategoryCreateInput {
   name: string
   slug?: string
@@ -42,7 +46,12 @@ export interface CategoryUpdateInput {
 }
 
 export const categoriesService = {
-  async list(params: CategoryListParams = {}): Promise<CategoryListResponse> {
+  async list(
+    params: CategoryListParams = {},
+    options: CategoryListOptions = {}
+  ): Promise<CategoryListResponse> {
+    const { allowMockFallback = true } = options
+
     try {
       await ensureStatusColumn()
       const db = getD1Db()
@@ -66,6 +75,11 @@ export const categoriesService = {
 
       return { tree, stats }
     } catch (error) {
+      if (!allowMockFallback) {
+        console.error("categoriesService.list failed without fallback", error)
+        throw error instanceof Error ? error : new Error("Failed to load categories")
+      }
+
       console.warn("categoriesService.list fallback to mock data", error)
       return { tree: mockCategoryTree, stats: mockCategoryStats }
     }

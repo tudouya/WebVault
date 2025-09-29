@@ -13,7 +13,9 @@
     "build:cf": "next-on-pages",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "db:seed": "node scripts/db/seed.js",
+    "db:seed:remote": "node scripts/db/seed.js --remote"
   },
   "keywords": [],
   "author": "",
