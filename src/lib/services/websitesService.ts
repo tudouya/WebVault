@@ -1,6 +1,4 @@
 import { eq, inArray, type InferSelectModel } from 'drizzle-orm';
-import { mockWebsites } from '@/features/websites/data/mockWebsites';
-import type { WebsiteCardData } from '@/features/websites/types/website';
 import { websites } from '@/lib/db/schema/websites';
 import { websiteTags } from '@/lib/db/schema/website-tags';
 import { tags as tagsTable } from '@/lib/db/schema/tags';
@@ -26,133 +24,77 @@ export interface ListResult {
   total: number;
 }
 
-export interface ListOptions {
-  allowMockFallback?: boolean;
-}
-
 export const websitesService = {
-  async list(params: ListParams = {}, options: ListOptions = {}): Promise<ListResult> {
-    const { allowMockFallback = true } = options;
+  async list(params: ListParams = {}): Promise<ListResult> {
     const { page = 1, pageSize = DEFAULT_PAGE_SIZE, query, category, featured, includeAds = true, minRating } = params;
     const normalizedPageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, pageSize));
     const normalizedPage = Math.max(1, page);
-    // Force D1 adapter usage - try D1 first regardless of environment detection
+
     const adapter = await tryImportD1Adapter();
-    console.log('D1 adapter import result:', !!adapter, !!adapter?.listWebsitesD1);
-    if (adapter?.listWebsitesD1) {
-      try {
-        console.log('Attempting to use D1 database for websites list');
-        const { rows, total, resolvedPage, pageSize: effectivePageSize } = await adapter.listWebsitesD1({
-          page: normalizedPage,
-          pageSize: normalizedPageSize,
-          query,
-          category,
-          featured,
-          includeAds,
-          minRating,
-        });
-        const tagMap = await loadTagsForWebsites(adapter, rows.map((row) => String(row.id)));
-        const dtoItems = rows
-          .map((row) => mapDbRowToDTO(row, tagMap.get(String(row.id))))
-          .map(validateDTO);
-        console.log('D1 database query successful, returned', dtoItems.length, 'items');
-        const effectivePage = typeof resolvedPage === 'number' ? resolvedPage : normalizedPage;
-        const finalPageSize = typeof effectivePageSize === 'number' ? effectivePageSize : normalizedPageSize;
-        return { items: dtoItems, page: effectivePage, pageSize: finalPageSize, total: Number(total ?? dtoItems.length) };
-      } catch (error) {
-        console.log('D1 database query failed, falling back to mock:', error);
-        if (!allowMockFallback) {
-          throw error instanceof Error ? error : new Error('Failed to load websites from database');
-        }
-      }
+
+    if (!adapter?.listWebsitesD1) {
+      throw new Error('D1 database adapter not available');
     }
 
-    // SQLite 分支已移除（D1-only）
-
-    // Fallback to mocks
-    if (!allowMockFallback) {
-      throw new Error('Unable to load websites from database');
-    }
-    let items = mockWebsites.slice();
-
-    if (query) {
-      const q = query.toLowerCase();
-      items = items.filter(w =>
-        (w.title?.toLowerCase().includes(q) || '') ||
-        (w.description?.toLowerCase().includes(q) || '') ||
-        (w.tags || []).some(t => t.toLowerCase().includes(q))
-      );
-    }
-
-    if (category) {
-      items = items.filter(w => w.category === category);
-    }
-
-    if (featured !== undefined) {
-      items = items.filter(w => Boolean(w.is_featured) === Boolean(featured));
-    }
-
-    if (!includeAds) {
-      items = items.filter(w => !w.isAd);
-    }
-
-    if (minRating !== undefined) {
-      items = items.filter(w => (w.rating || 0) >= minRating);
-    }
-
-    const total = items.length;
-    if (total === 0) {
-      return {
-        items: [],
-        page: 1,
+    try {
+      console.log('Querying D1 database for websites list');
+      const { rows, total, resolvedPage, pageSize: effectivePageSize } = await adapter.listWebsitesD1({
+        page: normalizedPage,
         pageSize: normalizedPageSize,
-        total: 0,
+        query,
+        category,
+        featured,
+        includeAds,
+        minRating,
+      });
+
+      const tagMap = await loadTagsForWebsites(adapter, rows.map((row) => String(row.id)));
+      const dtoItems = rows
+        .map((row) => mapDbRowToDTO(row, tagMap.get(String(row.id))))
+        .map(validateDTO);
+
+      console.log('D1 database query successful, returned', dtoItems.length, 'items');
+
+      const effectivePage = typeof resolvedPage === 'number' ? resolvedPage : normalizedPage;
+      const finalPageSize = typeof effectivePageSize === 'number' ? effectivePageSize : normalizedPageSize;
+
+      return {
+        items: dtoItems,
+        page: effectivePage,
+        pageSize: finalPageSize,
+        total: Number(total ?? dtoItems.length)
       };
+    } catch (error) {
+      console.error('D1 database query failed:', error);
+      throw error instanceof Error ? error : new Error('Failed to load websites from database');
     }
-
-    const totalPages = Math.ceil(total / normalizedPageSize);
-    const resolvedPage = Math.min(normalizedPage, totalPages);
-    const start = (resolvedPage - 1) * normalizedPageSize;
-    const pageItems = items.slice(start, start + normalizedPageSize);
-
-    const dtoItems = pageItems.map(mapWebsiteCardToDTO).map(validateDTO);
-
-    return {
-      items: dtoItems,
-      page: resolvedPage,
-      pageSize: normalizedPageSize,
-      total,
-    };
   },
 
   async getById(id: string): Promise<WebsiteDTO | null> {
-    // Force D1 adapter usage - try D1 first regardless of environment detection
     const adapter = await tryImportD1Adapter();
-    if (adapter?.getWebsiteByIdD1) {
-      try {
-        console.log('Attempting to use D1 database for getById:', id);
-        const row = await adapter.getWebsiteByIdD1(id);
-        if (!row) {
-          console.log('D1 database query returned no result for id:', id);
-          return null;
-        }
-        console.log('D1 database query successful for id:', id);
-        const tagMap = await loadTagsForWebsites(adapter, [String(row.id)]);
-        return validateDTO(mapDbRowToDTO(row, tagMap.get(String(row.id))));
-      } catch (error) {
-        console.log('D1 database query failed for id:', id, error);
-      }
+
+    if (!adapter?.getWebsiteByIdD1) {
+      throw new Error('D1 database adapter not available');
     }
 
-    // SQLite 分支已移除（D1-only）
+    try {
+      console.log('Querying D1 database for website by id:', id);
+      const row = await adapter.getWebsiteByIdD1(id);
 
-    const found = mockWebsites.find(w => w.id === id);
-    if (!found) return null;
-    return validateDTO(mapWebsiteCardToDTO(found));
+      if (!row) {
+        console.log('Website not found for id:', id);
+        return null;
+      }
+
+      console.log('D1 database query successful for id:', id);
+      const tagMap = await loadTagsForWebsites(adapter, [String(row.id)]);
+      return validateDTO(mapDbRowToDTO(row, tagMap.get(String(row.id))));
+    } catch (error) {
+      console.error('D1 database query failed for id:', id, error);
+      throw error instanceof Error ? error : new Error('Failed to load website from database');
+    }
   },
 };
-
-type WebsiteCardSource = WebsiteCardData | WebsiteDTO;
 
 type WebsiteDbRow = InferSelectModel<typeof websites>;
 
@@ -163,47 +105,6 @@ function normalizeStatus(value: unknown): WebsiteDTO['status'] {
     return value as WebsiteDTO['status'];
   }
   return 'active';
-}
-
-function mapWebsiteCardToDTO(source: WebsiteCardSource): WebsiteDTO {
-  const created = 'created_at' in source && source.created_at
-    ? source.created_at
-    : new Date().toISOString();
-  const updated = 'updated_at' in source && source.updated_at
-    ? source.updated_at
-    : created;
-
-  const screenshot = 'screenshot_url' in source && source.screenshot_url
-    ? source.screenshot_url
-    : 'image_url' in source
-      ? source.image_url
-      : undefined;
-
-  const visitCount = 'visit_count' in source && typeof source.visit_count === 'number'
-    ? source.visit_count
-    : 'visitCount' in source && typeof source.visitCount === 'number'
-      ? source.visitCount
-      : 0;
-
-  return {
-    id: String(source.id),
-    title: source.title,
-    description: source.description || undefined,
-    url: source.url,
-    favicon_url: source.favicon_url || undefined,
-    screenshot_url: screenshot,
-    tags: extractTags(source),
-    category: extractCategory(source),
-    isAd: 'isAd' in source ? Boolean(source.isAd) : false,
-    adType: 'adType' in source ? source.adType : undefined,
-    rating: typeof source.rating === 'number' ? source.rating : undefined,
-    visit_count: visitCount,
-    is_featured: 'is_featured' in source ? Boolean(source.is_featured) : false,
-    is_public: 'is_public' in source ? Boolean(source.is_public) : true,
-    status: normalizeStatus('status' in source ? source.status : undefined),
-    created_at: created,
-    updated_at: updated,
-  };
 }
 
 function validateDTO(dto: WebsiteDTO): WebsiteDTO {
@@ -248,29 +149,6 @@ function coerceBool(v: unknown, defaultValue = false): boolean {
     }
   }
   return defaultValue;
-}
-
-type MaybeTaggedSource = {
-  tags?: unknown
-  category?: unknown
-  category_id?: unknown
-}
-
-function extractTags(source: WebsiteCardSource): string[] {
-  const candidate = (source as MaybeTaggedSource).tags
-  if (!Array.isArray(candidate)) return []
-  return candidate.filter((item): item is string => typeof item === 'string')
-}
-
-function extractCategory(source: WebsiteCardSource): string | undefined {
-  const withCategory = source as MaybeTaggedSource
-  if (typeof withCategory.category === 'string') {
-    return withCategory.category
-  }
-  if (typeof withCategory.category_id === 'string') {
-    return withCategory.category_id
-  }
-  return undefined
 }
 
 type D1AdapterModule = typeof import('@/lib/db/adapters/d1');

@@ -5,13 +5,23 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-import { mockCategoryStats, mockCategoryTree } from "../data/mock-categories"
 import type { CategoryListPayload, CategoryNode, CategoryStatus } from "../types"
 import { CategoryFormCard } from "./category-form-card"
 import { CategoryDetailPanel } from "./category-detail-panel"
 import { CategoryFilters } from "./category-filters"
 import { CategoryStats } from "./category-stats"
 import { CategoryTreePanel } from "./category-tree-panel"
+
+// TODO: 迁移到使用真实 API 调用
+const mockCategoryTree: CategoryNode[] = [];
+const mockCategoryStats = {
+  total: 0,
+  active: 0,
+  inactive: 0,
+  archived: 0,
+  topLevel: 0,
+  hidden: 0,
+};
 
 type FormState =
   | { type: "create" }

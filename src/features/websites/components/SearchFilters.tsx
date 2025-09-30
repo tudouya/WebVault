@@ -16,7 +16,7 @@
 
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { Search } from 'lucide-react';
 
@@ -38,7 +38,8 @@ import {
 import { useHomepageFilters } from '../stores/homepage-store';
 import { useWebsiteSearch } from '../hooks/useWebsiteSearch';
 import { DEFAULT_SORT_OPTIONS } from '../types/filters';
-import type { Category } from '../types/category';
+import { useHomepageCategoryTree, useWebsiteTags } from '../hooks';
+import type { CategoryNode } from '@/features/categories/types';
 
 /**
  * 网站筛选器接口
@@ -79,76 +80,6 @@ interface SearchFiltersProps {
   onReset?: () => void;
 }
 
-// 模拟分类数据 - 后续可以从API获取
-const MOCK_CATEGORIES: Category[] = [
-  { 
-    id: '1', 
-    name: 'Technology', 
-    description: 'Tech websites and tools',
-    slug: 'technology', 
-    parentId: null,
-    status: 'active',
-    sort_order: 1,
-    website_count: 15,
-    is_expanded: false,
-    is_visible: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  { 
-    id: '2', 
-    name: 'Design', 
-    description: 'Design resources and inspiration',
-    slug: 'design', 
-    parentId: null,
-    status: 'active',
-    sort_order: 2,
-    website_count: 12,
-    is_expanded: false,
-    is_visible: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  { 
-    id: '3', 
-    name: 'Education', 
-    description: 'Learning platforms and resources',
-    slug: 'education', 
-    parentId: null,
-    status: 'active',
-    sort_order: 3,
-    website_count: 8,
-    is_expanded: false,
-    is_visible: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-  { 
-    id: '4', 
-    name: 'Business', 
-    description: 'Business tools and services',
-    slug: 'business', 
-    parentId: null,
-    status: 'active',
-    sort_order: 4,
-    website_count: 10,
-    is_expanded: false,
-    is_visible: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  },
-];
-
-// 模拟标签数据 - 后续可以从API获取
-const MOCK_TAGS = [
-  { id: '1', name: 'Free', slug: 'free', website_count: 20, color: '#10B981' },
-  { id: '2', name: 'Premium', slug: 'premium', website_count: 15, color: '#F59E0B' },
-  { id: '3', name: 'Open Source', slug: 'open-source', website_count: 12, color: '#3B82F6' },
-  { id: '4', name: 'Mobile App', slug: 'mobile-app', website_count: 8, color: '#8B5CF6' },
-  { id: '5', name: 'Web Based', slug: 'web-based', website_count: 25, color: '#06B6D4' },
-  { id: '6', name: 'API', slug: 'api', website_count: 7, color: '#EF4444' },
-];
-
 // 通用筛选选项
 const GENERAL_FILTER_OPTIONS = [
   { value: 'no-filter', label: 'No Filter' },
@@ -188,6 +119,36 @@ export function SearchFilters({
     resetFilters,
   } = useHomepageFilters();
 
+  const {
+    categories: categoryTree,
+    isLoading: categoriesLoading,
+    error: categoriesError,
+  } = useHomepageCategoryTree();
+
+  const {
+    tags,
+    isLoading: tagsLoading,
+    error: tagsError,
+  } = useWebsiteTags();
+
+  const categoryOptions = useMemo(() => {
+    return flattenCategories(categoryTree).map((item) => ({
+      id: item.id,
+      name: item.name,
+      label: item.depth > 0 ? `${'— '.repeat(item.depth)}${item.name}` : item.name,
+      websiteCount: item.websiteCount,
+    }));
+  }, [categoryTree]);
+
+  const tagOptions = useMemo(() => {
+    return tags.map((tag) => ({
+      id: tag.id,
+      name: tag.name,
+      websiteCount: tag.websiteCount ?? 0,
+      color: tag.color ?? undefined,
+    }));
+  }, [tags]);
+
   // 使用防抖搜索hook
   const {
     setQuery,
@@ -225,11 +186,16 @@ export function SearchFilters({
     }
   }, [queryValue, errors.query, clearErrors]);
 
-  // 同步表单值与store状态
+  // 同步表单值与store状态 - 只同步表单值，不触发搜索
+  const prevSearchRef = React.useRef(search);
   useEffect(() => {
-    setValue('query', search);
-    setQuery(search);
-  }, [search, setValue, setQuery]);
+    // 只在外部状态变化时更新表单，避免循环
+    if (prevSearchRef.current !== search) {
+      prevSearchRef.current = search;
+      setValue('query', search);
+      // 注意：这里不调用 setQuery，避免触发防抖搜索导致循环
+    }
+  }, [search, setValue]);
 
   /**
    * 处理搜索表单提交
@@ -282,8 +248,12 @@ export function SearchFilters({
   /**
    * 处理分类选择
    */
-  const handleCategorySelect = (categoryId: string) => {
-    const selectedCategoryId = categoryId === 'all' ? null : categoryId;
+  const handleCategorySelect = (value: string) => {
+    if (value.startsWith('__')) {
+      return;
+    }
+
+    const selectedCategoryId = value === 'all' ? null : value;
     setCategory(selectedCategoryId);
     
     // 触发筛选器变化回调
@@ -301,6 +271,10 @@ export function SearchFilters({
    * 处理标签选择
    */
   const handleTagSelect = (tagId: string) => {
+    if (tagId.startsWith('__')) {
+      return;
+    }
+
     if (tagId === 'no-tags') {
       // 清除所有标签筛选
       selectedTags.forEach(tag => removeTag(tag));
@@ -402,7 +376,7 @@ export function SearchFilters({
   // 获取当前选中的分类显示文本
   const getSelectedCategoryText = () => {
     if (!categoryId) return 'All Categories';
-    const category = MOCK_CATEGORIES.find(c => c.id === categoryId);
+    const category = categoryOptions.find((option) => option.id === categoryId);
     return category?.name || 'All Categories';
   };
 
@@ -413,7 +387,7 @@ export function SearchFilters({
     }
     
     if (selectedTags.length === 1) {
-      const tag = MOCK_TAGS.find(t => t.id === selectedTags[0]);
+      const tag = tagOptions.find(t => t.id === selectedTags[0]);
       return tag?.name || 'Select tags';
     }
     
@@ -508,23 +482,37 @@ export function SearchFilters({
           {/* 分类筛选下拉框 */}
           <div className="min-w-[140px] w-auto">
             <Select onValueChange={handleCategorySelect} value={categoryId || 'all'}>
-              <SelectTrigger className="h-9 border-border bg-background text-sm">
+              <SelectTrigger className="h-9 border-border bg-background text-sm" disabled={categoriesLoading}>
                 <SelectValue placeholder={getSelectedCategoryText()} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all" className="text-muted-foreground">
                   All Categories
                 </SelectItem>
-                {MOCK_CATEGORIES.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    <div className="flex items-center justify-between w-full">
-                      <span>{category.name}</span>
-                      <span className="text-xs text-muted-foreground ml-2">
-                        {category.website_count}
-                      </span>
-                    </div>
+                {categoriesLoading ? (
+                  <SelectItem value="__categories_loading" disabled>
+                    分类加载中...
                   </SelectItem>
-                ))}
+                ) : categoriesError ? (
+                  <SelectItem value="__categories_error" disabled>
+                    {categoriesError}
+                  </SelectItem>
+                ) : categoryOptions.length === 0 ? (
+                  <SelectItem value="__categories_empty" disabled>
+                    暂无分类
+                  </SelectItem>
+                ) : (
+                  categoryOptions.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      <div className="flex items-center justify-between w-full">
+                        <span>{category.label}</span>
+                        <span className="text-xs text-muted-foreground ml-2">
+                          {category.websiteCount}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -532,33 +520,49 @@ export function SearchFilters({
           {/* 标签筛选下拉框 */}
           <div className="min-w-[120px] w-auto">
             <Select onValueChange={handleTagSelect}>
-              <SelectTrigger className="h-9 border-border bg-background text-sm">
+              <SelectTrigger className="h-9 border-border bg-background text-sm" disabled={tagsLoading}>
                 <SelectValue placeholder={getSelectedTagsText()} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="no-tags" className="text-muted-foreground">
                   Clear Tags
                 </SelectItem>
-                {MOCK_TAGS.map((tag) => (
-                  <SelectItem 
-                    key={tag.id} 
-                    value={tag.id}
-                    className={selectedTags.includes(tag.id) ? "bg-accent" : ""}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center gap-2">
-                        <div 
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: tag.color }}
-                        />
-                        <span>{tag.name}</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground ml-2">
-                        {tag.website_count}
-                      </span>
-                    </div>
+                {tagsLoading ? (
+                  <SelectItem value="__tags_loading" disabled>
+                    标签加载中...
                   </SelectItem>
-                ))}
+                ) : tagsError ? (
+                  <SelectItem value="__tags_error" disabled>
+                    {tagsError}
+                  </SelectItem>
+                ) : tagOptions.length === 0 ? (
+                  <SelectItem value="__tags_empty" disabled>
+                    暂无标签
+                  </SelectItem>
+                ) : (
+                  tagOptions.map((tag) => (
+                    <SelectItem
+                      key={tag.id}
+                      value={tag.id}
+                      className={selectedTags.includes(tag.id) ? 'bg-accent' : ''}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-2">
+                          {tag.color && (
+                            <div
+                              className="w-2 h-2 rounded-full"
+                              style={{ backgroundColor: tag.color }}
+                            />
+                          )}
+                          <span>{tag.name}</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground ml-2">
+                          {tag.websiteCount}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -635,3 +639,25 @@ export function SearchFilters({
 }
 
 export default SearchFilters;
+
+interface FlattenedCategory {
+  id: string
+  name: string
+  depth: number
+  websiteCount: number
+}
+
+function flattenCategories(nodes: CategoryNode[], depth = 0): FlattenedCategory[] {
+  return nodes.flatMap((node) => {
+    const current: FlattenedCategory = {
+      id: node.id,
+      name: node.name,
+      depth,
+      websiteCount: node.websiteCount ?? 0,
+    }
+
+    const children = Array.isArray(node.children) ? flattenCategories(node.children, depth + 1) : []
+
+    return [current, ...children]
+  })
+}

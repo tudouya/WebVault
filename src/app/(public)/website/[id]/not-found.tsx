@@ -3,9 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { WebsiteCard } from '@/features/websites/components/WebsiteCard'
-import { getMockWebsitesList, getAllMockCategories } from '@/features/websites/data/mockWebsites'
-import { Search, ArrowLeft, Globe, TrendingUp } from 'lucide-react'
+import { Search, ArrowLeft, Globe } from 'lucide-react'
 
 /**
  * 网站详情页面404错误处理组件
@@ -40,14 +38,8 @@ import { Search, ArrowLeft, Globe, TrendingUp } from 'lucide-react'
  * - 用户体验优化
  */
 export default function WebsiteNotFound() {
-  // 获取推荐网站（特色或高评分的3个）
-  const allWebsites = getMockWebsitesList(50) // 获取足够多的数据用于筛选
-  const recommendedWebsites = allWebsites
-    .filter(website => website.is_featured || (website.rating && website.rating >= 4.5))
-    .slice(0, 3)
-  
-  // 获取分类列表
-  const categories = getAllMockCategories().slice(0, 6) // 显示前6个分类
+  // TODO: 从 API 获取推荐网站和分类
+  // 暂时禁用推荐功能，直到迁移到真实 API
 
   return (
     <div className="min-h-screen bg-background">
@@ -93,57 +85,7 @@ export default function WebsiteNotFound() {
             </Link>
           </div>
 
-          {/* 推荐网站部分 */}
-          {recommendedWebsites.length > 0 && (
-            <div className="text-left">
-              <div className="flex items-center gap-2 mb-6">
-                <TrendingUp className="w-5 h-5 text-primary" />
-                <h2 className="text-2xl font-semibold text-foreground">
-                  精选推荐
-                </h2>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                {recommendedWebsites.map((website) => (
-                  <Link 
-                    key={website.id} 
-                    href={`/website/${website.id}`}
-                    className="block transition-transform duration-200 hover:scale-[1.02] focus:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-xl"
-                  >
-                    <WebsiteCard 
-                      website={website} 
-                      className="h-full"
-                    />
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 分类导航 */}
-          <div className="bg-muted/30 rounded-lg p-6">
-            <h3 className="text-lg font-medium text-foreground mb-3">
-              寻找特定类型的网站？
-            </h3>
-            <p className="text-muted-foreground mb-4">
-              尝试使用搜索功能查找您感兴趣的网站，或浏览以下分类：
-            </p>
-            
-            {/* 分类快速导航 */}
-            <div className="flex flex-wrap gap-2 justify-center">
-              {categories.map((category) => (
-                <Link key={category} href={`/category?type=${encodeURIComponent(category)}`}>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="rounded-full"
-                  >
-                    {category}
-                  </Button>
-                </Link>
-              ))}
-            </div>
-          </div>
+          {/* 推荐和分类功能暂时禁用，等待迁移到真实 API */}
 
           {/* 底部帮助信息 */}
           <div className="mt-8 pt-6 border-t border-border">

@@ -40,6 +40,12 @@ import type {
   WebsiteStatus
 } from '../types';
 import type { FilterState, SortField, SortOrder } from '../types/filters';
+import {
+  mapWebsiteDtoToCard,
+  normalizeWebsiteListMeta,
+  extractApiErrorMessage,
+} from '../utils';
+import type { WebsiteDTO } from '@/lib/validations/websites';
 
 /**
  * 搜索筛选器配置接口
@@ -238,6 +244,19 @@ const DEFAULT_SEARCH_SUGGESTIONS: SearchSuggestions = {
   tags: [],
 };
 
+interface SearchApiSuccessPayload {
+  code: number;
+  message: string;
+  data: WebsiteDTO[];
+  meta?: {
+    page?: number;
+    per_page?: number;
+    total?: number;
+    total_pages?: number;
+    has_more?: boolean;
+  };
+}
+
 /**
  * 搜索筛选器Hook
  * 
@@ -364,26 +383,34 @@ export function useSearchFilters(config: SearchFiltersConfig = {}) {
   /**
    * 执行搜索操作
    */
+  const lastExecutedQueryRef = useRef<string>('');
   const executeSearchInternal = useCallback(async (
-    query: string, 
+    query: string,
     filters?: Partial<SearchPageFilters>
   ) => {
     if (isExecutingRef.current) return;
-    
+
+    // 防止相同查询重复执行
+    const trimmedQuery = query.trim();
+    if (lastExecutedQueryRef.current === trimmedQuery && !filters) {
+      return;
+    }
+    lastExecutedQueryRef.current = trimmedQuery;
+
     const validation = validateSearchQuery(query);
     if (!validation.isValid) {
       setSearchError(validation.message || '搜索查询无效');
       return;
     }
-    
+
     isExecutingRef.current = true;
     searchStartTimeRef.current = Date.now();
     setSearchError(null);
-    
+
     try {
       // 更新搜索状态
-      setSearch(query.trim());
-      
+      setSearch(trimmedQuery);
+
       // 如果提供了筛选器，应用它们
       if (filters) {
         // 应用筛选器更新逻辑
@@ -393,26 +420,28 @@ export function useSearchFilters(config: SearchFiltersConfig = {}) {
           setSorting(filters.sortBy as SortField, filters.sortOrder as SortOrder);
         }
       }
-      
-      // 同步URL状态
-      syncUrlFromSearchPage();
-      
+
+      // 延迟同步URL状态，避免在状态更新中触发循环
+      setTimeout(() => {
+        syncUrlFromSearchPage();
+      }, 0);
+
       // 添加到搜索历史
-      if (searchConfig.autoAddToHistory && query.trim()) {
-        addToHistory(query.trim());
+      if (searchConfig.autoAddToHistory && trimmedQuery) {
+        addToHistory(trimmedQuery);
       }
-      
+
       // 更新搜索统计
       if (searchConfig.enableAnalytics) {
         const searchTime = Date.now() - searchStartTimeRef.current;
         updateStats({
-          lastSearchQuery: query.trim(),
+          lastSearchQuery: trimmedQuery,
           lastSearchTime: new Date().toISOString(),
           searchTime,
         });
       }
-      
-      console.log('执行搜索:', { query: query.trim(), filters });
+
+      console.log('执行搜索:', { query: trimmedQuery, filters });
     } catch (error) {
       console.error('搜索执行失败:', error);
       setSearchError('搜索失败，请重试');
@@ -443,17 +472,26 @@ export function useSearchFilters(config: SearchFiltersConfig = {}) {
   /**
    * 设置搜索查询
    */
+  const setQueryRef = useRef<string>('');
   const setQuery = useCallback((query: string) => {
+    // 防止重复调用导致循环
+    if (setQueryRef.current === query) {
+      return;
+    }
+    setQueryRef.current = query;
+
     // 立即更新搜索状态（不触发实际搜索）
     setSearch(query);
-    
-    // 同步URL状态
-    syncUrlFromSearchPage();
-    
+
+    // 延迟同步URL状态，避免在状态更新过程中触发
+    setTimeout(() => {
+      syncUrlFromSearchPage();
+    }, 0);
+
     if (searchConfig.enableRealTimeSearch) {
       debouncedExecuteSearch(query);
     }
-    
+
     if (searchConfig.enableSuggestions && query.trim().length >= 2) {
       debouncedFetchSuggestions(query.trim());
     }
@@ -721,13 +759,15 @@ export function useSearchResults(config: SearchResultsConfig = {}) {
   const [analytics, setAnalytics] = useState<SearchAnalytics | null>(null);
 
   // 缓存和引用
-  const resultsCache = useRef<Map<string, { 
-    results: WebsiteCardData[]; 
-    timestamp: number; 
+  const resultsCache = useRef<Map<string, {
+    results: WebsiteCardData[];
+    timestamp: number;
     totalResults: number;
   }>>(new Map());
   const lastSearchRef = useRef<string>('');
   const searchStartTimeRef = useRef<number>(0);
+  const abortRef = useRef<AbortController | null>(null);
+  const requestIdRef = useRef(0);
 
   /**
    * 生成缓存键
@@ -744,39 +784,6 @@ export function useSearchResults(config: SearchResultsConfig = {}) {
   }, [searchConfig.cacheTimeout]);
 
   /**
-   * 模拟搜索API
-   */
-  const mockSearchAPI = useCallback(async (
-    query: string, 
-    filters: SearchPageFilters, 
-    page: number
-  ): Promise<{ results: WebsiteCardData[]; totalResults: number }> => {
-    // 模拟API延迟
-    await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 200));
-    
-    // 模拟搜索结果
-    const mockResults: WebsiteCardData[] = Array.from({ length: 12 }, (_, i) => ({
-      id: `search-result-${page}-${i}`,
-      title: `Search Result ${page * 12 + i + 1} for "${query}"`,
-      description: `This is a mock search result for query "${query}" with applied filters.`,
-      url: `https://example-${page}-${i}.com`,
-      favicon_url: '/assets/icons/default-favicon.png',
-      image_url: `/assets/images/mock-${(i % 6) + 1}.jpg`,
-      tags: ['search', 'mock', 'result'],
-      category: filters.category || 'general',
-      rating: 4 + Math.random(),
-      visit_count: Math.floor(Math.random() * 1000),
-      is_featured: Math.random() > 0.8,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    }));
-
-    const mockTotalResults = query ? 48 : 0; // 模拟总结果数
-
-    return { results: mockResults, totalResults: mockTotalResults };
-  }, []);
-
-  /**
    * 加载搜索结果
    */
   const loadResults = useCallback(async (
@@ -784,9 +791,9 @@ export function useSearchResults(config: SearchResultsConfig = {}) {
     filters: SearchPageFilters,
     page: number = 1
   ) => {
-    const cacheKey = generateCacheKey(query, filters, page);
-    
-    // 检查缓存
+    const normalizedQuery = query?.trim() ?? '';
+    const cacheKey = generateCacheKey(normalizedQuery, filters, page);
+
     const cached = resultsCache.current.get(cacheKey);
     if (cached && isCacheValid(cached.timestamp)) {
       setResults(cached.results);
@@ -795,70 +802,143 @@ export function useSearchResults(config: SearchResultsConfig = {}) {
       setCurrentPage(page);
       return;
     }
-    
-    // 开始搜索
+
+    const controller = new AbortController();
+    abortRef.current?.abort();
+    abortRef.current = controller;
+    const requestId = ++requestIdRef.current;
+
     setStatus('loading');
     setError(null);
     searchStartTimeRef.current = Date.now();
-    lastSearchRef.current = query;
-    
+    lastSearchRef.current = normalizedQuery;
+
+    const params = new URLSearchParams();
+    params.set('page', String(page));
+    params.set('pageSize', String(searchConfig.itemsPerPage));
+
+    if (normalizedQuery.length > 0) {
+      params.set('query', normalizedQuery);
+    }
+
+    if (filters.category) {
+      params.set('category', filters.category);
+    }
+
+    if (Array.isArray(filters.tags) && filters.tags.length > 0) {
+      params.set('tags', filters.tags.join(','));
+    }
+
+    if (typeof filters.featured === 'boolean') {
+      params.set('featured', String(filters.featured));
+    }
+
+    if (typeof filters.includeAds === 'boolean') {
+      params.set('includeAds', String(filters.includeAds));
+    }
+
+    if (typeof filters.minRating === 'number' && Number.isFinite(filters.minRating)) {
+      params.set('minRating', String(filters.minRating));
+    }
+
+    if (filters.sortBy && filters.sortBy !== 'relevance') {
+      params.set('sortBy', filters.sortBy);
+    }
+
+    if (filters.sortOrder) {
+      params.set('sortOrder', filters.sortOrder);
+    }
+
     try {
-      const { results: newResults, totalResults: newTotalResults } = await mockSearchAPI(query, filters, page);
-      
-      // 计算搜索时间
+      const response = await fetch(`/api/websites?${params.toString()}`, {
+        signal: controller.signal,
+        cache: 'no-store',
+      });
+
+      if (!response.headers.get('content-type')?.includes('application/json')) {
+        throw new Error('响应格式无效');
+      }
+
+      const payload = (await response.json()) as SearchApiSuccessPayload | Record<string, unknown>;
+
+      if (!('code' in payload) || payload.code !== 0 || !Array.isArray(payload.data)) {
+        const message = extractApiErrorMessage(payload) ?? '搜索结果加载失败';
+        throw new Error(message);
+      }
+
+      if (requestIdRef.current !== requestId) {
+        return;
+      }
+
+      const mappedResults = payload.data.map(mapWebsiteDtoToCard);
+      const meta = normalizeWebsiteListMeta(payload.meta, {
+        page,
+        pageSize: searchConfig.itemsPerPage,
+        total: payload.data.length,
+      });
+
+      const totalResultsValue = meta.total;
       const searchDuration = Date.now() - searchStartTimeRef.current;
       setSearchTime(searchDuration);
-      
-      // 更新状态
-      setResults(newResults);
-      setTotalResults(newTotalResults);
-      setCurrentPage(page);
-      setStatus(newResults.length > 0 ? 'success' : 'empty');
-      
-      // 缓存结果
+      setResults(mappedResults);
+      setTotalResults(totalResultsValue);
+      setCurrentPage(meta.page);
+      setStatus(mappedResults.length > 0 ? 'success' : 'empty');
+
       resultsCache.current.set(cacheKey, {
-        results: newResults,
-        totalResults: newTotalResults,
+        results: mappedResults,
+        totalResults: totalResultsValue,
         timestamp: Date.now(),
       });
-      
-      // 添加到最近搜索
-      if (query.trim()) {
-        addRecentSearch(query, newTotalResults);
+
+      if (normalizedQuery) {
+        addRecentSearch(normalizedQuery, totalResultsValue);
       }
-      
-      // 更新搜索统计
+
       updateStats({
-        totalResults: newTotalResults,
+        totalResults: totalResultsValue,
         searchTime: searchDuration,
-        lastSearchQuery: query,
+        lastSearchQuery: normalizedQuery,
         lastSearchTime: new Date().toISOString(),
       });
-      
-      // 创建搜索分析数据
+
       if (searchConfig.enableResultAnalytics) {
         const analyticsData: SearchAnalytics = {
-          query,
+          query: normalizedQuery,
           filters,
-          resultCount: newTotalResults,
+          resultCount: totalResultsValue,
           searchTime: searchDuration,
           timestamp: new Date().toISOString(),
         };
         setAnalytics(analyticsData);
       }
-      
-      console.log('搜索完成:', { query, totalResults: newTotalResults, searchTime: searchDuration });
+
+      console.log('搜索完成:', {
+        query: normalizedQuery,
+        totalResults: totalResultsValue,
+        searchTime: searchDuration,
+      });
     } catch (err) {
+      if (controller.signal.aborted || requestIdRef.current !== requestId) {
+        return;
+      }
+
       console.error('搜索失败:', err);
+      setResults([]);
+      setTotalResults(0);
       setStatus('error');
       setError(err instanceof Error ? err.message : '搜索失败，请重试');
+    } finally {
+      if (abortRef.current === controller) {
+        abortRef.current = null;
+      }
     }
   }, [
     generateCacheKey,
     isCacheValid,
-    mockSearchAPI,
     addRecentSearch,
     updateStats,
+    searchConfig.itemsPerPage,
     searchConfig.enableResultAnalytics,
   ]);
 
@@ -1004,6 +1084,12 @@ export function useSearchResults(config: SearchResultsConfig = {}) {
     trackWebsiteVisit,
   ]);
 
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
+
   return {
     // 搜索结果状态
     ...searchResultsState,
@@ -1031,38 +1117,48 @@ export function useSearchPage(
   const { syncSearchPageFromUrl, urlState } = useSearchPageUrlSync();
   
   // 从URL恢复搜索状态 (组件初始化时)
+  const initializedRef = useRef(false);
   useEffect(() => {
+    // 只在组件首次挂载时执行一次
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
     // 检查URL是否包含搜索参数
-    const hasUrlParams = Object.entries(urlState).some(([_, value]) => 
+    const hasUrlParams = Object.entries(urlState).some(([_, value]) =>
       value !== undefined && value !== null && value !== ''
     );
-    
+
     if (hasUrlParams) {
       console.log('从URL恢复搜索状态:', urlState);
       syncSearchPageFromUrl();
-      
+
       // 如果有搜索查询，自动触发搜索
       if (urlState.search) {
         searchFilters.executeSearch(urlState.search);
       }
     }
-  }, [syncSearchPageFromUrl, searchFilters, urlState]); // 添加所有依赖项
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 只在首次挂载时执行
   
   // 监听浏览器前进后退事件，恢复搜索状态
+  const searchFiltersRef = useRef(searchFilters);
+  searchFiltersRef.current = searchFilters;
+
   useEffect(() => {
     const handlePopstate = (_event: PopStateEvent) => {
       console.log('浏览器后退/前进，恢复搜索状态');
       syncSearchPageFromUrl();
-      
-      // 如果状态中有搜索查询，重新执行搜索
-      if (searchFilters.query) {
-        searchFilters.executeSearch();
+
+      // 使用 ref 获取最新的 searchFilters，避免在 useEffect 依赖中引用
+      const currentFilters = searchFiltersRef.current;
+      if (currentFilters.query) {
+        currentFilters.executeSearch();
       }
     };
-    
+
     window.addEventListener('popstate', handlePopstate);
     return () => window.removeEventListener('popstate', handlePopstate);
-  }, [syncSearchPageFromUrl, searchFilters]);
+  }, [syncSearchPageFromUrl]); // 只依赖稳定的函数
 
   /**
    * 执行完整搜索流程

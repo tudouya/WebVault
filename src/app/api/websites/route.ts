@@ -63,15 +63,16 @@ export async function GET(request: Request) {
   const pageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, parsedPageSize));
 
   const query = url.searchParams.get('query') ?? url.searchParams.get('q') ?? undefined;
-  const category = url.searchParams.get('category') ?? undefined;
+  const categoryRaw = url.searchParams.get('category');
+  // Filter out "undefined" string and convert to undefined
+  const category = (categoryRaw && categoryRaw !== 'undefined') ? categoryRaw : undefined;
   const featured = parseBool(url.searchParams.get('featured'));
   const includeAds = parseBool(url.searchParams.get('includeAds')) ?? true;
   const minRating = url.searchParams.get('minRating') ? Number(url.searchParams.get('minRating')) : undefined;
 
   try {
     const result = await websitesService.list(
-      { page, pageSize, query, category, featured, includeAds, minRating },
-      { allowMockFallback: false }
+      { page, pageSize, query, category, featured, includeAds, minRating }
     );
 
     const totalPages = result.total > 0 ? Math.ceil(result.total / result.pageSize) : 0;

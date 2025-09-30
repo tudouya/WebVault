@@ -21,7 +21,6 @@ const Logo = () => (
 // 导航项配置
 const navigationItems = [
   { label: "Home", href: "/" },
-  { label: "Home5", href: "/home5" },
   { label: "Search", href: "/search" },
   { label: "Collection", href: "/collection" },
   { label: "Category", href: "/category" },

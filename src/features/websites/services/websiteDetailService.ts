@@ -11,7 +11,10 @@
 import type { Category } from '../types/category';
 import { WebsiteDetailData } from '../types/detail';
 import { Website, WebsiteCardData } from '../types/website';
-import { mockWebsites } from '../data/mockWebsites';
+
+// TODO: 迁移到使用真实 API 调用，不再使用 mock 数据
+// import { mockWebsites } from '../data/mockWebsites';
+const mockWebsites: WebsiteCardData[] = [];
 
 /**
  * 相关网站推荐策略类型

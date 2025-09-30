@@ -4,6 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { WebsiteCardData } from '../types/website';
 import type { WebsiteDTO } from '@/lib/validations/websites';
+import {
+  mapWebsiteDtoToCard,
+  normalizeWebsiteListMeta,
+  extractApiErrorMessage,
+} from '../utils';
 
 interface UseHomepageWebsitesOptions {
   page: number;
@@ -130,32 +135,20 @@ export function useHomepageWebsites(options: UseHomepageWebsitesOptions): UseHom
             return;
           }
           setWebsites(payload.data.map(mapWebsiteDtoToCard));
+          const meta = normalizeWebsiteListMeta(payload.meta, {
+            page,
+            pageSize,
+            total: payload.data.length,
+          });
 
-          const rawMeta = (payload.meta ?? {}) as Record<string, unknown>;
-          const rawPage = typeof rawMeta.page === 'number' ? rawMeta.page : page;
-          const nextPageSize = typeof rawMeta.per_page === 'number' ? rawMeta.per_page : pageSize;
-          const nextTotal = typeof rawMeta.total === 'number' ? rawMeta.total : payload.data.length;
-          const nextTotalPages = typeof rawMeta.total_pages === 'number'
-            ? rawMeta.total_pages
-            : nextPageSize > 0
-              ? Math.ceil(nextTotal / nextPageSize)
-              : 0;
-          const boundedPage = Math.min(
-            Math.max(rawPage, 1),
-            nextTotalPages > 0 ? nextTotalPages : 1
-          );
-          const nextHasMore = typeof rawMeta.has_more === 'boolean'
-            ? rawMeta.has_more
-            : nextTotalPages > 0 && boundedPage < nextTotalPages;
-
-          setResolvedPage(boundedPage);
-          setResolvedPageSize(nextPageSize);
-          setTotal(nextTotal);
-          setTotalPages(nextTotalPages);
-          setHasMore(nextHasMore);
+          setResolvedPage(meta.page);
+          setResolvedPageSize(meta.pageSize);
+          setTotal(meta.total);
+          setTotalPages(meta.totalPages);
+          setHasMore(meta.hasMore);
           setError(null);
         } else {
-          const message = extractMessage(payload) ?? '网站数据加载失败';
+          const message = extractApiErrorMessage(payload) ?? '网站数据加载失败';
           throw new Error(message);
         }
       } catch (err) {
@@ -197,49 +190,4 @@ export function useHomepageWebsites(options: UseHomepageWebsitesOptions): UseHom
     hasMore,
     refresh,
   }), [websites, isLoading, error, resolvedPage, resolvedPageSize, total, totalPages, hasMore, refresh]);
-}
-
-const VALID_AD_TYPES: WebsiteCardData['adType'][] = ['banner', 'sponsored', 'featured', 'premium'];
-
-function mapWebsiteDtoToCard(dto: WebsiteDTO): WebsiteCardData {
-  const adType = typeof dto.adType === 'string' && (VALID_AD_TYPES as string[]).includes(dto.adType)
-    ? (dto.adType as WebsiteCardData['adType'])
-    : undefined;
-
-  return {
-    id: dto.id,
-    title: dto.title,
-    description: dto.description,
-    url: dto.url,
-    favicon_url: dto.favicon_url || undefined,
-    image_url: dto.screenshot_url || undefined,
-    tags: Array.isArray(dto.tags) ? dto.tags : [],
-    category: dto.category,
-    isAd: dto.isAd,
-    adType,
-    rating: dto.rating,
-    visit_count: dto.visit_count,
-    is_featured: dto.is_featured,
-    created_at: dto.created_at,
-    updated_at: dto.updated_at,
-  };
-}
-
-function extractMessage(data: unknown): string | null {
-  if (!data || typeof data !== 'object') return null;
-  const record = data as Record<string, unknown>;
-
-  if (typeof record.message === 'string') return record.message;
-  if (typeof record.error === 'string') return record.error;
-
-  if (record.errors && typeof record.errors === 'object') {
-    const errorMap = record.errors as Record<string, unknown>;
-    for (const value of Object.values(errorMap)) {
-      if (Array.isArray(value) && value.length > 0 && typeof value[0] === 'string') {
-        return value[0];
-      }
-    }
-  }
-
-  return null;
 }

@@ -1,50 +1,18 @@
 import { NextResponse } from "next/server"
 
-import type { CategoryStatus } from "@/features/categories/types"
-import { categoriesService } from "@/lib/services/categoriesService"
+import { tagsService } from "@/lib/services/tagsService"
 
 export const runtime = "edge"
 
-function normalizeStatus(value: string | null): CategoryStatus | "all" {
-  if (!value) return "active"
+function normalizeStatus(value: string | null): "active" | "inactive" | "all" {
+  if (value === "inactive") return "inactive"
   if (value === "all") return "all"
-  if (value === "active" || value === "inactive" || value === "hidden") {
-    return value
-  }
   return "active"
 }
 
-export async function GET(request: Request) {
-  const url = new URL(request.url)
-  const status = normalizeStatus(url.searchParams.get("status"))
-  const search = url.searchParams.get("search") ?? undefined
-  const requestId = request.headers.get("x-request-id") ?? crypto.randomUUID()
-
-  try {
-    const result = await categoriesService.list(
-      {
-        search,
-        status,
-      },
-    )
-
-    return respondSuccess({
-      requestId,
-      data: { tree: result.tree },
-    })
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "加载分类失败"
-
-    return respondError({
-      status: 500,
-      requestId,
-      code: "internal_error",
-      message: "加载分类失败",
-      errors: {
-        detail: [message],
-      },
-    })
-  }
+function normalizeOrder(value: string | null): "recent" | "name" {
+  if (value === "recent") return "recent"
+  return "name"
 }
 
 const TIMESTAMP_FORMATTER = new Intl.DateTimeFormat("en-CA", {
@@ -57,6 +25,44 @@ const TIMESTAMP_FORMATTER = new Intl.DateTimeFormat("en-CA", {
   second: "2-digit",
   hour12: false,
 })
+
+export async function GET(request: Request) {
+  const url = new URL(request.url)
+  const requestId = request.headers.get("x-request-id") ?? crypto.randomUUID()
+  const search = url.searchParams.get("search") ?? undefined
+  const status = normalizeStatus(url.searchParams.get("status"))
+  const orderBy = normalizeOrder(url.searchParams.get("orderBy"))
+
+  try {
+    const result = await tagsService.list({
+      search,
+      status,
+      orderBy,
+    })
+
+    return respondSuccess({
+      requestId,
+      data: {
+        items: result.items,
+        total: result.total,
+        active: result.active,
+        inactive: result.inactive,
+      },
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "加载标签数据失败"
+
+    return respondError({
+      status: 500,
+      code: "internal_error",
+      message: "加载标签数据失败",
+      requestId,
+      errors: {
+        detail: [message],
+      },
+    })
+  }
+}
 
 function respondSuccess({
   requestId,

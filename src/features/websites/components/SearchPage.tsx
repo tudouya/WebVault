@@ -16,7 +16,7 @@
 
 'use client';
 
-import React, { useMemo, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
@@ -30,9 +30,9 @@ import { Footer } from './Footer';
 import { ErrorBoundary } from './ErrorBoundary';
 
 // 导入hooks和类型
-import { WebsiteCardData, WebsiteFilters } from '../types/website';
-import { SearchHeaderProps, SearchPageStatus } from '../types/search';
-import { getMockWebsites } from '../data/mockWebsites';
+import type { WebsiteCardData, WebsiteFilters } from '../types/website';
+import type { SearchHeaderProps, SearchPageStatus } from '../types/search';
+import { useSearchPage } from '../hooks';
 
 /**
  * SearchPaginationWrapper 组件
@@ -330,7 +330,6 @@ export interface SearchPageProps {
  * 性能优化特性：
  * - 使用React.memo避免不必要的重新渲染
  * - 使用useCallback优化事件处理函数
- * - 使用useMemo优化复杂计算
  * - 防抖搜索输入减少API调用
  * - 组件级别的性能监控和优化
  * 
@@ -349,14 +348,14 @@ const SearchPage = React.memo(function SearchPage({
   showFooter = true,
   showPagination = true,
   searchHeaderProps,
-  searchQuery,
-  websites,
-  totalResults,
-  searchStatus = 'idle',
-  searchError,
-  currentPage = 1,
+  searchQuery: externalSearchQuery,
+  websites: externalWebsites,
+  totalResults: externalTotalResults,
+  searchStatus: externalSearchStatus,
+  searchError: externalSearchError,
+  currentPage: externalCurrentPage,
   itemsPerPage = 12,
-  totalPages,
+  totalPages: externalTotalPages,
   onSearch,
   onFiltersChange,
   onFiltersReset,
@@ -365,44 +364,114 @@ const SearchPage = React.memo(function SearchPage({
   onSearchRetry,
   onPageChange,
 }: SearchPageProps) {
-  // 使用模拟数据作为默认值，如果没有提供 websites prop
-  const displayWebsites = websites || (searchQuery ? [] : getMockWebsites(12));
-  
-  // 计算搜索结果状态
-  const isSearchLoading = isLoading || searchStatus === 'loading';
-  const isSearchError = searchStatus === 'error' || !!searchError;
-  const isEmpty = searchStatus === 'empty' || (displayWebsites.length === 0 && !!searchQuery);
-  
-  // 使用useMemo优化计算属性，避免每次渲染重新计算
-  const memoizedComputedValues = useMemo(() => {
-    const calculatedTotalResults = totalResults || (displayWebsites.length > 0 ? 24 : 0);
-    const calculatedTotalPages = totalPages || Math.ceil(calculatedTotalResults / itemsPerPage);
-    const shouldShowPagination = showPagination && calculatedTotalPages > 1 && !isLoading && !isSearchError && !isEmpty;
-    
-    return {
-      calculatedTotalResults,
-      calculatedTotalPages,
-      shouldShowPagination
-    };
-  }, [totalResults, displayWebsites.length, totalPages, itemsPerPage, showPagination, isLoading, isSearchError, isEmpty]);
-  
-  // 从memoized值中解构
-  const { calculatedTotalResults, calculatedTotalPages, shouldShowPagination } = memoizedComputedValues;
-  
-  // 滚动时的导航栏固定效果 - 复用HomePage逻辑
+  const {
+    filters,
+    results,
+    performSearch,
+  } = useSearchPage(
+    {
+      debounceDelay: 300,
+      enableRealTimeSearch: false,
+      enableSuggestions: false,
+      autoAddToHistory: true,
+      minSearchLength: 1,
+      enableAnalytics: true,
+    },
+    {
+      itemsPerPage,
+    }
+  );
+
+  const {
+    results: websiteResults,
+    isLoading: searchLoading,
+    status: resultStatus,
+    error: resultError,
+    totalResults: resultTotal,
+    currentPage: resultCurrentPage,
+    totalPages: resultTotalPages,
+    loadResults: loadSearchResults,
+    setPage: setSearchPage,
+    retrySearch: retrySearchResults,
+  } = results;
+
+  const initialLoadRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!initialLoadRef.current) {
+      initialLoadRef.current = true;
+      const initialQuery = filters.query || externalSearchQuery || '';
+      void performSearch(initialQuery);
+    }
+  }, [performSearch, filters.query, externalSearchQuery]);
+
+  const activeQuery = filters.query || externalSearchQuery || '';
+  const effectiveWebsites = externalWebsites ?? websiteResults;
+  const combinedLoading = isLoading || searchLoading;
+  const searchStatus = externalSearchStatus ?? resultStatus;
+  const searchErrorMessage = externalSearchError ?? resultError ?? undefined;
+  const isSearchError = searchStatus === 'error' || Boolean(searchErrorMessage);
+  const effectiveTotalResults = typeof externalTotalResults === 'number' ? externalTotalResults : resultTotal;
+  const effectiveTotalPages = typeof externalTotalPages === 'number' ? externalTotalPages : resultTotalPages;
+  const effectiveCurrentPage = externalCurrentPage ?? resultCurrentPage;
+  const shouldShowPagination = showPagination
+    && effectiveTotalPages > 1
+    && effectiveTotalResults > 0
+    && !combinedLoading
+    && !isSearchError;
+
+  const handleWebsiteVisit = useCallback((website: WebsiteCardData) => {
+    onWebsiteVisit?.(website);
+  }, [onWebsiteVisit]);
+
+  const handleTagClick = useCallback((tag: string) => {
+    onTagClick?.(tag);
+  }, [onTagClick]);
+
+  const handleSearch = useCallback((query: string) => {
+    onSearch?.(query);
+    void performSearch(query);
+  }, [onSearch, performSearch]);
+
+  const handleFiltersChange = useCallback((nextFilters: Partial<WebsiteFilters>) => {
+    onFiltersChange?.(nextFilters);
+    void performSearch(undefined, filters.filters);
+  }, [onFiltersChange, performSearch, filters.filters]);
+
+  const handleReset = useCallback(() => {
+    onFiltersReset?.();
+    void performSearch('');
+  }, [onFiltersReset, performSearch]);
+
+  const handleRetry = useCallback(() => {
+    onSearchRetry?.();
+    retrySearchResults();
+  }, [onSearchRetry, retrySearchResults]);
+
+  const handlePageChange = useCallback((page: number) => {
+    if (page === effectiveCurrentPage) {
+      return;
+    }
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+    onPageChange?.(page);
+    setSearchPage(page);
+    void loadSearchResults(activeQuery, filters.filters, page);
+  }, [activeQuery, effectiveCurrentPage, onPageChange, setSearchPage, loadSearchResults, filters.filters]);
+
   const [isScrolled, setIsScrolled] = React.useState(false);
   React.useEffect(() => {
     const handleScroll = () => {
       const scrollTop = window.scrollY;
-      const threshold = 100; // 100px后显示阴影效果
+      const threshold = 100;
       setIsScrolled(scrollTop > threshold);
     };
 
-    // 添加节流处理
     let timeoutId: NodeJS.Timeout;
     const throttledHandleScroll = () => {
       clearTimeout(timeoutId);
-      timeoutId = setTimeout(handleScroll, 16); // ~60fps
+      timeoutId = setTimeout(handleScroll, 16);
     };
 
     window.addEventListener('scroll', throttledHandleScroll, { passive: true });
@@ -412,43 +481,7 @@ const SearchPage = React.memo(function SearchPage({
     };
   }, []);
 
-  // 使用useCallback优化事件处理函数，避免重新渲染时创建新函数
-  const handleWebsiteVisit = useCallback((website: WebsiteCardData) => {
-    onWebsiteVisit?.(website);
-    // 可以在这里添加访问统计逻辑
-  }, [onWebsiteVisit]);
-
-  const handleTagClick = useCallback((tag: string) => {
-    onTagClick?.(tag);
-    // 可以在这里添加标签筛选逻辑
-  }, [onTagClick]);
-
-  const handleSearch = useCallback((query: string) => {
-    onSearch?.(query);
-  }, [onSearch]);
-
-  const handleFiltersChange = useCallback((filters: Partial<WebsiteFilters>) => {
-    onFiltersChange?.(filters);
-  }, [onFiltersChange]);
-
-  const handleReset = useCallback(() => {
-    onFiltersReset?.();
-  }, [onFiltersReset]);
-
-  const handleSearchRetry = useCallback(() => {
-    onSearchRetry?.();
-  }, [onSearchRetry]);
-
-  const handlePageChange = useCallback((newPage: number) => {
-    // 平滑滚动到页面顶部
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-    
-    // 调用外部分页变化回调
-    onPageChange?.(newPage);
-  }, [onPageChange]);
+  const showGlobalLoadingOverlay = searchStatus === 'loading' && searchLoading;
 
   return (
     <div 
@@ -494,7 +527,7 @@ const SearchPage = React.memo(function SearchPage({
             onReset={handleReset}
             className={cn(
               "transition-all duration-300 ease-in-out",
-              isLoading && "opacity-75"
+              combinedLoading && "opacity-75"
             )}
           />
         </ErrorBoundary>
@@ -511,19 +544,19 @@ const SearchPage = React.memo(function SearchPage({
                 aria-label="搜索结果区域"
               >
                 <SearchResults
-                  websites={displayWebsites}
-                  isLoading={isSearchLoading}
+                  websites={effectiveWebsites}
+                  isLoading={combinedLoading}
                   isError={isSearchError}
-                  error={searchError}
-                  searchQuery={searchQuery}
-                  totalResults={calculatedTotalResults}
+                  error={searchErrorMessage}
+                  searchQuery={activeQuery}
+                  totalResults={effectiveTotalResults}
                   onWebsiteVisit={handleWebsiteVisit}
                   onTagClick={handleTagClick}
-                  onRetry={handleSearchRetry}
+                  onRetry={handleRetry}
                   className={cn(
                     // 添加内容切换动画
                     'transition-all duration-300 ease-in-out',
-                    isLoading && 'opacity-75'
+                    combinedLoading && 'opacity-75'
                   )}
                 />
               </div>
@@ -534,13 +567,13 @@ const SearchPage = React.memo(function SearchPage({
               <ErrorBoundary level="section" onError={(error) => console.error('Pagination error:', error)}>
                 <div className="mt-8">
                   <SearchPaginationWrapper
-                    currentPage={currentPage}
-                    totalPages={calculatedTotalPages}
-                    totalItems={calculatedTotalResults}
+                    currentPage={effectiveCurrentPage}
+                    totalPages={effectiveTotalPages}
+                    totalItems={effectiveTotalResults}
                     onPageChange={handlePageChange}
                     className={cn(
                       "transition-all duration-300 ease-in-out",
-                      isLoading && "opacity-75"
+                      combinedLoading && "opacity-75"
                     )}
                   />
                 </div>
@@ -568,7 +601,7 @@ const SearchPage = React.memo(function SearchPage({
       )}
       
       {/* 全局加载状态覆盖层 - 增强subtle加载动画 */}
-      {isLoading && searchStatus === 'loading' && (
+      {showGlobalLoadingOverlay && (
         <div 
           className={cn(
             "fixed inset-0 bg-background/80 backdrop-blur-sm z-50",

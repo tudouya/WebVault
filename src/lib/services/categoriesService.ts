@@ -4,7 +4,6 @@ import type { InferSelectModel } from "drizzle-orm"
 import { categories } from "@/lib/db/schema/categories"
 import { getD1Db } from "@/lib/db/adapters/d1"
 
-import { mockCategoryStats, mockCategoryTree } from "@/features/categories/data/mock-categories"
 import type { CategoryNode, CategoryStatsSummary, CategoryStatus } from "@/features/categories/types"
 
 import { generateCategorySlug } from "@/features/categories/utils/slug"
@@ -19,10 +18,6 @@ export type CategoryListParams = {
 export interface CategoryListResponse {
   tree: CategoryNode[]
   stats: CategoryStatsSummary
-}
-
-export interface CategoryListOptions {
-  allowMockFallback?: boolean
 }
 
 export interface CategoryCreateInput {
@@ -46,12 +41,7 @@ export interface CategoryUpdateInput {
 }
 
 export const categoriesService = {
-  async list(
-    params: CategoryListParams = {},
-    options: CategoryListOptions = {}
-  ): Promise<CategoryListResponse> {
-    const { allowMockFallback = true } = options
-
+  async list(params: CategoryListParams = {}): Promise<CategoryListResponse> {
     try {
       await ensureStatusColumn()
       const db = getD1Db()
@@ -75,13 +65,8 @@ export const categoriesService = {
 
       return { tree, stats }
     } catch (error) {
-      if (!allowMockFallback) {
-        console.error("categoriesService.list failed without fallback", error)
-        throw error instanceof Error ? error : new Error("Failed to load categories")
-      }
-
-      console.warn("categoriesService.list fallback to mock data", error)
-      return { tree: mockCategoryTree, stats: mockCategoryStats }
+      console.error("categoriesService.list failed", error)
+      throw error instanceof Error ? error : new Error("Failed to load categories")
     }
   },
 

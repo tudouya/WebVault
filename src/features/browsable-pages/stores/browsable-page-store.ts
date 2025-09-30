@@ -18,16 +18,18 @@ import {
   useQueryStates
 } from 'nuqs';
 import { useCallback, useRef } from 'react';
-import { 
+import {
   BrowsablePageState,
   BrowsablePageConfig,
   BrowsablePageData,
   BrowsablePageURLParams,
   FilterParams,
-  DEFAULT_PAGE_CONFIG 
+  DEFAULT_PAGE_CONFIG
 } from '../types';
 import { SortField, SortOrder } from '@/features/websites/types/filters';
-import { mockWebsites } from '@/features/websites/data/mockWebsites';
+import type { WebsiteCardData } from '@/features/websites/types';
+// TODO: 迁移到使用真实 API 调用
+// import { mockWebsites } from '@/features/websites/data/mockWebsites';
 
 /**
  * URL搜索参数解析器配置
@@ -276,6 +278,9 @@ export const useBrowsablePageStore = create<BrowsablePageStoreState>()(
               const currentPage = state.filters.currentPage || 1;
               const itemsPerPage = state.filters.itemsPerPage || 12;
               
+              // TODO: 迁移到使用真实 API 调用，不再使用 mock 数据
+              // 临时返回空数据结构以允许编译
+
               // 生成页面特定的实体数据
               let entityData: BrowsablePageData['entity'] = {
                 id: 'default',
@@ -283,12 +288,11 @@ export const useBrowsablePageStore = create<BrowsablePageStoreState>()(
                 slug: 'default',
                 description: 'Default description',
                 stats: {
-                  websiteCount: mockWebsites.length,
+                  websiteCount: 0,
                   createdAt: new Date().toISOString(),
                   updatedAt: new Date().toISOString(),
                 },
               };
-              let websiteData = [...mockWebsites];
 
               if (pageType === 'collection') {
                 entityData = {
@@ -297,15 +301,11 @@ export const useBrowsablePageStore = create<BrowsablePageStoreState>()(
                   slug: entitySlug || 'developer-essential-tools',
                   description: '精选的开发工具和资源，包括代码编辑器、版本控制、调试工具等，提升开发效率的必备工具集合。',
                   stats: {
-                    websiteCount: mockWebsites.length,
+                    websiteCount: 0,
                     createdAt: '2024-01-15T10:00:00Z',
                     updatedAt: new Date().toISOString(),
                   },
                 };
-                // 集合页面：显示开发工具相关网站
-                websiteData = mockWebsites.filter(site => 
-                  site.tags.some(tag => ['开发工具', '代码托管', '编程', 'API'].includes(tag))
-                );
               } else if (pageType === 'category') {
                 entityData = {
                   id: 'development',
@@ -313,18 +313,11 @@ export const useBrowsablePageStore = create<BrowsablePageStoreState>()(
                   slug: 'development',
                   description: 'Browse and discover websites organized by categories. WebVault为您提供按分类整理的优质网站资源。',
                   stats: {
-                    websiteCount: mockWebsites.length,
+                    websiteCount: 0,
                     createdAt: '2024-01-01T00:00:00Z',
                     updatedAt: new Date().toISOString(),
                   },
                 };
-                // 分类页面：默认显示所有网站，支持分类筛选
-                if (state.filters.categoryId) {
-                  websiteData = mockWebsites.filter(site => site.category === state.filters.categoryId);
-                } else {
-                  // 没有筛选条件时显示所有网站
-                  websiteData = [...mockWebsites];
-                }
               } else if (pageType === 'tag') {
                 entityData = {
                   id: 'all-tags',
@@ -332,54 +325,20 @@ export const useBrowsablePageStore = create<BrowsablePageStoreState>()(
                   slug: 'all-tags',
                   description: 'Browse and discover websites organized by tags. WebVault为您提供按标签整理的优质网站资源。',
                   stats: {
-                    websiteCount: mockWebsites.length,
+                    websiteCount: 0,
                     createdAt: '2024-01-01T00:00:00Z',
                     updatedAt: new Date().toISOString(),
                   },
                 };
-                // 标签页面：默认显示所有网站，支持标签筛选
-                if (state.filters.selectedTags && state.filters.selectedTags.length > 0) {
-                  websiteData = mockWebsites.filter(site => 
-                    state.filters.selectedTags!.some(filterTag => 
-                      site.tags.some(siteTag => siteTag.includes(filterTag))
-                    )
-                  );
-                } else {
-                  // 没有筛选条件时显示所有网站
-                  websiteData = [...mockWebsites];
-                }
               }
-              
-              // 应用排序
-              if (state.filters.sortBy) {
-                websiteData.sort((a, b) => {
-                  const order = state.filters.sortOrder === 'desc' ? -1 : 1;
-                  switch (state.filters.sortBy) {
-                    case 'created_at':
-                      return order * (new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime());
-                    case 'updated_at':
-                      return order * (new Date(a.updated_at || 0).getTime() - new Date(b.updated_at || 0).getTime());
-                    case 'title':
-                      return order * a.title.localeCompare(b.title);
-                    case 'rating':
-                      return order * ((a.rating || 0) - (b.rating || 0));
-                    case 'visit_count':
-                      return order * ((a.visit_count || 0) - (b.visit_count || 0));
-                    default:
-                      return 0;
-                  }
-                });
-              }
-              
-              // 应用分页
-              const totalCount = websiteData.length;
-              const startIndex = (currentPage - 1) * itemsPerPage;
-              const endIndex = startIndex + itemsPerPage;
-              const paginatedWebsites = websiteData.slice(startIndex, endIndex);
-              
-              // 生成筛选选项
-              const allCategories = Array.from(new Set(mockWebsites.map(site => site.category)));
-              const allTags = Array.from(new Set(mockWebsites.flatMap(site => site.tags)));
+
+              // 临时空数据
+              const totalCount = 0;
+              const paginatedWebsites: WebsiteCardData[] = [];
+
+              // 临时空筛选选项
+              const allCategories: string[] = [];
+              const allTags: string[] = [];
               
               const mockData: BrowsablePageData = {
                 entity: entityData,
@@ -399,13 +358,13 @@ export const useBrowsablePageStore = create<BrowsablePageStoreState>()(
                     id: cat || '',
                     name: cat || '',
                     slug: cat?.toLowerCase().replace(/\s+/g, '-') || '',
-                    websiteCount: mockWebsites.filter(site => site.category === cat).length,
+                    websiteCount: 0,
                   })),
                   tags: allTags.map(tag => ({
                     id: tag,
                     name: tag,
                     slug: tag.toLowerCase().replace(/\s+/g, '-'),
-                    websiteCount: mockWebsites.filter(site => site.tags.includes(tag)).length,
+                    websiteCount: 0,
                   })),
                 },
                 breadcrumbs: [

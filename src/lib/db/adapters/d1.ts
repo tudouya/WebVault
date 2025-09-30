@@ -1,6 +1,6 @@
 import { drizzle } from 'drizzle-orm/d1';
 import { getRequestContext } from '@cloudflare/next-on-pages';
-import { and, desc, eq, gte, like, sql, SQL } from 'drizzle-orm';
+import { and, desc, eq, gte, sql, SQL } from 'drizzle-orm';
 import { websites } from '@/lib/db/schema/websites';
 import type { CloudflareEnv } from '@/types/env';
 
@@ -31,8 +31,13 @@ export async function listWebsitesD1(params: ListParamsD1) {
   const conds: SQL[] = [];
   if (query && query.trim()) {
     const q = `%${escapeLike(query.trim())}%`;
+    // 搜索 title、description 和 url 三个字段
     conds.push(
-      like(websites.title, q)
+      sql`(
+        ${websites.title} LIKE ${q} OR
+        ${websites.description} LIKE ${q} OR
+        ${websites.url} LIKE ${q}
+      )`
     );
   }
   if (category) conds.push(eq(websites.categoryId, category));
