@@ -62,6 +62,42 @@ export const browsablePageParamsParsers = {
   rating: parseAsInteger,
   ads: parseAsBoolean,
 } as const;
+/**
+ * Helper function to extract categories from category tree
+ * Recursively traverses the category tree and flattens it into an array
+ */
+function extractCategoriesFromTree(tree: any[]): Array<{
+  id: string;
+  name: string;
+  slug: string;
+  websiteCount: number;
+}> {
+  const categories: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    websiteCount: number;
+  }> = [];
+  
+  function traverse(nodes: any[]) {
+    for (const node of nodes) {
+      categories.push({
+        id: node.id?.toString() || node.slug,
+        name: node.name,
+        slug: node.slug,
+        websiteCount: node.websiteCount || 0,
+      });
+      
+      // Recursively process children if they exist
+      if (node.children && Array.isArray(node.children) && node.children.length > 0) {
+        traverse(node.children);
+      }
+    }
+  }
+  
+  traverse(tree);
+  return categories;
+}
 
 /**
  * 扩展的浏览页面状态接口
@@ -270,16 +306,73 @@ export const useBrowsablePageStore = create<BrowsablePageStoreState>()(
             );
             
             try {
-              // 模拟网络请求延迟
-              await new Promise(resolve => setTimeout(resolve, 500));
-              
-              // 根据页面类型生成不同的模拟数据
               const pageType = state.config.pageType;
               const currentPage = state.filters.currentPage || 1;
               const itemsPerPage = state.filters.itemsPerPage || 12;
               
-              // TODO: 迁移到使用真实 API 调用，不再使用 mock 数据
-              // 临时返回空数据结构以允许编译
+              // 构建 API 查询参数
+              const apiParams = new URLSearchParams({
+                page: currentPage.toString(),
+                pageSize: itemsPerPage.toString(),
+              });
+
+              // 添加筛选参数
+              if (state.filters.search) {
+                apiParams.set('q', state.filters.search);
+              }
+              if (state.filters.categoryId) {
+                apiParams.set('category', state.filters.categoryId);
+              }
+              if (state.filters.sortBy) {
+                apiParams.set('sort', state.filters.sortBy);
+              }
+              if (state.filters.sortOrder) {
+                apiParams.set('order', state.filters.sortOrder);
+              }
+              
+              // 调用真实 API
+              const response = await fetch(`/api/websites?${apiParams.toString()}`);
+              
+              if (!response.ok) {
+                throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+              }
+              
+              const result = await response.json();
+              
+              if (result.code !== 0) {
+                throw new Error(result.message || 'API 返回错误');
+              }
+
+              // 转换 API 响应为 WebsiteCardData 格式
+              const websites: WebsiteCardData[] = (result.data || []).map((item: any) => ({
+                id: item.id.toString(),
+                title: item.title,
+                description: item.description,
+                url: item.url,
+                favicon: item.favicon,
+                category: item.category,
+                tags: item.tags || [],
+                rating: item.rating,
+                visitCount: item.visitCount,
+                isAd: item.isAd || false,
+                isFeatured: item.isFeatured || false,
+                createdAt: item.createdAt,
+                updatedAt: item.updatedAt,
+              }));
+
+              // 获取分类列表用于筛选选项
+              const categoriesResponse = await fetch('/api/categories');
+              const categoriesResult = await categoriesResponse.json();
+              const allCategories = categoriesResult.code === 0 && categoriesResult.data?.tree 
+                ? extractCategoriesFromTree(categoriesResult.data.tree) 
+                : [];
+
+              // 从网站数据中提取所有标签
+              const allTagsSet = new Set<string>();
+              websites.forEach(website => {
+                website.tags?.forEach(tag => allTagsSet.add(tag));
+              });
+              const allTags = Array.from(allTagsSet);
 
               // 生成页面特定的实体数据
               let entityData: BrowsablePageData['entity'] = {
@@ -288,7 +381,7 @@ export const useBrowsablePageStore = create<BrowsablePageStoreState>()(
                 slug: 'default',
                 description: 'Default description',
                 stats: {
-                  websiteCount: 0,
+                  websiteCount: result.meta?.total || 0,
                   createdAt: new Date().toISOString(),
                   updatedAt: new Date().toISOString(),
                 },
@@ -301,19 +394,22 @@ export const useBrowsablePageStore = create<BrowsablePageStoreState>()(
                   slug: entitySlug || 'developer-essential-tools',
                   description: '精选的开发工具和资源，包括代码编辑器、版本控制、调试工具等，提升开发效率的必备工具集合。',
                   stats: {
-                    websiteCount: 0,
+                    websiteCount: result.meta?.total || 0,
                     createdAt: '2024-01-15T10:00:00Z',
                     updatedAt: new Date().toISOString(),
                   },
                 };
               } else if (pageType === 'category') {
+                const categoryName = state.filters.categoryId || 'All Categories';
                 entityData = {
-                  id: 'development',
-                  name: 'Explore by categories',
-                  slug: 'development',
-                  description: 'Browse and discover websites organized by categories. WebVault为您提供按分类整理的优质网站资源。',
+                  id: state.filters.categoryId || 'all-categories',
+                  name: categoryName === 'all-categories' ? 'Explore by categories' : categoryName,
+                  slug: state.filters.categoryId || 'all-categories',
+                  description: state.filters.categoryId 
+                    ? `浏览${categoryName}分类下的优质网站资源，发现该领域专业的工具和服务。`
+                    : 'Browse and discover websites organized by categories. WebVault为您提供按分类整理的优质网站资源。',
                   stats: {
-                    websiteCount: 0,
+                    websiteCount: result.meta?.total || 0,
                     createdAt: '2024-01-01T00:00:00Z',
                     updatedAt: new Date().toISOString(),
                   },
@@ -325,41 +421,31 @@ export const useBrowsablePageStore = create<BrowsablePageStoreState>()(
                   slug: 'all-tags',
                   description: 'Browse and discover websites organized by tags. WebVault为您提供按标签整理的优质网站资源。',
                   stats: {
-                    websiteCount: 0,
+                    websiteCount: result.meta?.total || 0,
                     createdAt: '2024-01-01T00:00:00Z',
                     updatedAt: new Date().toISOString(),
                   },
                 };
               }
 
-              // 临时空数据
-              const totalCount = 0;
-              const paginatedWebsites: WebsiteCardData[] = [];
-
-              // 临时空筛选选项
-              const allCategories: string[] = [];
-              const allTags: string[] = [];
+              const totalCount = result.meta?.total || 0;
+              const totalPages = result.meta?.total_pages || Math.ceil(totalCount / itemsPerPage);
               
-              const mockData: BrowsablePageData = {
+              const apiData: BrowsablePageData = {
                 entity: entityData,
                 websites: {
-                  items: paginatedWebsites,
+                  items: websites,
                   totalCount,
                   pagination: {
                     currentPage,
                     itemsPerPage,
-                    totalPages: Math.ceil(totalCount / itemsPerPage),
-                    hasNextPage: currentPage < Math.ceil(totalCount / itemsPerPage),
+                    totalPages,
+                    hasNextPage: result.meta?.has_more || false,
                     hasPrevPage: currentPage > 1,
                   },
                 },
                 filterOptions: {
-                  categories: allCategories.map(cat => ({
-                    id: cat || '',
-                    name: cat || '',
-                    slug: cat?.toLowerCase().replace(/\s+/g, '-') || '',
-                    websiteCount: 0,
-                  })),
+                  categories: allCategories,
                   tags: allTags.map(tag => ({
                     id: tag,
                     name: tag,
@@ -376,13 +462,14 @@ export const useBrowsablePageStore = create<BrowsablePageStoreState>()(
               
               set(
                 (current) => ({
-                  data: mockData,
+                  data: apiData,
                   loading: { ...current.loading, page: false, content: false },
                   meta: {
                     ...current.meta,
                     lastUpdated: new Date().toISOString(),
                     retryCount: 0,
                     isInitialized: true,
+                    dataSource: 'api',
                   },
                 }),
                 false,
@@ -409,7 +496,7 @@ export const useBrowsablePageStore = create<BrowsablePageStoreState>()(
               );
             }
           },
-          
+
           refreshData: async () => {
             const state = get();
             const entitySlug = state.data?.entity.slug;
