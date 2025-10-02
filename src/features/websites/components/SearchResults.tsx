@@ -8,8 +8,8 @@ import type { WebsiteCardData } from "../types/website";
 
 interface SearchResultsProps {
   /** 搜索结果网站数据列表 */
-  websites: WebsiteCardData[];
-  
+  websites?: WebsiteCardData[];
+
   /** 是否正在加载 */
   isLoading?: boolean;
   
@@ -214,7 +214,7 @@ const SearchResults = React.memo(function SearchResults({
   }, [processedWebsites.length]);
   
   // 优化的渲染回调
-  const renderWebsiteCard = useCallback((website: typeof websites[0], index: number) => (
+  const renderWebsiteCard = useCallback((website: WebsiteCardData, index: number) => (
     <WebsiteCard
       key={website.id}
       website={website}
@@ -224,7 +224,7 @@ const SearchResults = React.memo(function SearchResults({
         "h-fit", // 确保卡片高度自适应内容
         "website-grid-enter" // 网格入场动画
       )}
-      style={{ 
+      style={{
         animationDelay: `${Math.min(index * 100, 500)}ms` // 最大延迟500ms
       }}
     />

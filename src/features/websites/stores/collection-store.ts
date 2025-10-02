@@ -21,12 +21,8 @@ import {
   CollectionStatus,
   CollectionURLParams,
 } from '../types/collection';
-import { 
-  getMockCollections,
-  searchMockCollections,
-  filterMockCollectionsByTags,
-  getAllMockCollectionTags
-} from '../data/mockCollections';
+import { collectionApiService } from '../services/collection-api.service';
+import type { CollectionListParams } from '@/features/collections/types';
 
 /**
  * 集合页面URL搜索参数解析器配置
@@ -147,6 +143,25 @@ const DEFAULT_PAGINATION = {
 };
 
 /**
+ * 映射前端排序字段到API排序参数
+ */
+function mapSortByToOrderBy(sortBy?: string): 'recent' | 'name' | 'order' | undefined {
+  if (!sortBy) return 'recent';
+
+  switch (sortBy) {
+    case 'title':
+      return 'name';
+    case 'sortOrder':
+      return 'order';
+    case 'updatedAt':
+    case 'createdAt':
+      return 'recent';
+    default:
+      return 'recent';
+  }
+}
+
+/**
  * 创建集合页面状态管理Store
  * 使用与homepage-store相同的中间件配置，确保一致的开发体验
  */
@@ -205,10 +220,10 @@ export const useCollectionStore = create<CollectionPageState>()(
           // 数据加载方法
           loadCollections: async () => {
             const state = get();
-            
+
             // 防止重复加载
             if (state.ui.isLoading) return;
-            
+
             set(
               (current) => ({
                 ui: { ...current.ui, isLoading: true },
@@ -217,114 +232,56 @@ export const useCollectionStore = create<CollectionPageState>()(
               false,
               'loadCollections:start'
             );
-            
+
             try {
-              // 模拟网络请求延迟
-              await new Promise(resolve => setTimeout(resolve, 300));
-              
               // 获取当前筛选条件
-              const { searchQuery, filters, sorting } = state;
-              
-              // 应用筛选和搜索
-              let collections = getMockCollections();
-              
-              // 搜索筛选
-              if (searchQuery && searchQuery.trim()) {
-                collections = searchMockCollections(searchQuery.trim());
-              }
-              
-              // 状态筛选
-              if (filters?.status && filters.status.length > 0) {
-                collections = collections.filter(collection => 
-                  filters.status!.includes(collection.status)
-                );
-              }
-              
-              // 标签筛选
-              if (filters?.tags && filters.tags.length > 0) {
-                collections = filterMockCollectionsByTags(filters.tags);
-              }
-              
-              // 日期范围筛选
-              if (filters?.dateRange?.from || filters?.dateRange?.to) {
-                collections = collections.filter(collection => {
-                  const createdDate = new Date(collection.createdAt);
-                  if (filters.dateRange?.from && createdDate < new Date(filters.dateRange.from)) {
-                    return false;
-                  }
-                  if (filters.dateRange?.to && createdDate > new Date(filters.dateRange.to)) {
-                    return false;
-                  }
-                  return true;
-                });
-              }
-              
-              // 创建者筛选
-              if (filters?.createdBy) {
-                collections = collections.filter(collection => 
-                  collection.createdBy === filters.createdBy
-                );
-              }
-              
-              // 排序应用
-              if (sorting && sorting.sortBy && sorting.sortOrder) {
-                collections.sort((a, b) => {
-                  let aValue: string | number | Date;
-                  let bValue: string | number | Date;
-                  
-                  switch (sorting.sortBy) {
-                    case 'title':
-                      aValue = a.title.toLowerCase();
-                      bValue = b.title.toLowerCase();
-                      break;
-                    case 'websiteCount':
-                      aValue = a.websiteCount;
-                      bValue = b.websiteCount;
-                      break;
-                    case 'createdAt':
-                      aValue = new Date(a.createdAt);
-                      bValue = new Date(b.createdAt);
-                      break;
-                    case 'updatedAt':
-                      aValue = new Date(a.updatedAt);
-                      bValue = new Date(b.updatedAt);
-                      break;
-                    case 'sortOrder':
-                      aValue = a.sortOrder || 999;
-                      bValue = b.sortOrder || 999;
-                      break;
-                    default:
-                      aValue = a.createdAt;
-                      bValue = b.createdAt;
-                  }
-                  
-                  if (aValue < bValue) {
-                    return sorting.sortOrder === 'asc' ? -1 : 1;
-                  }
-                  if (aValue > bValue) {
-                    return sorting.sortOrder === 'asc' ? 1 : -1;
-                  }
-                  return 0;
-                });
-              }
-              
-              // 计算分页
-              const totalItems = collections.length;
-              const totalPages = Math.ceil(totalItems / state.pagination.itemsPerPage);
-              const startIndex = (state.pagination.currentPage - 1) * state.pagination.itemsPerPage;
-              const endIndex = startIndex + state.pagination.itemsPerPage;
-              const paginatedCollections = collections.slice(startIndex, endIndex);
-              
-              // 获取可用标签
-              const availableTags = getAllMockCollectionTags();
-              
+              const { searchQuery, pagination, sorting } = state;
+
+              // 构建API请求参数
+              const apiParams: CollectionListParams = {
+                search: searchQuery || undefined,
+                page: pagination.currentPage,
+                pageSize: pagination.itemsPerPage,
+                // 映射排序字段到API参数
+                orderBy: mapSortByToOrderBy(sorting?.sortBy),
+              };
+
+              // 调用API获取数据
+              const result = await collectionApiService.list(apiParams);
+
+              // 将API返回的数据转换为store使用的格式
+              const collections: Collection[] = result.items.map((item, index) => ({
+                id: item.id,
+                title: item.name, // API 使用 name，前端使用 title
+                slug: item.slug,
+                description: item.description || '',
+                coverImage: item.coverImage,
+                websiteCount: item.websiteCount,
+                tags: [], // API 暂不支持标签
+                status: 'active' as CollectionStatus, // API 暂时使用 active 状态
+                createdAt: item.createdAt,
+                updatedAt: item.updatedAt,
+                createdBy: 'system', // API 暂不支持创建者
+                sortOrder: item.displayOrder,
+                isFeatured: item.isFeatured,
+                // 添加默认 icon（使用序号作为默认字符）
+                icon: {
+                  character: String.fromCodePoint(0x1F4C1 + (index % 10)), // 📁📂📃...
+                  backgroundColor: '#3b82f6',
+                  textColor: '#ffffff',
+                },
+              }));
+
+              // 获取可用标签（暂时返回空数组）
+              const availableTags: string[] = [];
+
               set(
                 (current) => ({
-                  collections: paginatedCollections,
+                  collections,
                   pagination: {
                     ...current.pagination,
-                    totalItems,
-                    totalPages,
+                    totalItems: result.total,
+                    totalPages: Math.ceil(result.total / result.pageSize),
                   },
                   ui: {
                     ...current.ui,
@@ -336,17 +293,17 @@ export const useCollectionStore = create<CollectionPageState>()(
                     ...current.meta,
                     lastUpdated: new Date().toISOString(),
                     availableTags,
-                    dataSource: 'mock',
+                    dataSource: 'api',
                   },
                   error: null,
                 }),
                 false,
                 'loadCollections:success'
               );
-              
+
             } catch (error) {
               console.error('Failed to load collections:', error);
-              
+
               set(
                 (current) => ({
                   ui: {

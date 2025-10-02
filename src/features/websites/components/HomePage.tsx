@@ -39,6 +39,20 @@ import { useHomepageCategoryTree, useHomepageWebsites } from '../hooks';
 import { useHomepageFilters, useHomepagePagination, useHomepageUrlSync } from '../stores/homepage-store';
 
 /**
+ * 递归检查分类树中是否存在指定ID的分类
+ * @param categories - 分类树数组
+ * @param targetId - 目标分类ID
+ * @returns 是否存在该分类
+ */
+function hasCategory(categories: CategoryNode[], targetId: string): boolean {
+  for (const cat of categories) {
+    if (cat.id === targetId) return true;
+    if (cat.children && hasCategory(cat.children, targetId)) return true;
+  }
+  return false;
+}
+
+/**
  * HomePage组件属性接口
  */
 export interface HomePageProps {
@@ -148,8 +162,6 @@ export function HomePage({
   const {
     currentPage,
     itemsPerPage,
-    totalItems,
-    totalPages: paginationTotalPages,
     updatePagination,
   } = useHomepagePagination();
 
@@ -199,13 +211,22 @@ export function HomePage({
 
   const baseUrlState = React.useMemo(() => {
     return {
+      // 搜索和分类筛选（空字符串转为 undefined）
       search: search || undefined,
       category: categoryId || undefined,
+
+      // 标签筛选（空数组转为 undefined）
       tags: selectedTags.length > 0 ? selectedTags.join(',') : undefined,
+
+      // 排序（非默认值才保留）
       sortBy: sortBy !== 'created_at' ? sortBy : undefined,
       sortOrder: sortOrder !== 'desc' ? sortOrder : undefined,
+
+      // 分页（页码 > 1 或 itemsPerPage != 12 才保留）
       page: currentPage > 1 ? currentPage : undefined,
       limit: itemsPerPage !== 12 ? itemsPerPage : undefined,
+
+      // 高级筛选（只有 true 才保留 featured，includeAds 为 false 才保留）
       featured: featuredOnly ? true : undefined,
       includeAds: includeAds === false ? false : undefined,
       minRating: minRating && minRating > 0 ? minRating : undefined,
@@ -237,31 +258,23 @@ export function HomePage({
     setUrlState(baseUrlState);
   }, [baseUrlState, setUrlState]);
 
+  /**
+   * 同步后端返回的分页信息到本地状态
+   * 只在数据成功加载后更新，避免依赖循环
+   */
   React.useEffect(() => {
     if (!shouldFetchWebsites) return;
     if (websitesLoading || fetchedError) return;
 
-    const updates: Partial<PaginationState> = {};
+    const updates: Partial<PaginationState> = {
+      totalItems: fetchedTotal,
+      totalPages: fetchedTotalPages,
+      itemsPerPage: resolvedPageSize,
+      currentPage: resolvedPage,
+    };
 
-    if (totalItems !== fetchedTotal) {
-      updates.totalItems = fetchedTotal;
-    }
-
-    if (paginationTotalPages !== fetchedTotalPages) {
-      updates.totalPages = fetchedTotalPages;
-    }
-
-    if (itemsPerPage !== resolvedPageSize) {
-      updates.itemsPerPage = resolvedPageSize;
-    }
-
-    if (currentPage !== resolvedPage) {
-      updates.currentPage = resolvedPage;
-    }
-
-    if (Object.keys(updates).length > 0) {
-      updatePagination(updates);
-    }
+    updatePagination(updates);
+    // 只依赖后端返回的值，避免循环更新
   }, [
     shouldFetchWebsites,
     websitesLoading,
@@ -270,10 +283,6 @@ export function HomePage({
     fetchedTotalPages,
     resolvedPage,
     resolvedPageSize,
-    totalItems,
-    paginationTotalPages,
-    itemsPerPage,
-    currentPage,
     updatePagination,
   ]);
 
@@ -506,18 +515,6 @@ export function HomePage({
       )}
     </div>
   );
-}
-
-function hasCategory(nodes: CategoryNode[], id: string): boolean {
-  for (const node of nodes) {
-    if (node.id === id) {
-      return true;
-    }
-    if (node.children && hasCategory(node.children, id)) {
-      return true;
-    }
-  }
-  return false;
 }
 
 /**

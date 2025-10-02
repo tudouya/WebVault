@@ -96,23 +96,23 @@ export function CollectionIndexPage({
   const router = useRouter();
   
   // 集合数据状态管理
-  const { 
+  const {
     collections,
     loading: dataLoading,
     error: dataError,
     isInitialized,
     loadCollections
   } = useCollectionData();
-  
+
   // 集合分页状态管理
   const collectionPagination = useCollectionPagination();
-  
+
   // URL状态同步
   const { syncStoreFromUrl } = useCollectionUrlSync();
-  
+
   // 合并loading状态
   const combinedLoading = isLoading || dataLoading;
-  
+
   // 首次加载时初始化数据
   React.useEffect(() => {
     if (!isInitialized) {
@@ -236,7 +236,7 @@ export function CollectionIndexPage({
                 >
                   <CollectionGrid
                     collections={collections}
-                    isLoading={combinedLoading && !isInitialized}
+                    isLoading={combinedLoading || !isInitialized}
                     isError={!!dataError}
                     error={dataError || undefined}
                     onCollectionClick={handleCollectionClick}

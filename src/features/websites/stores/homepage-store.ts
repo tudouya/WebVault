@@ -27,6 +27,47 @@ import { DEFAULT_FILTER_STATE } from '../types/filters';
 type UrlStateValue = string | number | boolean | null | undefined | string[];
 type UrlStateParams = Record<string, UrlStateValue>;
 
+/**
+ * 清理 URL 参数对象，移除无效值
+ *
+ * 过滤规则：
+ * - 移除 undefined、null 值
+ * - 移除空字符串
+ * - 移除 NaN 和 Infinity
+ * - 移除空数组
+ * - 保留 false 和 0（它们是有效值）
+ */
+function cleanUrlParams<T extends Record<string, unknown>>(params: T): Partial<T> {
+  const cleaned: Partial<T> = {};
+
+  for (const [key, value] of Object.entries(params)) {
+    // 跳过 undefined 和 null
+    if (value === undefined || value === null) {
+      continue;
+    }
+
+    // 跳过空字符串
+    if (typeof value === 'string' && value.trim() === '') {
+      continue;
+    }
+
+    // 跳过 NaN 和 Infinity
+    if (typeof value === 'number' && (!Number.isFinite(value))) {
+      continue;
+    }
+
+    // 跳过空数组
+    if (Array.isArray(value) && value.length === 0) {
+      continue;
+    }
+
+    // 保留有效值（包括 false 和 0）
+    cleaned[key as keyof T] = value as T[keyof T];
+  }
+
+  return cleaned;
+}
+
 function toStringValue(value: UrlStateValue, defaultValue = ''): string {
   if (typeof value === 'string') {
     return value;
@@ -1159,6 +1200,34 @@ export const useHomepageStore = create<HomepageState>()(
       {
         name: 'homepage-store',
         storage: createJSONStorage(() => sessionStorage),
+        merge: (persistedState, currentState) => {
+          if (!persistedState) {
+            return currentState;
+          }
+
+          const typedState = persistedState as Partial<HomepageState>;
+
+          return {
+            ...currentState,
+            ...typedState,
+            ui: {
+              ...currentState.ui,
+              ...typedState.ui,
+            },
+            categoryNavigation: {
+              ...currentState.categoryNavigation,
+              ...typedState.categoryNavigation,
+            },
+            searchPage: {
+              ...currentState.searchPage,
+              ...typedState.searchPage,
+              searchStats: {
+                ...currentState.searchPage.searchStats,
+                ...typedState.searchPage?.searchStats,
+              },
+            },
+          };
+        },
         // 只持久化UI偏好设置和搜索历史，URL参数通过nuqs管理
         partialize: (state) => ({
           ui: {
@@ -1203,7 +1272,9 @@ export function useHomepageUrlSync() {
   }, [actions, urlState]);
 
   const setUrlState = useCallback((nextState: Record<string, unknown>) => {
-    setUrlStateInternal(nextState);
+    // 清理 URL 参数，移除无效值
+    const cleanedState = cleanUrlParams(nextState);
+    setUrlStateInternal(cleanedState);
   }, [setUrlStateInternal]);
 
   return {
@@ -1247,7 +1318,7 @@ export function useSearchPageUrlSync() {
       featured: store.featuredOnly || undefined,
       includeAds: !store.includeAds ? store.includeAds : undefined,
       minRating: store.minRating && store.minRating > 0 ? store.minRating : undefined,
-      
+
       // 搜索页面特定参数
       searchType: store.searchPage.searchType !== 'all' ? store.searchPage.searchType : undefined,
       searchScope: store.searchPage.searchScope !== 'all' ? store.searchPage.searchScope : undefined,
@@ -1264,8 +1335,10 @@ export function useSearchPageUrlSync() {
       showPreview: !store.searchPage.showPreview ? store.searchPage.showPreview : undefined,
       relevance: store.searchPage.relevanceSort || undefined,
     };
-    
-    setUrlState(searchPageUrlState);
+
+    // 清理 URL 参数后再设置
+    const cleanedState = cleanUrlParams(searchPageUrlState);
+    setUrlState(cleanedState);
   };
   
   return {

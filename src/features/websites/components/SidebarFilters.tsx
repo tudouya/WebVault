@@ -3,13 +3,6 @@
 import React from 'react'
 
 import { Button } from '@/components/ui/button'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import type { CategoryNode } from '@/features/categories/types'
 import { cn } from '@/lib/utils'
 import { ChevronDown, X } from 'lucide-react'
@@ -47,6 +40,45 @@ export function SidebarFilters({
     () => (Array.isArray(rawCategories) ? rawCategories : []),
     [rawCategories],
   )
+
+  /**
+   * 从后端返回的分类树中提取网站数量信息
+   * 注意：后端(categoriesService)已经递归聚合了子分类的网站数量到websiteCount字段
+   * 所以这里直接使用websiteCount，不需要再次聚合，避免重复计算
+   */
+  const categoryCountInfo = React.useMemo(() => {
+    const map = new Map<string, number>()
+
+    // 递归遍历分类树，直接使用后端计算好的websiteCount
+    const traverseCategories = (nodes: CategoryNode[]) => {
+      nodes.forEach((node) => {
+        // 直接使用后端已经聚合好的数量（包含子分类）
+        const count = typeof node.websiteCount === "number" ? node.websiteCount : 0
+        map.set(node.id, count)
+
+        // 递归处理子分类
+        if (Array.isArray(node.children) && node.children.length > 0) {
+          traverseCategories(node.children)
+        }
+      })
+    }
+
+    traverseCategories(categories)
+
+    // 计算顶级分类的总数（不包含重复）
+    const topLevelTotal = categories.reduce(
+      (sum, node) => sum + (typeof node.websiteCount === "number" ? node.websiteCount : 0),
+      0
+    )
+
+    return {
+      map,
+      total: topLevelTotal,
+    }
+  }, [categories])
+
+  const totalCategoryCount = categoryCountInfo.total
+  const categoryCountMap = categoryCountInfo.map
 
   const [expandedGroups, setExpandedGroups] = React.useState<Set<string>>(new Set())
 
@@ -129,7 +161,19 @@ export function SidebarFilters({
               onClick={() => handleCategorySelect(null)}
               disabled={isLoading}
             >
-              All Categories
+              <div className="flex w-full items-center justify-between gap-3">
+                <span className="font-medium">全部分类</span>
+                <span
+                  className={cn(
+                    'inline-flex min-w-[2.25rem] justify-center rounded-full px-2 py-0.5 text-xs font-medium transition-colors duration-200',
+                    selectedCategoryId === null
+                      ? 'bg-primary/15 text-primary'
+                      : 'bg-muted text-muted-foreground'
+                  )}
+                >
+                  {totalCategoryCount}
+                </span>
+              </div>
             </Button>
           </div>
 
@@ -139,6 +183,7 @@ export function SidebarFilters({
               const children = group.children ?? []
               const hasChildren = children.length > 0
               const isExpanded = expandedGroups.has(group.id)
+              const groupCount = categoryCountMap.get(group.id) ?? 0
 
               return (
                 <div key={group.id} className="space-y-1">
@@ -167,49 +212,78 @@ export function SidebarFilters({
                           hasChildren && isExpanded ? 'bg-primary' : 'bg-muted-foreground/40',
                         )}
                       />
-                      {group.name}
+                      <span className="font-medium text-foreground">{group.name}</span>
                     </span>
-                    {hasChildren ? (
-                      <div className={cn('transition-transform duration-200', isExpanded && 'rotate-180')}>
-                        <ChevronDown
-                          className={cn(
-                            'h-4 w-4 transition-colors duration-200',
-                            isExpanded ? 'text-foreground' : 'text-muted-foreground',
-                          )}
-                        />
-                      </div>
-                    ) : null}
+                    <span className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          'inline-flex min-w-[2rem] justify-center rounded-full px-2 py-0.5 text-xs font-medium transition-colors duration-200',
+                          selectedCategoryId === group.id
+                            ? 'bg-primary/15 text-primary'
+                            : 'bg-muted text-muted-foreground',
+                        )}
+                      >
+                        {groupCount}
+                      </span>
+                      {hasChildren ? (
+                        <div className={cn('transition-transform duration-200', isExpanded && 'rotate-180')}>
+                          <ChevronDown
+                            className={cn(
+                              'h-4 w-4 transition-colors duration-200',
+                              isExpanded ? 'text-foreground' : 'text-muted-foreground',
+                            )}
+                          />
+                        </div>
+                      ) : (
+                        selectedCategoryId === group.id ? (
+                          <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                        ) : null
+                      )}
+                    </span>
                   </button>
 
                   {hasChildren ? (
                     isExpanded && (
                       <div className="ml-2 space-y-1 animate-in slide-in-from-top-2 duration-200">
-                        {children.map((child, index) => (
-                          <button
-                            key={child.id}
-                            className={cn(
-                              'flex w-full items-center gap-3 py-2.5 px-4 text-sm',
-                              'rounded-md transition-all duration-200 text-left group relative',
-                              selectedCategoryId === child.id
-                                ? 'text-primary font-medium bg-primary/10 border-l-2 border-primary shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground hover:bg-muted/40',
-                            )}
-                            onClick={() => handleCategorySelect(child.id)}
-                            disabled={isLoading}
-                            style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
-                          >
-                            <div
+                        {children.map((child, index) => {
+                          const childCount = categoryCountMap.get(child.id) ?? 0
+                          return (
+                            <button
+                              key={child.id}
                               className={cn(
-                                'w-3 h-px bg-border transition-colors duration-200',
-                                selectedCategoryId === child.id ? 'bg-primary/30' : 'group-hover:bg-border',
+                                'flex w-full items-center gap-3 py-2.5 px-4 text-sm',
+                                'rounded-md transition-all duration-200 text-left group relative',
+                                selectedCategoryId === child.id
+                                  ? 'text-primary font-medium bg-primary/10 border-l-2 border-primary shadow-sm'
+                                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/40',
                               )}
-                            />
-                            <span className="flex-1">{child.name}</span>
-                            {selectedCategoryId === child.id && (
-                              <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                            )}
-                          </button>
-                        ))}
+                              onClick={() => handleCategorySelect(child.id)}
+                              disabled={isLoading}
+                              style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
+                            >
+                              <div
+                                className={cn(
+                                  'w-3 h-px bg-border transition-colors duration-200',
+                                  selectedCategoryId === child.id ? 'bg-primary/30' : 'group-hover:bg-border',
+                                )}
+                              />
+                              <span className="flex-1">{child.name}</span>
+                              <span
+                                className={cn(
+                                  'inline-flex min-w-[2rem] justify-center rounded-full px-2 py-0.5 text-xs font-medium transition-colors duration-200',
+                                  selectedCategoryId === child.id
+                                    ? 'bg-primary/15 text-primary'
+                                    : 'bg-muted text-muted-foreground',
+                                )}
+                              >
+                                {childCount}
+                              </span>
+                              {selectedCategoryId === child.id && (
+                                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                              )}
+                            </button>
+                          )
+                        })}
                       </div>
                     )
                   ) : (
@@ -232,6 +306,16 @@ export function SidebarFilters({
                           )}
                         />
                         <span className="flex-1">{group.name}</span>
+                        <span
+                          className={cn(
+                            'inline-flex min-w-[2rem] justify-center rounded-full px-2 py-0.5 text-xs font-medium transition-colors duration-200',
+                            selectedCategoryId === group.id
+                              ? 'bg-primary/15 text-primary'
+                              : 'bg-muted text-muted-foreground',
+                          )}
+                        >
+                          {groupCount}
+                        </span>
                         {selectedCategoryId === group.id && (
                           <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                         )}
@@ -255,45 +339,12 @@ export function SidebarFilters({
             </div>
           )}
 
-          {/* 标签筛选 */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium text-foreground">Select Tags</h4>
-            <Select disabled={isLoading}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="No Filter" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="no-filter">No Filter</SelectItem>
-                <SelectItem value="design">Design</SelectItem>
-                <SelectItem value="development">Development</SelectItem>
-                <SelectItem value="business">Business</SelectItem>
-                <SelectItem value="education">Education</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* 排序选择 */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-medium text-foreground">Sort by</h4>
-            <Select defaultValue="time-listed" disabled={isLoading}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="time-listed">Time listed</SelectItem>
-                <SelectItem value="popularity">Popularity</SelectItem>
-                <SelectItem value="name">Name</SelectItem>
-                <SelectItem value="rating">Rating</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* 重置按钮 */}
-        <div className="pt-4 border-t border-border">
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => {
+          <div className="pt-4 border-t border-border">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
                 handleCategorySelect(null)
                 setExpandedGroups(() => {
                   if (categories[0]) {
@@ -301,11 +352,11 @@ export function SidebarFilters({
                   }
                   return new Set()
                 })
-            }}
-            disabled={isLoading}
-          >
-            Reset
-          </Button>
+              }}
+              disabled={isLoading}
+            >
+              重置筛选
+            </Button>
           </div>
         </div>
       </div>

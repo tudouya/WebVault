@@ -16,9 +16,9 @@
 
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Search } from 'lucide-react';
+import { Search, Check } from 'lucide-react';
 
 import { Input } from '@/components/ui/input';
 import { 
@@ -30,30 +30,16 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 
-import { 
-  searchFormResolver, 
+import {
+  searchFormResolver,
   searchFormDefaults,
   type SearchFormData,
 } from '../schemas';
 import { useHomepageFilters } from '../stores/homepage-store';
 import { useWebsiteSearch } from '../hooks/useWebsiteSearch';
-import { DEFAULT_SORT_OPTIONS } from '../types/filters';
 import { useHomepageCategoryTree, useWebsiteTags } from '../hooks';
 import type { CategoryNode } from '@/features/categories/types';
-
-/**
- * 网站筛选器接口
- */
-export interface WebsiteFilters {
-  search?: string;
-  categoryId?: string | null;
-  selectedTags?: string[];
-  sortBy?: string;
-  sortOrder?: 'asc' | 'desc';
-  featuredOnly?: boolean;
-  includeAds?: boolean;
-  minRating?: number;
-}
+import type { SearchPageFilters } from '../types/website';
 
 /**
  * SearchFilters组件属性
@@ -63,31 +49,30 @@ interface SearchFiltersProps {
    * 自定义CSS类名
    */
   className?: string;
-  
+
   /**
    * 搜索回调函数
    */
   onSearch?: (query: string) => void;
-  
+
   /**
    * 筛选器变化回调函数
    */
-  onFiltersChange?: (filters: WebsiteFilters) => void;
-  
+  onFiltersChange?: (filters: Partial<SearchPageFilters>) => void;
+
   /**
    * 重置回调函数
    */
   onReset?: () => void;
+
+  /**
+   * 执行搜索函数
+   * 当筛选器变化时调用此函数重新加载搜索结果
+   */
+  performSearch?: () => void;
 }
 
-// 通用筛选选项
-const GENERAL_FILTER_OPTIONS = [
-  { value: 'no-filter', label: 'No Filter' },
-  { value: 'featured', label: 'Featured Only' },
-  { value: 'recent', label: 'Recently Added' },
-  { value: 'popular', label: 'Most Popular' },
-  { value: 'free', label: 'Free Only' },
-];
+// 通用筛选选项已删除 - 功能简化
 
 /**
  * SearchFilters 搜索和筛选控制组件
@@ -95,11 +80,12 @@ const GENERAL_FILTER_OPTIONS = [
  * 提供搜索框和各种筛选选择器的统一界面
  * 集成防抖搜索、表单验证和状态管理
  */
-export function SearchFilters({ 
+export function SearchFilters({
   className = '',
   onSearch,
   onFiltersChange,
-  onReset 
+  onReset,
+  performSearch
 }: SearchFiltersProps) {
   // 获取状态管理hooks
   const {
@@ -114,8 +100,6 @@ export function SearchFilters({
     setCategory,
     addTag,
     removeTag,
-    setSorting,
-    setFeaturedOnly,
     resetFilters,
   } = useHomepageFilters();
 
@@ -130,6 +114,10 @@ export function SearchFilters({
     isLoading: tagsLoading,
     error: tagsError,
   } = useWebsiteTags();
+
+  // 分类和标签搜索状态
+  const [categorySearchQuery, setCategorySearchQuery] = useState('');
+  const [tagSearchQuery, setTagSearchQuery] = useState('');
 
   const categoryOptions = useMemo(() => {
     return flattenCategories(categoryTree).map((item) => ({
@@ -148,6 +136,24 @@ export function SearchFilters({
       color: tag.color ?? undefined,
     }));
   }, [tags]);
+
+  // 过滤后的分类选项
+  const filteredCategoryOptions = useMemo(() => {
+    if (!categorySearchQuery.trim()) return categoryOptions;
+    const query = categorySearchQuery.toLowerCase().trim();
+    return categoryOptions.filter(cat =>
+      cat.name.toLowerCase().includes(query)
+    );
+  }, [categoryOptions, categorySearchQuery]);
+
+  // 过滤后的标签选项
+  const filteredTagOptions = useMemo(() => {
+    if (!tagSearchQuery.trim()) return tagOptions;
+    const query = tagSearchQuery.toLowerCase().trim();
+    return tagOptions.filter(tag =>
+      tag.name.toLowerCase().includes(query)
+    );
+  }, [tagOptions, tagSearchQuery]);
 
   // 使用防抖搜索hook
   const {
@@ -255,16 +261,21 @@ export function SearchFilters({
 
     const selectedCategoryId = value === 'all' ? null : value;
     setCategory(selectedCategoryId);
-    
+
     // 触发筛选器变化回调
     onFiltersChange?.({
-      search,
-      categoryId: selectedCategoryId,
-      selectedTags,
+      query: search,
+      category: selectedCategoryId === null ? undefined : selectedCategoryId,
+      tags: selectedTags,
       sortBy,
       sortOrder,
-      featuredOnly,
+      featured: featuredOnly,
     });
+
+    // 延迟触发搜索，确保状态已更新
+    setTimeout(() => {
+      performSearch?.();
+    }, 0);
   };
 
   /**
@@ -278,90 +289,41 @@ export function SearchFilters({
     if (tagId === 'no-tags') {
       // 清除所有标签筛选
       selectedTags.forEach(tag => removeTag(tag));
+
+      // 延迟触发搜索
+      setTimeout(() => {
+        performSearch?.();
+      }, 0);
       return;
     }
-    
+
     if (selectedTags.includes(tagId)) {
       removeTag(tagId);
     } else {
       addTag(tagId);
     }
-    
+
     // 触发筛选器变化回调
+    const nextTags = selectedTags.includes(tagId)
+      ? selectedTags.filter(t => t !== tagId)
+      : [...selectedTags, tagId];
+
     onFiltersChange?.({
-      search,
-      categoryId,
-      selectedTags: selectedTags.includes(tagId) 
-        ? selectedTags.filter(t => t !== tagId)
-        : [...selectedTags, tagId],
+      query: search,
+      category: categoryId ?? undefined,
+      tags: nextTags,
       sortBy,
       sortOrder,
-      featuredOnly,
+      featured: featuredOnly,
     });
+
+    // 延迟触发搜索，确保状态已更新
+    setTimeout(() => {
+      performSearch?.();
+    }, 0);
   };
 
-  /**
-   * 处理通用筛选选择
-   */
-  const handleGeneralFilterSelect = (value: string) => {
-    let newFeaturedOnly = featuredOnly;
-    let newSortBy = sortBy;
-    let newSortOrder = sortOrder;
-
-    switch (value) {
-      case 'no-filter':
-        newFeaturedOnly = false;
-        break;
-      case 'featured':
-        newFeaturedOnly = true;
-        break;
-      case 'recent':
-        newSortBy = 'created_at';
-        newSortOrder = 'desc';
-        setSorting('created_at', 'desc');
-        break;
-      case 'popular':
-        newSortBy = 'visit_count';
-        newSortOrder = 'desc';
-        setSorting('visit_count', 'desc');
-        break;
-    }
-
-    if (newFeaturedOnly !== featuredOnly) {
-      setFeaturedOnly(newFeaturedOnly);
-    }
-    
-    // 触发筛选器变化回调
-    onFiltersChange?.({
-      search,
-      categoryId,
-      selectedTags,
-      sortBy: newSortBy,
-      sortOrder: newSortOrder,
-      featuredOnly: newFeaturedOnly,
-    });
-  };
-
-  /**
-   * 处理排序选择
-   */
-  const handleSortSelect = (value: string) => {
-    const [field, order] = value.split('-');
-    setSorting(
-      field as 'created_at' | 'updated_at' | 'title' | 'rating' | 'visit_count' | 'featured' | 'relevance',
-      order as 'asc' | 'desc'
-    );
-    
-    // 触发筛选器变化回调
-    onFiltersChange?.({
-      search,
-      categoryId,
-      selectedTags,
-      sortBy: field,
-      sortOrder: order as 'asc' | 'desc',
-      featuredOnly,
-    });
-  };
+  // 通用筛选和排序处理函数已删除 - 功能简化
 
   /**
    * 处理重置操作
@@ -370,6 +332,16 @@ export function SearchFilters({
     resetFilters();
     clearSearch();
     setValue('query', '');
+    onFiltersChange?.({
+      query: '',
+      category: undefined,
+      tags: [],
+      sortBy: undefined,
+      sortOrder: undefined,
+      featured: undefined,
+      includeAds: undefined,
+      minRating: undefined,
+    });
     onReset?.();
   };
 
@@ -394,19 +366,13 @@ export function SearchFilters({
     return `${selectedTags.length} tags selected`;
   };
 
-  // 获取当前通用筛选显示文本
-  const getGeneralFilterText = () => {
-    if (featuredOnly) return 'Featured Only';
-    return 'No Filter';
-  };
+  const tagSelectKey = useMemo(() => {
+    if (selectedTags.length === 0) return 'tags-empty';
+    const sorted = [...selectedTags].sort();
+    return `tags-${sorted.join('-')}`;
+  }, [selectedTags]);
 
-  // 获取当前排序显示文本
-  const getCurrentSortText = () => {
-    const currentSort = DEFAULT_SORT_OPTIONS.find(
-      option => option.field === sortBy && option.order === sortOrder
-    );
-    return currentSort?.label || 'Sort by Time listed';
-  };
+  // 显示文本获取函数已删除 - 功能简化
 
   return (
     <section 
@@ -415,9 +381,9 @@ export function SearchFilters({
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* 统一的搜索和筛选控制区域 - 确保边缘对齐 */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          {/* 搜索表单区域 - 左侧对齐网站卡片 */}
-          <div className="flex-1 max-w-md lg:max-w-sm xl:max-w-md lg:flex-shrink-0">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 lg:gap-6">
+          {/* 搜索表单区域 - 增大宽度以利用释放的空间 */}
+          <div className="flex-1 max-w-md lg:max-w-lg xl:max-w-2xl lg:flex-shrink-0">
             <form 
               onSubmit={handleSubmit(onSubmit)}
               className="w-full"
@@ -477,15 +443,37 @@ export function SearchFilters({
             </form>
           </div>
 
-          {/* 筛选器控制区域 */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0">
-          {/* 分类筛选下拉框 */}
-          <div className="min-w-[140px] w-auto">
-            <Select onValueChange={handleCategorySelect} value={categoryId || 'all'}>
-              <SelectTrigger className="h-9 border-border bg-background text-sm" disabled={categoriesLoading}>
+          {/* 筛选器控制区域 - 更宽松的间距 */}
+          <div className="flex flex-wrap items-center gap-3 lg:gap-4 flex-shrink-0">
+          {/* 分类筛选下拉框 - 带搜索功能 */}
+          <div className="min-w-[160px] sm:min-w-[180px] w-auto">
+            <Select
+              onValueChange={(value) => {
+                handleCategorySelect(value);
+                setCategorySearchQuery(''); // 选择后清空搜索
+              }}
+              value={categoryId || 'all'}
+              onOpenChange={(open) => {
+                if (!open) setCategorySearchQuery(''); // 关闭时清空搜索
+              }}
+            >
+              <SelectTrigger className="h-10 border-border bg-background text-sm" disabled={categoriesLoading}>
                 <SelectValue placeholder={getSelectedCategoryText()} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-80">
+                {/* 搜索框 */}
+                <div className="sticky top-0 z-10 bg-background p-2 border-b">
+                  <Input
+                    placeholder="Search categories..."
+                    value={categorySearchQuery}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      setCategorySearchQuery(e.target.value);
+                    }}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    className="h-8 text-sm"
+                  />
+                </div>
                 <SelectItem value="all" className="text-muted-foreground">
                   All Categories
                 </SelectItem>
@@ -497,12 +485,12 @@ export function SearchFilters({
                   <SelectItem value="__categories_error" disabled>
                     {categoriesError}
                   </SelectItem>
-                ) : categoryOptions.length === 0 ? (
+                ) : filteredCategoryOptions.length === 0 ? (
                   <SelectItem value="__categories_empty" disabled>
-                    暂无分类
+                    {categorySearchQuery ? '未找到匹配的分类' : '暂无分类'}
                   </SelectItem>
                 ) : (
-                  categoryOptions.map((category) => (
+                  filteredCategoryOptions.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       <div className="flex items-center justify-between w-full">
                         <span>{category.label}</span>
@@ -517,13 +505,32 @@ export function SearchFilters({
             </Select>
           </div>
 
-          {/* 标签筛选下拉框 */}
-          <div className="min-w-[120px] w-auto">
-            <Select onValueChange={handleTagSelect}>
-              <SelectTrigger className="h-9 border-border bg-background text-sm" disabled={tagsLoading}>
+          {/* 标签筛选下拉框 - 带搜索功能和多选指示 */}
+          <div className="min-w-[140px] sm:min-w-[160px] w-auto">
+            <Select
+              key={tagSelectKey}
+              onValueChange={handleTagSelect}
+              onOpenChange={(open) => {
+                if (!open) setTagSearchQuery(''); // 关闭时清空搜索
+              }}
+            >
+              <SelectTrigger className="h-10 border-border bg-background text-sm" disabled={tagsLoading}>
                 <SelectValue placeholder={getSelectedTagsText()} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-80">
+                {/* 搜索框 */}
+                <div className="sticky top-0 z-10 bg-background p-2 border-b">
+                  <Input
+                    placeholder="Search tags..."
+                    value={tagSearchQuery}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      setTagSearchQuery(e.target.value);
+                    }}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    className="h-8 text-sm"
+                  />
+                </div>
                 <SelectItem value="no-tags" className="text-muted-foreground">
                   Clear Tags
                 </SelectItem>
@@ -535,12 +542,12 @@ export function SearchFilters({
                   <SelectItem value="__tags_error" disabled>
                     {tagsError}
                   </SelectItem>
-                ) : tagOptions.length === 0 ? (
+                ) : filteredTagOptions.length === 0 ? (
                   <SelectItem value="__tags_empty" disabled>
-                    暂无标签
+                    {tagSearchQuery ? '未找到匹配的标签' : '暂无标签'}
                   </SelectItem>
                 ) : (
-                  tagOptions.map((tag) => (
+                  filteredTagOptions.map((tag) => (
                     <SelectItem
                       key={tag.id}
                       value={tag.id}
@@ -548,6 +555,9 @@ export function SearchFilters({
                     >
                       <div className="flex items-center justify-between w-full">
                         <div className="flex items-center gap-2">
+                          {selectedTags.includes(tag.id) && (
+                            <Check className="h-3 w-3 text-primary" />
+                          )}
                           {tag.color && (
                             <div
                               className="w-2 h-2 rounded-full"
@@ -567,48 +577,13 @@ export function SearchFilters({
             </Select>
           </div>
 
-          {/* 通用筛选下拉框 */}
-          <div className="min-w-[110px] w-auto">
-            <Select onValueChange={handleGeneralFilterSelect}>
-              <SelectTrigger className="h-9 border-border bg-background text-sm">
-                <SelectValue placeholder={getGeneralFilterText()} />
-              </SelectTrigger>
-              <SelectContent>
-                {GENERAL_FILTER_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* 排序下拉框 */}
-          <div className="min-w-[160px] w-auto">
-            <Select onValueChange={handleSortSelect}>
-              <SelectTrigger className="h-9 border-border bg-background text-sm">
-                <SelectValue placeholder={getCurrentSortText()} />
-              </SelectTrigger>
-              <SelectContent>
-                {DEFAULT_SORT_OPTIONS.map((option) => (
-                  <SelectItem 
-                    key={`${option.field}-${option.order}`} 
-                    value={`${option.field}-${option.order}`}
-                  >
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Reset按钮 */}
-          <Button 
-            variant="outline" 
+          {/* Reset按钮 - 与选择器高度一致 */}
+          <Button
+            variant="outline"
             size="sm"
             onClick={handleReset}
             disabled={!hasActiveFilters && !hasActiveSearch}
-            className="h-9 px-3 text-sm"
+            className="h-10 px-4 text-sm"
             aria-label="重置所有筛选条件"
           >
             重置

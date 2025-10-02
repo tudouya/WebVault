@@ -30,7 +30,7 @@ import { Footer } from './Footer';
 import { ErrorBoundary } from './ErrorBoundary';
 
 // 导入hooks和类型
-import type { WebsiteCardData, WebsiteFilters } from '../types/website';
+import type { WebsiteCardData, SearchPageFilters } from '../types/website';
 import type { SearchHeaderProps, SearchPageStatus } from '../types/search';
 import { useSearchPage } from '../hooks';
 
@@ -271,7 +271,7 @@ export interface SearchPageProps {
   /**
    * 筛选器变化回调函数
    */
-  onFiltersChange?: (filters: Partial<WebsiteFilters>) => void;
+  onFiltersChange?: (filters: Partial<SearchPageFilters>) => void;
   
   /**
    * 重置筛选回调函数
@@ -432,10 +432,16 @@ const SearchPage = React.memo(function SearchPage({
     void performSearch(query);
   }, [onSearch, performSearch]);
 
-  const handleFiltersChange = useCallback((nextFilters: Partial<WebsiteFilters>) => {
+  const handleFiltersChange = useCallback((nextFilters: Partial<SearchPageFilters>) => {
     onFiltersChange?.(nextFilters);
-    void performSearch(undefined, filters.filters);
-  }, [onFiltersChange, performSearch, filters.filters]);
+    // 筛选变更后，重新搜索并重置到第 1 页
+    setSearchPage(1);
+    const mergedFilters: SearchPageFilters = {
+      ...filters.filters,
+      ...nextFilters,
+    };
+    void loadSearchResults(activeQuery, mergedFilters, 1);
+  }, [onFiltersChange, setSearchPage, loadSearchResults, activeQuery, filters.filters]);
 
   const handleReset = useCallback(() => {
     onFiltersReset?.();
@@ -525,6 +531,7 @@ const SearchPage = React.memo(function SearchPage({
             onSearch={handleSearch}
             onFiltersChange={handleFiltersChange}
             onReset={handleReset}
+            performSearch={() => performSearch()}
             className={cn(
               "transition-all duration-300 ease-in-out",
               combinedLoading && "opacity-75"
