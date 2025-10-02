@@ -194,8 +194,7 @@ function parseTags(raw: unknown): string[] {
     const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
     return parsed.filter((tag): tag is string => typeof tag === "string")
-  } catch (error) {
-    console.warn("Failed to parse blog post tags", error)
+  } catch {
     return []
   }
 }

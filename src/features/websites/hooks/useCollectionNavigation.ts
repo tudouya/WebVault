@@ -177,13 +177,7 @@ export function useCollectionNavigation(
       // 执行路由跳转
       router.push(targetUrl);
       
-    } catch (error) {
-      console.error('Collection navigation failed:', error, {
-        collectionId: collection.id,
-        collectionTitle: collection.title,
-        source,
-      });
-      
+    } catch {
       // 降级处理：使用原生跳转
       if (typeof window !== 'undefined') {
         window.location.href = getCollectionUrl(collection);

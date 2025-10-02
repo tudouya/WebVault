@@ -482,8 +482,8 @@ async function recordAuditLog(
       changes: payload.changes ? JSON.stringify(payload.changes) : null,
       createdAt: new Date().toISOString(),
     })
-  } catch (error) {
-    console.warn("recordAuditLog failed", error)
+  } catch {
+    // Silently fail for audit log
   }
 }
 

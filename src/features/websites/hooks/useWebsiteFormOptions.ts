@@ -64,7 +64,6 @@ export function useWebsiteFormOptions() {
         collections: payload.data.collections ?? [],
       })
     } catch (fetchError) {
-      console.error("useWebsiteFormOptions", fetchError)
       setOptions(EMPTY_OPTIONS)
       setError(fetchError instanceof Error ? fetchError.message : "加载选项失败")
     } finally {

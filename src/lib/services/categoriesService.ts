@@ -1,7 +1,8 @@
-import { and, eq, like, ne, type SQL } from "drizzle-orm"
+import { and, eq, like, ne, sql, type SQL } from "drizzle-orm"
 import type { InferSelectModel } from "drizzle-orm"
 
 import { categories } from "@/lib/db/schema/categories"
+import { websites } from "@/lib/db/schema/websites"
 import { getD1Db } from "@/lib/db/adapters/d1"
 
 import type { CategoryNode, CategoryStatsSummary, CategoryStatus } from "@/features/categories/types"
@@ -13,6 +14,7 @@ import type { CloudflareEnv } from "@/types/env"
 export type CategoryListParams = {
   search?: string
   status?: CategoryStatus | "all"
+  countStatus?: "published" | "all"
 }
 
 export interface CategoryListResponse {
@@ -40,12 +42,38 @@ export interface CategoryUpdateInput {
   status?: CategoryStatus
 }
 
+/**
+ * 递归获取指定分类及其所有子分类的ID列表
+ * @param categoryId - 父分类ID
+ * @returns 包含父分类及所有子分类的ID数组
+ */
+export async function getAllSubcategoryIds(categoryId: string): Promise<string[]> {
+  const db = getD1Db()
+  const allIds = [categoryId]
+
+  const getChildren = async (parentId: string) => {
+    const children = await db
+      .select({ id: categories.id })
+      .from(categories)
+      .where(eq(categories.parentId, parentId))
+
+    for (const child of children) {
+      allIds.push(child.id)
+      await getChildren(child.id)
+    }
+  }
+
+  await getChildren(categoryId)
+  return allIds
+}
+
 export const categoriesService = {
   async list(params: CategoryListParams = {}): Promise<CategoryListResponse> {
     try {
       await ensureStatusColumn()
       const db = getD1Db()
       const filters: SQL[] = []
+      const countStatus = params.countStatus ?? "published"
 
       if (params.search) {
         const query = `%${params.search.trim()}%`
@@ -60,12 +88,33 @@ export const categoriesService = {
 
       const rows = await db.select().from(categories).where(where)
 
-      const tree = buildTree(rows)
+      // 计算每个分类的网站数量
+      const websiteCountConditions: SQL[] = []
+      if (countStatus === "published") {
+        websiteCountConditions.push(eq(websites.status, "published"))
+      }
+
+      const websiteCounts = await db
+        .select({
+          categoryId: websites.categoryId,
+          count: sql<number>`count(*)`.as('count'),
+        })
+        .from(websites)
+        .where(websiteCountConditions.length ? and(...websiteCountConditions) : undefined)
+        .groupBy(websites.categoryId)
+
+      const countMap = new Map<string, number>()
+      websiteCounts.forEach((item) => {
+        if (item.categoryId) {
+          countMap.set(item.categoryId, item.count)
+        }
+      })
+
+      const tree = buildTree(rows, countMap)
       const stats = calculateStats(rows)
 
       return { tree, stats }
     } catch (error) {
-      console.error("categoriesService.list failed", error)
       throw error instanceof Error ? error : new Error("Failed to load categories")
     }
   },
@@ -172,17 +221,17 @@ async function ensureStatusColumn() {
         )
         .run()
     }
-  } catch (error) {
-    console.warn("ensureStatusColumn failed", error)
+  } catch {
+    // Silently fail if column already exists
   }
 }
 
-function buildTree(rows: CategoryRow[]): CategoryNode[] {
+function buildTree(rows: CategoryRow[], countMap: Map<string, number>): CategoryNode[] {
   const map = new Map<string, CategoryNode>()
   const roots: CategoryNode[] = []
 
   rows.forEach((row) => {
-    map.set(row.id, mapRow(row))
+    map.set(row.id, mapRow(row, countMap.get(row.id) || 0))
   })
 
   map.forEach((node) => {
@@ -200,11 +249,21 @@ function buildTree(rows: CategoryRow[]): CategoryNode[] {
     nodes.forEach((child) => child.children && sortNodes(child.children))
   }
 
+  const aggregateCounts = (node: CategoryNode): number => {
+    const direct = node.directWebsiteCount ?? node.websiteCount ?? 0
+    const children = node.children ?? []
+    const childrenTotal = children.reduce((sum, child) => sum + aggregateCounts(child), 0)
+    const total = direct + childrenTotal
+    node.websiteCount = total
+    return total
+  }
+
   sortNodes(roots)
+  roots.forEach(aggregateCounts)
   return roots
 }
 
-function mapRow(row: CategoryRow): CategoryNode {
+function mapRow(row: CategoryRow, websiteCount: number = 0): CategoryNode {
   const status = normalizeStatus(row.status)
   return {
     id: row.id,
@@ -216,7 +275,8 @@ function mapRow(row: CategoryRow): CategoryNode {
     displayOrder: row.displayOrder ?? 0,
     status,
     color: undefined,
-    websiteCount: 0,
+    directWebsiteCount: websiteCount,
+    websiteCount,
     children: [],
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

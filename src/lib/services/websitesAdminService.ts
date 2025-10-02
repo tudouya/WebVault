@@ -16,15 +16,12 @@ import {
   type WebsiteAdminListParams,
   type WebsiteAdminListResult,
   type WebsiteTagSummary,
-  WEBSITE_REVIEW_STATUSES,
 } from "@/features/websites/types/admin"
 import {
   type WebsiteAdminCreateInput,
   type WebsiteAdminUpdateInput,
   type WebsiteStatusUpdateInput,
-  type WebsiteBulkReviewInput,
 } from "@/features/websites/schemas"
-import type { WebsiteReviewStatus } from "@/features/websites/types/admin"
 import type { WebsiteStatus, AdType } from "@/features/websites/types"
 import { generateWebsiteSlug } from "@/features/websites/utils"
 import { tagsService } from "@/lib/services/tagsService"
@@ -63,20 +60,12 @@ export const websitesAdminService = {
       filters.push(eq(websites.status, params.status))
     }
 
-    if (params.reviewStatus && params.reviewStatus !== "all") {
-      filters.push(eq(websites.reviewStatus, params.reviewStatus))
-    }
-
     if (params.categoryId) {
       filters.push(eq(websites.categoryId, params.categoryId))
     }
 
     if (params.isFeatured !== undefined) {
       filters.push(eq(websites.isFeatured, params.isFeatured))
-    }
-
-    if (params.isPublic !== undefined) {
-      filters.push(eq(websites.isPublic, params.isPublic))
     }
 
     if (params.isAd !== undefined) {
@@ -129,9 +118,7 @@ export const websitesAdminService = {
         rating: websites.rating,
         visitCount: websites.visitCount,
         isFeatured: websites.isFeatured,
-        isPublic: websites.isPublic,
         status: websites.status,
-        reviewStatus: websites.reviewStatus,
         submittedBy: websites.submittedBy,
         notes: websites.notes,
         faviconUrl: websites.faviconUrl,
@@ -184,9 +171,7 @@ export const websitesAdminService = {
         rating: websites.rating,
         visitCount: websites.visitCount,
         isFeatured: websites.isFeatured,
-        isPublic: websites.isPublic,
         status: websites.status,
-        reviewStatus: websites.reviewStatus,
         submittedBy: websites.submittedBy,
         notes: websites.notes,
         faviconUrl: websites.faviconUrl,
@@ -239,9 +224,7 @@ export const websitesAdminService = {
       rating: input.rating ?? null,
       visitCount: input.visitCount ?? 0,
       isFeatured: Boolean(input.isFeatured),
-      isPublic: input.isPublic ?? true,
       status: normalizeStatus(input.status),
-      reviewStatus: normalizeReviewStatus(input.reviewStatus),
       notes: normalizeNullable(input.notes),
       submittedBy: normalizeNullable(input.submittedBy),
       createdAt: now,
@@ -323,16 +306,8 @@ export const websitesAdminService = {
       payload.isFeatured = Boolean(input.isFeatured)
     }
 
-    if (input.isPublic !== undefined) {
-      payload.isPublic = Boolean(input.isPublic)
-    }
-
     if (input.status !== undefined) {
       payload.status = normalizeStatus(input.status)
-    }
-
-    if (input.reviewStatus !== undefined) {
-      payload.reviewStatus = normalizeReviewStatus(input.reviewStatus)
     }
 
     if (input.faviconUrl !== undefined) {
@@ -394,16 +369,8 @@ export const websitesAdminService = {
       payload.status = normalizeStatus(input.status)
     }
 
-    if (input.reviewStatus !== undefined) {
-      payload.reviewStatus = normalizeReviewStatus(input.reviewStatus)
-    }
-
     if (input.isFeatured !== undefined) {
       payload.isFeatured = Boolean(input.isFeatured)
-    }
-
-    if (input.isPublic !== undefined) {
-      payload.isPublic = Boolean(input.isPublic)
     }
 
     if (input.notes !== undefined) {
@@ -423,28 +390,6 @@ export const websitesAdminService = {
       action: "website.updateStatus",
       entityId: id,
       changes: input,
-    })
-  },
-
-  async bulkReview(input: WebsiteBulkReviewInput, options: MutationOptions = {}) {
-    const db = getD1Db()
-    if (!input.ids.length) return
-
-    const now = new Date().toISOString()
-    await db
-      .update(websites)
-      .set({
-        reviewStatus: normalizeReviewStatus(input.reviewStatus),
-      notes: normalizeNullable(input.notes),
-        updatedAt: now,
-      })
-      .where(inArray(websites.id, input.ids))
-
-    await recordAuditLog(db, {
-      actorId: options.actorId,
-      action: "website.review.bulk",
-      entityId: "bulk",
-      changes: { ids: input.ids, reviewStatus: input.reviewStatus },
     })
   },
 
@@ -671,8 +616,8 @@ async function recordAuditLog(
       changes: payload.changes ? JSON.stringify(payload.changes) : null,
       createdAt: new Date().toISOString(),
     })
-  } catch (error) {
-    console.warn("recordAuditLog failed", error)
+  } catch {
+    // Silently fail for audit log
   }
 }
 
@@ -696,9 +641,7 @@ function mapToListItem(row: WebsiteJoinedRow, tagsSummary: WebsiteTagSummary[]):
     rating: typeof row.rating === "number" ? row.rating : null,
     visitCount: typeof row.visitCount === "number" ? row.visitCount : 0,
     isFeatured: coerceBool(row.isFeatured),
-    isPublic: coerceBool(row.isPublic, true),
     status: normalizeStatus(row.status),
-    reviewStatus: normalizeReviewStatus(row.reviewStatus),
     submittedBy: row.submittedBy ?? null,
     notes: row.notes ?? null,
     faviconUrl: row.faviconUrl ?? null,
@@ -709,17 +652,10 @@ function mapToListItem(row: WebsiteJoinedRow, tagsSummary: WebsiteTagSummary[]):
 }
 
 function normalizeStatus(status?: string | null): WebsiteStatus {
-  if (status === "inactive" || status === "pending" || status === "rejected") {
+  if (status === "draft" || status === "published") {
     return status
   }
-  return "active"
-}
-
-function normalizeReviewStatus(status?: string | null): WebsiteReviewStatus {
-  if (status && WEBSITE_REVIEW_STATUSES.includes(status as WebsiteReviewStatus)) {
-    return status as WebsiteReviewStatus
-  }
-  return "pending"
+  return "draft"
 }
 
 function normalizeAdType(value?: string | null): AdType | null {
@@ -760,8 +696,7 @@ function parseJson(value?: string | null): unknown {
   if (!value) return null
   try {
     return JSON.parse(value)
-  } catch (error) {
-    console.warn("parse submission payload failed", error)
+  } catch {
     return value
   }
 }

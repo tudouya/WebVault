@@ -244,6 +244,8 @@ const DEFAULT_SEARCH_SUGGESTIONS: SearchSuggestions = {
   tags: [],
 };
 
+const DEFAULT_SEARCH_DATE_RANGE = { from: null, to: null } as const;
+
 interface SearchApiSuccessPayload {
   code: number;
   message: string;
@@ -276,6 +278,28 @@ export function useSearchFilters(config: SearchFiltersConfig = {}) {
   const searchPageState = useSearchPageState();
   const { addToHistory } = useSearchHistory();
   const { updateStats } = useSearchStats();
+
+  const searchPageExcludeTerms = useMemo(() => {
+    return Array.isArray(searchPageState.excludeTerms)
+      ? searchPageState.excludeTerms
+      : [];
+  }, [searchPageState.excludeTerms]);
+
+  const searchPageRequiredTerms = useMemo(() => {
+    return Array.isArray(searchPageState.requiredTerms)
+      ? searchPageState.requiredTerms
+      : [];
+  }, [searchPageState.requiredTerms]);
+
+  const searchPageStatus = useMemo(() => {
+    return Array.isArray(searchPageState.status)
+      ? searchPageState.status
+      : [];
+  }, [searchPageState.status]);
+
+  const searchPageDateRange = useMemo(() => {
+    return searchPageState.dateRange ?? DEFAULT_SEARCH_DATE_RANGE;
+  }, [searchPageState.dateRange]);
 
   // 内部状态
   const [suggestions, setSuggestions] = useState<SearchSuggestions>(DEFAULT_SEARCH_SUGGESTIONS);
@@ -371,8 +395,8 @@ export function useSearchFilters(config: SearchFiltersConfig = {}) {
       try {
         const newSuggestions = await fetchSearchSuggestions(query);
         setSuggestions(newSuggestions);
-      } catch (error) {
-        console.error('获取搜索建议失败:', error);
+      } catch {
+        // Silently fail for suggestions
       } finally {
         setIsLoadingSuggestions(false);
       }
@@ -441,9 +465,7 @@ export function useSearchFilters(config: SearchFiltersConfig = {}) {
         });
       }
 
-      console.log('执行搜索:', { query: trimmedQuery, filters });
-    } catch (error) {
-      console.error('搜索执行失败:', error);
+    } catch {
       setSearchError('搜索失败，请重试');
     } finally {
       isExecutingRef.current = false;
@@ -578,11 +600,11 @@ export function useSearchFilters(config: SearchFiltersConfig = {}) {
     searchScope: searchPageState.searchScope,
     searchMode: searchPageState.searchMode,
     exactMatch: searchPageState.exactMatch,
-    excludeTerms: searchPageState.excludeTerms,
-    requiredTerms: searchPageState.requiredTerms,
-    dateRange: searchPageState.dateRange,
+    excludeTerms: searchPageExcludeTerms,
+    requiredTerms: searchPageRequiredTerms,
+    dateRange: searchPageDateRange,
     language: searchPageState.language,
-    status: searchPageState.status.length > 0 ? searchPageState.status[0] as WebsiteStatus : undefined,
+    status: searchPageStatus.length > 0 ? (searchPageStatus[0] as WebsiteStatus) : undefined,
   }), [
     currentQuery,
     categoryId,
@@ -593,6 +615,10 @@ export function useSearchFilters(config: SearchFiltersConfig = {}) {
     includeAds,
     minRating,
     searchPageState,
+    searchPageExcludeTerms,
+    searchPageRequiredTerms,
+    searchPageStatus,
+    searchPageDateRange,
   ]);
 
   // 检查是否有活跃的搜索和筛选
@@ -604,11 +630,11 @@ export function useSearchFilters(config: SearchFiltersConfig = {}) {
     !includeAds,
     minRating && minRating > 0,
     searchPageState.exactMatch,
-    searchPageState.excludeTerms.length > 0,
-    searchPageState.requiredTerms.length > 0,
-    searchPageState.dateRange.from || searchPageState.dateRange.to,
+    searchPageExcludeTerms.length > 0,
+    searchPageRequiredTerms.length > 0,
+    searchPageDateRange.from || searchPageDateRange.to,
     searchPageState.language,
-    searchPageState.status.length > 0,
+    searchPageStatus.length > 0,
   ].some(Boolean);
 
   // 清理副作用
@@ -912,18 +938,11 @@ export function useSearchResults(config: SearchResultsConfig = {}) {
         };
         setAnalytics(analyticsData);
       }
-
-      console.log('搜索完成:', {
-        query: normalizedQuery,
-        totalResults: totalResultsValue,
-        searchTime: searchDuration,
-      });
     } catch (err) {
       if (controller.signal.aborted || requestIdRef.current !== requestId) {
         return;
       }
 
-      console.error('搜索失败:', err);
       setResults([]);
       setTotalResults(0);
       setStatus('error');
@@ -1024,7 +1043,6 @@ export function useSearchResults(config: SearchResultsConfig = {}) {
         },
       };
       setAnalytics(updatedAnalytics);
-      console.log('跟踪网站访问:', { website: website.title, position });
     }
   }, [searchConfig.enableResultAnalytics, analytics]);
 
@@ -1129,7 +1147,6 @@ export function useSearchPage(
     );
 
     if (hasUrlParams) {
-      console.log('从URL恢复搜索状态:', urlState);
       syncSearchPageFromUrl();
 
       // 如果有搜索查询，自动触发搜索
@@ -1146,7 +1163,6 @@ export function useSearchPage(
 
   useEffect(() => {
     const handlePopstate = (_event: PopStateEvent) => {
-      console.log('浏览器后退/前进，恢复搜索状态');
       syncSearchPageFromUrl();
 
       // 使用 ref 获取最新的 searchFilters，避免在 useEffect 依赖中引用
@@ -1230,7 +1246,6 @@ export function useSearchPageUrlStateSync() {
    * 从URL恢复完整搜索状态
    */
   const restoreFromUrl = useCallback(() => {
-    console.log('从URL恢复搜索状态:', urlState);
     syncSearchPageFromUrl();
   }, [syncSearchPageFromUrl, urlState]);
   
@@ -1318,7 +1333,7 @@ export function useSearchPageUrlParams() {
   const baseParams = useMemo(() => ({
     search: urlState.search || '',
     category: urlState.category || null,
-    tags: urlState.tags ? urlState.tags.split(',').filter(Boolean) : [],
+    tags: (urlState.tags && typeof urlState.tags === 'string') ? urlState.tags.split(',').filter(Boolean) : [],
     sortBy: (urlState.sortBy as SortField) || 'created_at',
     sortOrder: (urlState.sortOrder as SortOrder) || 'desc',
     page: urlState.page || 1,
@@ -1336,14 +1351,14 @@ export function useSearchPageUrlParams() {
     searchScope: (urlState.searchScope as SearchPageState['searchScope']) || 'all',
     searchMode: (urlState.searchMode as SearchPageState['searchMode']) || 'simple',
     exactMatch: urlState.exactMatch || false,
-    excludeTerms: urlState.excludeTerms ? urlState.excludeTerms.split(',').filter(Boolean) : [],
-    requiredTerms: urlState.requiredTerms ? urlState.requiredTerms.split(',').filter(Boolean) : [],
+    excludeTerms: (urlState.excludeTerms && typeof urlState.excludeTerms === 'string') ? urlState.excludeTerms.split(',').filter(Boolean) : [],
+    requiredTerms: (urlState.requiredTerms && typeof urlState.requiredTerms === 'string') ? urlState.requiredTerms.split(',').filter(Boolean) : [],
     dateRange: {
       from: urlState.dateFrom || null,
       to: urlState.dateTo || null,
     },
     language: urlState.language || null,
-    status: urlState.status ? urlState.status.split(',').filter(Boolean) : [],
+    status: (urlState.status && typeof urlState.status === 'string') ? urlState.status.split(',').filter(Boolean) : [],
     viewMode: (urlState.view as SearchPageState['viewMode']) || 'grid',
     groupBy: (urlState.groupBy as SearchPageState['groupBy']) || 'none',
     showPreview: urlState.showPreview ?? true,
@@ -1371,17 +1386,17 @@ export function useSearchPageUrlParams() {
   const hasActiveFilters = useMemo(() => {
     return Boolean(
       baseParams.category ||
-      baseParams.tags.length > 0 ||
+      (baseParams.tags && baseParams.tags.length > 0) ||
       baseParams.featured ||
       !baseParams.includeAds ||
       baseParams.minRating > 0 ||
       searchPageParams.exactMatch ||
-      searchPageParams.excludeTerms.length > 0 ||
-      searchPageParams.requiredTerms.length > 0 ||
+      (searchPageParams.excludeTerms && searchPageParams.excludeTerms.length > 0) ||
+      (searchPageParams.requiredTerms && searchPageParams.requiredTerms.length > 0) ||
       searchPageParams.dateRange.from ||
       searchPageParams.dateRange.to ||
       searchPageParams.language ||
-      searchPageParams.status.length > 0
+      (searchPageParams.status && searchPageParams.status.length > 0)
     );
   }, [baseParams, searchPageParams]);
   

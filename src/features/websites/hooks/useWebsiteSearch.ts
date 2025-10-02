@@ -170,9 +170,8 @@ export function useWebsiteSearch(config: SearchConfig = {}) {
       try {
         const suggestions = await fetchSearchSuggestions(query);
         // Future: 更新搜索建议状态
-        console.log('搜索建议:', suggestions);
-      } catch (error) {
-        console.error('获取搜索建议失败:', error);
+      } catch {
+        // Silently fail for suggestions
       }
     },
     searchConfig.debounceDelay
@@ -187,7 +186,6 @@ export function useWebsiteSearch(config: SearchConfig = {}) {
       
       const validation = validateSearch(query);
       if (!validation.isValid) {
-        console.warn('搜索验证失败:', validation.message);
         return;
       }
       
@@ -196,10 +194,9 @@ export function useWebsiteSearch(config: SearchConfig = {}) {
       try {
         // 更新store状态
         setSearch(query.trim());
-        
-        console.log('执行搜索:', query.trim() || '(清空搜索)');
-      } catch (error) {
-        console.error('搜索执行失败:', error);
+
+      } catch {
+        // Silently fail
       } finally {
         isExecutingRef.current = false;
       }
@@ -234,8 +231,7 @@ export function useWebsiteSearch(config: SearchConfig = {}) {
     const searchQuery = query !== undefined ? query : searchInputRef.current;
     const validation = validateSearch(searchQuery);
     
-    if (!validation.isValid && validation.message) {
-      console.warn('搜索验证失败:', validation.message);
+    if (!validation.isValid) {
       return;
     }
     
@@ -244,9 +240,8 @@ export function useWebsiteSearch(config: SearchConfig = {}) {
     
     try {
       setSearch(searchQuery.trim());
-      console.log('立即执行搜索:', searchQuery.trim() || '(清空搜索)');
-    } catch (error) {
-      console.error('搜索执行失败:', error);
+    } catch {
+      // Silently fail
     }
   }, [setSearch, validateSearch, debouncedExecuteSearch]);
 
@@ -260,9 +255,8 @@ export function useWebsiteSearch(config: SearchConfig = {}) {
     
     try {
       storeClearSearch();
-      console.log('清除搜索');
-    } catch (error) {
-      console.error('清除搜索失败:', error);
+    } catch {
+      // Silently fail
     }
   }, [storeClearSearch, debouncedExecuteSearch, debouncedFetchSuggestions]);
 
@@ -275,9 +269,8 @@ export function useWebsiteSearch(config: SearchConfig = {}) {
     
     try {
       setSearch(query);
-      console.log('选择搜索建议:', suggestion);
-    } catch (error) {
-      console.error('选择搜索建议失败:', error);
+    } catch {
+      // Silently fail
     }
   }, [setSearch]);
 
@@ -290,7 +283,6 @@ export function useWebsiteSearch(config: SearchConfig = {}) {
     debouncedFetchSuggestions.cancel();
     
     // 不清除store中的搜索，只重置本地状态
-    console.log('重置搜索状态');
   }, [debouncedExecuteSearch, debouncedFetchSuggestions]);
 
   /**
