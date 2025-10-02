@@ -6,7 +6,8 @@
  */
 
 import { BlogDetailData, BlogCardData, BlogDetailDataUtils, BlogCategoryUtils } from '../types';
-import { mockBlogDetails } from './mockBlogs';
+// Mock data has been removed - using empty array as fallback
+const mockBlogDetails: BlogDetailData[] = [];
 
 /**
  * 相关文章推荐策略类型

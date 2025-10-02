@@ -21,17 +21,10 @@ import {
   useCollectionFilters,
   useCollectionPagination,
 } from '@/features/websites/stores/collection-store';
-import {
-  getMockCollections
-} from '@/features/websites/data/mockCollections';
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type {
-  searchMockCollections as _searchMockCollections,
-  filterMockCollectionsByStatus as _filterMockCollectionsByStatus,
-  filterMockCollectionsByTags as _filterMockCollectionsByTags
-} from '@/features/websites/data/mockCollections';
 import type { Collection, CollectionStatus } from '@/features/websites/types/collection';
+
+// Mock data has been removed - using empty fallback
+const getMockCollections = (): Collection[] => [];
 import type { WebsiteCardData } from '@/features/websites/types/website';
 
 /**

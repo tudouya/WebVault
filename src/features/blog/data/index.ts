@@ -1,36 +1,24 @@
 /**
  * Blog data module exports
- * 
- * 统一导出博客数据相关的模拟数据、工具函数和类型定义
+ *
+ * Mock data has been removed. This file is kept for backward compatibility.
+ * All exports return empty arrays or no-op functions.
  */
 
-// 导出所有模拟博客数据和工具函数
-export {
-  // 核心数据
-  mockBlogs,
-  
-  // 数据获取函数
-  getBlogCardData,
-  getMockBlogs,
-  getMockBlogCards,
-  getMockBlogsPaginated,
-  
-  // 筛选和搜索函数
-  filterMockBlogsByCategory,
-  searchMockBlogs,
-  
-  // 分类相关函数
-  getAllMockBlogCategories,
-  getBlogCategoryUsageStats,
-  
-  // 统计函数
-  getMockBlogStats,
-  
-  // 时间格式化函数
-  formatRelativeTime,
-  addRelativeTimeToBlogs,
-  
-  // 验证函数
-  isValidBlogData,
-  validateBlogDataArray
-} from './mockBlogs';
+import type { BlogCardData } from '../types';
+
+// Mock data has been removed - provide empty fallbacks
+export const mockBlogs: BlogCardData[] = [];
+export const getBlogCardData = (): BlogCardData[] => [];
+export const getMockBlogs = (): BlogCardData[] => [];
+export const getMockBlogCards = (): BlogCardData[] => [];
+export const getMockBlogsPaginated = () => ({ items: [] as BlogCardData[], total: 0, page: 1, pageSize: 10 });
+export const filterMockBlogsByCategory = (): BlogCardData[] => [];
+export const searchMockBlogs = (): BlogCardData[] => [];
+export const getAllMockBlogCategories = (): string[] => [];
+export const getBlogCategoryUsageStats = () => ({});
+export const getMockBlogStats = () => ({ total: 0, published: 0, draft: 0 });
+export const formatRelativeTime = (date: string): string => date;
+export const addRelativeTimeToBlogs = (blogs: BlogCardData[]): BlogCardData[] => blogs;
+export const isValidBlogData = (): boolean => false;
+export const validateBlogDataArray = () => ({ isValid: false, errors: [] as string[] });

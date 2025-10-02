@@ -63,10 +63,40 @@ export const browsablePageParamsParsers = {
   ads: parseAsBoolean,
 } as const;
 /**
+ * 简化的分类节点类型，用于提取分类信息
+ */
+interface SimpleCategoryNode {
+  id?: string | number;
+  name: string;
+  slug: string;
+  websiteCount?: number;
+  children?: SimpleCategoryNode[];
+}
+
+/**
+ * API 返回的网站数据项类型
+ */
+interface ApiWebsiteItem {
+  id: string | number;
+  title: string;
+  description: string;
+  url: string;
+  favicon?: string;
+  category?: string;
+  tags?: string[];
+  rating?: number;
+  visitCount?: number;
+  isAd?: boolean;
+  isFeatured?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
  * Helper function to extract categories from category tree
  * Recursively traverses the category tree and flattens it into an array
  */
-function extractCategoriesFromTree(tree: any[]): Array<{
+function extractCategoriesFromTree(tree: SimpleCategoryNode[]): Array<{
   id: string;
   name: string;
   slug: string;
@@ -78,8 +108,8 @@ function extractCategoriesFromTree(tree: any[]): Array<{
     slug: string;
     websiteCount: number;
   }> = [];
-  
-  function traverse(nodes: any[]) {
+
+  function traverse(nodes: SimpleCategoryNode[]) {
     for (const node of nodes) {
       categories.push({
         id: node.id?.toString() || node.slug,
@@ -344,7 +374,7 @@ export const useBrowsablePageStore = create<BrowsablePageStoreState>()(
               }
 
               // 转换 API 响应为 WebsiteCardData 格式
-              const websites: WebsiteCardData[] = (result.data || []).map((item: any) => ({
+              const websites: WebsiteCardData[] = (result.data || []).map((item: ApiWebsiteItem) => ({
                 id: item.id.toString(),
                 title: item.title,
                 description: item.description,
