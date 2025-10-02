@@ -13,7 +13,7 @@ export type AdType = 'banner' | 'sponsored' | 'featured' | 'premium';
 /**
  * Website status enumeration
  */
-export type WebsiteStatus = 'active' | 'inactive' | 'pending' | 'rejected';
+export type WebsiteStatus = 'draft' | 'published';
 
 /**
  * Core Website interface
@@ -48,24 +48,15 @@ export interface Website {
   
   /** Publication status */
   status: WebsiteStatus;
-  
+
   /** Advertisement flag */
   isAd: boolean;
-  
+
   /** Advertisement type (when isAd is true) */
   adType?: AdType;
-  
-  /** Website rating (0-5 scale) */
-  rating?: number;
-  
+
   /** Visit count tracking */
   visitCount: number;
-  
-  /** Featured website flag */
-  is_featured: boolean;
-  
-  /** Public visibility flag */
-  is_public: boolean;
   
   /** Creation timestamp */
   created_at: string;
@@ -87,7 +78,6 @@ export interface WebsiteCreateInput {
   adType?: AdType;
   rating?: number;
   is_featured?: boolean;
-  is_public?: boolean;
 }
 
 /**
@@ -115,9 +105,7 @@ export interface WebsiteCardData {
   category?: string;
   isAd?: boolean;
   adType?: AdType;
-  rating?: number;
   visit_count?: number;
-  is_featured?: boolean;
   created_at?: string;
   updated_at?: string;
 }

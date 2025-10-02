@@ -15,9 +15,7 @@ interface UseHomepageWebsitesOptions {
   pageSize: number;
   search?: string;
   categoryId?: string | null;
-  featuredOnly?: boolean;
   includeAds?: boolean;
-  minRating?: number;
   enabled?: boolean;
 }
 
@@ -52,9 +50,7 @@ export function useHomepageWebsites(options: UseHomepageWebsitesOptions): UseHom
     pageSize,
     search,
     categoryId,
-    featuredOnly,
     includeAds = true,
-    minRating,
     enabled = true,
   } = options;
 
@@ -102,16 +98,8 @@ export function useHomepageWebsites(options: UseHomepageWebsitesOptions): UseHom
       params.set('category', categoryId);
     }
 
-    if (typeof featuredOnly === 'boolean') {
-      params.set('featured', String(featuredOnly));
-    }
-
     if (typeof includeAds === 'boolean') {
       params.set('includeAds', String(includeAds));
-    }
-
-    if (typeof minRating === 'number' && Number.isFinite(minRating)) {
-      params.set('minRating', String(minRating));
     }
 
     setIsLoading(true);
@@ -134,11 +122,13 @@ export function useHomepageWebsites(options: UseHomepageWebsitesOptions): UseHom
           if (requestIdRef.current !== requestId) {
             return;
           }
+          // 后端已经过滤了 status='published'，这里直接使用数据
+          // 不需要再次过滤，避免影响分页计算
           setWebsites(payload.data.map(mapWebsiteDtoToCard));
           const meta = normalizeWebsiteListMeta(payload.meta, {
             page,
             pageSize,
-            total: payload.data.length,
+            total: payload.data.length, // 使用当前页数据长度作为fallback
           });
 
           setResolvedPage(meta.page);
@@ -177,7 +167,7 @@ export function useHomepageWebsites(options: UseHomepageWebsitesOptions): UseHom
       controller.abort();
       abortRef.current = null;
     };
-  }, [page, pageSize, search, categoryId, featuredOnly, includeAds, minRating, refreshToken, enabled]);
+  }, [page, pageSize, search, categoryId, includeAds, refreshToken, enabled]);
 
   return useMemo(() => ({
     websites,

@@ -11,11 +11,8 @@ export const WebsiteDTOSchema = z.object({
   category: z.string().optional(),
   isAd: z.boolean().default(false),
   adType: z.string().optional(),
-  rating: z.number().min(0).max(5).optional(),
   visit_count: z.number().int().nonnegative().optional(),
-  is_featured: z.boolean().default(false),
-  is_public: z.boolean().default(true),
-  status: z.enum(['active', 'inactive', 'pending', 'rejected']).default('active'),
+  status: z.enum(['draft', 'published']).default('published'),
   created_at: z.string(),
   updated_at: z.string(),
 });

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 
 import type { WebsiteAdminListItem } from "@/features/websites/types/admin"
 
-import { WebsiteReviewStatusBadge, WebsiteStatusBadge } from "./website-status-badge"
+import { WebsiteStatusBadge } from "./website-status-badge"
 
 interface WebsiteTableProps {
   items: WebsiteAdminListItem[]
@@ -43,8 +43,7 @@ export function WebsiteTable({
           <tr>
             <th className="px-4 py-2 text-left font-medium">网站信息</th>
             <th className="px-4 py-2 text-left font-medium">分类</th>
-            <th className="px-4 py-2 text-left font-medium">发布状态</th>
-            <th className="px-4 py-2 text-left font-medium">审核状态</th>
+            <th className="px-4 py-2 text-left font-medium">状态</th>
             <th className="px-4 py-2 text-left font-medium">访问/评分</th>
             <th className="px-4 py-2 text-right font-medium">操作</th>
           </tr>
@@ -52,19 +51,19 @@ export function WebsiteTable({
         <tbody>
           {loading ? (
             <tr>
-              <td className="px-4 py-6 text-center text-muted-foreground" colSpan={6}>
+              <td className="px-4 py-6 text-center text-muted-foreground" colSpan={5}>
                 正在加载网站数据...
               </td>
             </tr>
           ) : error ? (
             <tr>
-              <td className="px-4 py-6 text-center text-destructive" colSpan={6}>
+              <td className="px-4 py-6 text-center text-destructive" colSpan={5}>
                 {error}
               </td>
             </tr>
           ) : items.length === 0 ? (
             <tr>
-              <td className="px-4 py-6 text-center text-muted-foreground" colSpan={6}>
+              <td className="px-4 py-6 text-center text-muted-foreground" colSpan={5}>
                 暂无数据
               </td>
             </tr>
@@ -105,15 +104,9 @@ export function WebsiteTable({
                     {item.isAd ? (
                       <div className="mt-1 text-[11px] text-amber-600">广告位</div>
                     ) : null}
-                    {item.isFeatured ? (
-                      <div className="mt-1 text-[11px] text-primary">精选推荐</div>
-                    ) : null}
                   </td>
                   <td className="px-4 py-3 align-top">
                     <WebsiteStatusBadge status={item.status} />
-                  </td>
-                  <td className="px-4 py-3 align-top">
-                    <WebsiteReviewStatusBadge status={item.reviewStatus} />
                     {item.submittedBy ? (
                       <div className="mt-1 text-[11px] text-muted-foreground">
                         提交人：{item.submittedBy}
@@ -122,9 +115,6 @@ export function WebsiteTable({
                   </td>
                   <td className="px-4 py-3 align-top">
                     <div className="text-sm text-foreground">{item.visitCount ?? 0} 次访问</div>
-                    <div className="text-xs text-muted-foreground">
-                      评分：{item.rating ?? "-"}
-                    </div>
                     <div className="mt-1 text-[11px] text-muted-foreground">
                       更新：{new Date(item.updatedAt).toLocaleDateString()}
                     </div>

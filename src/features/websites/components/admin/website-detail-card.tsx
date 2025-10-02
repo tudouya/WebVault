@@ -3,16 +3,15 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-import type { WebsiteAdminDetail, WebsiteReviewStatus } from "@/features/websites/types/admin"
+import type { WebsiteAdminDetail } from "@/features/websites/types/admin"
 
-import { WebsiteReviewStatusBadge, WebsiteStatusBadge } from "./website-status-badge"
+import { WebsiteStatusBadge } from "./website-status-badge"
 
 interface WebsiteDetailCardProps {
   website: WebsiteAdminDetail | null
   loading?: boolean
   onEdit: (website: WebsiteAdminDetail) => void
   onDelete: (website: WebsiteAdminDetail) => void
-  onReviewChange: (website: WebsiteAdminDetail, status: WebsiteReviewStatus) => Promise<void> | void
 }
 
 export function WebsiteDetailCard({
@@ -20,7 +19,6 @@ export function WebsiteDetailCard({
   loading,
   onEdit,
   onDelete,
-  onReviewChange,
 }: WebsiteDetailCardProps) {
   if (loading) {
     return (
@@ -60,12 +58,6 @@ export function WebsiteDetailCard({
         <section className="space-y-3">
           <div className="flex flex-wrap gap-2">
             <WebsiteStatusBadge status={website.status} />
-            <WebsiteReviewStatusBadge status={website.reviewStatus} />
-            {website.isFeatured ? (
-              <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-                精选展示
-              </span>
-            ) : null}
             {website.isAd ? (
               <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800">
                 广告位 {website.adType ? `· ${website.adType}` : ""}
@@ -81,10 +73,6 @@ export function WebsiteDetailCard({
             <div>
               <span className="font-semibold text-foreground">访问次数：</span>
               {website.visitCount ?? 0}
-            </div>
-            <div>
-              <span className="font-semibold text-foreground">评分：</span>
-              {website.rating ?? "-"}
             </div>
             <div>
               <span className="font-semibold text-foreground">创建时间：</span>
@@ -149,9 +137,6 @@ export function WebsiteDetailCard({
           <Button variant="default" onClick={() => onEdit(website)}>
             编辑信息
           </Button>
-          <Button variant="outline" onClick={() => onReviewChange(website, "approved")}>通过审核</Button>
-          <Button variant="outline" onClick={() => onReviewChange(website, "changes_requested")}>需修改</Button>
-          <Button variant="destructive" onClick={() => onReviewChange(website, "rejected")}>拒绝</Button>
           <Button variant="ghost" className="text-destructive" onClick={() => onDelete(website)}>
             删除网站
           </Button>

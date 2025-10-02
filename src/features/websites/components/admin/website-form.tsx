@@ -27,10 +27,7 @@ export interface WebsiteFormPayload {
   screenshotUrl?: string | null
   isAd?: boolean
   adType?: string
-  rating?: number | null
   visitCount?: number
-  isFeatured?: boolean
-  isPublic?: boolean
   notes?: string
 }
 
@@ -72,10 +69,7 @@ export function WebsiteForm({ mode, website, submitting, onCancel, onSubmit, lay
   const [screenshotUrl, setScreenshotUrl] = useState("")
   const [isAd, setIsAd] = useState(false)
   const [adType, setAdType] = useState("")
-  const [rating, setRating] = useState("")
   const [visitCount, setVisitCount] = useState("")
-  const [isFeatured, setIsFeatured] = useState(false)
-  const [isPublic, setIsPublic] = useState(true)
   const [notes, setNotes] = useState("")
   const [error, setError] = useState<string | null>(null)
 
@@ -97,7 +91,6 @@ export function WebsiteForm({ mode, website, submitting, onCancel, onSubmit, lay
       setRating("")
       setVisitCount("")
       setIsFeatured(false)
-      setIsPublic(true)
       setNotes("")
       setError(null)
       return
@@ -116,10 +109,7 @@ export function WebsiteForm({ mode, website, submitting, onCancel, onSubmit, lay
     setScreenshotUrl(website.screenshotUrl ?? "")
     setIsAd(Boolean(website.isAd))
     setAdType(website.adType ?? "")
-    setRating(website.rating != null ? String(website.rating) : "")
     setVisitCount(website.visitCount != null ? String(website.visitCount) : "")
-    setIsFeatured(Boolean(website.isFeatured))
-    setIsPublic(Boolean(website.isPublic))
     setNotes(website.notes ?? "")
     setError(null)
   }, [mode, website?.id, website])
@@ -192,15 +182,6 @@ export function WebsiteForm({ mode, website, submitting, onCancel, onSubmit, lay
       return
     }
 
-    const normalizedRating = rating.trim()
-    if (normalizedRating) {
-      const parsedRating = Number(normalizedRating)
-      if (Number.isNaN(parsedRating) || parsedRating < 0 || parsedRating > 5) {
-        setError("评分需在 0-5 之间")
-        return
-      }
-    }
-
     const normalizedVisit = visitCount.trim()
     if (normalizedVisit) {
       const parsedVisit = Number(normalizedVisit)
@@ -227,17 +208,13 @@ export function WebsiteForm({ mode, website, submitting, onCancel, onSubmit, lay
       screenshotUrl: sanitizeUrl(screenshotUrl) ?? null,
       isAd,
       adType: isAd ? sanitizeText(adType) : undefined,
-      rating: normalizedRating ? Number(normalizedRating) : undefined,
       visitCount: normalizedVisit ? Math.max(0, Math.floor(Number(normalizedVisit))) : undefined,
-      isFeatured,
-      isPublic,
       notes: sanitizeText(notes),
     }
 
     try {
       await onSubmit(payload)
     } catch (submitError) {
-      console.error("WebsiteForm submit", submitError)
       setError(submitError instanceof Error ? submitError.message : "提交失败，请稍后再试")
     }
   }
@@ -427,44 +404,6 @@ export function WebsiteForm({ mode, website, submitting, onCancel, onSubmit, lay
           ) : null}
         </div>
 
-        <div className="space-y-2">
-          <Label>首页展示</Label>
-          <div className="flex flex-col gap-2 text-sm">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                className="h-4 w-4"
-                checked={isFeatured}
-                onChange={(event) => setIsFeatured(event.target.checked)}
-                disabled={submitting}
-              />
-              <span>精选展示</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                className="h-4 w-4"
-                checked={isPublic}
-                onChange={(event) => setIsPublic(event.target.checked)}
-                disabled={submitting}
-              />
-              <span>公开可见</span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="website-rating">评分（0-5）</Label>
-          <Input
-            id="website-rating"
-            value={rating}
-            onChange={(event) => setRating(event.target.value)}
-            placeholder="例如：4.5"
-            disabled={submitting}
-          />
-        </div>
         <div className="space-y-2">
           <Label htmlFor="website-visit-count">访问次数</Label>
           <Input

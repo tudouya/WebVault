@@ -66,13 +66,16 @@ export async function GET(request: Request) {
   const categoryRaw = url.searchParams.get('category');
   // Filter out "undefined" string and convert to undefined
   const category = (categoryRaw && categoryRaw !== 'undefined') ? categoryRaw : undefined;
-  const featured = parseBool(url.searchParams.get('featured'));
+
+  // 读取 tags 参数
+  const tagsRaw = url.searchParams.get('tags');
+  const tags = tagsRaw ? tagsRaw.split(',').filter(Boolean) : undefined;
+
   const includeAds = parseBool(url.searchParams.get('includeAds')) ?? true;
-  const minRating = url.searchParams.get('minRating') ? Number(url.searchParams.get('minRating')) : undefined;
 
   try {
     const result = await websitesService.list(
-      { page, pageSize, query, category, featured, includeAds, minRating }
+      { page, pageSize, query, category, tags, includeAds }
     );
 
     const totalPages = result.total > 0 ? Math.ceil(result.total / result.pageSize) : 0;

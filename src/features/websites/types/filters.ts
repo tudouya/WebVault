@@ -58,13 +58,7 @@ export interface FilterState {
   
   /** Website status filter */
   status?: string[];
-  
-  /** Rating filter (minimum rating) */
-  minRating?: number;
-  
-  /** Show featured only */
-  featuredOnly: boolean;
-  
+
   /** Show ads filter */
   includeAds: boolean;
   
@@ -188,7 +182,6 @@ export const DEFAULT_FILTER_STATE: FilterState = {
   selectedTags: [],
   sortBy: 'created_at',
   sortOrder: 'desc',
-  featuredOnly: false,
   includeAds: true,
 };
 

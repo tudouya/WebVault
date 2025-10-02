@@ -12,9 +12,8 @@ export interface ListParams {
   pageSize?: number;
   query?: string;
   category?: string;
-  featured?: boolean;
+  tags?: string[];
   includeAds?: boolean;
-  minRating?: number;
 }
 
 export interface ListResult {
@@ -26,7 +25,7 @@ export interface ListResult {
 
 export const websitesService = {
   async list(params: ListParams = {}): Promise<ListResult> {
-    const { page = 1, pageSize = DEFAULT_PAGE_SIZE, query, category, featured, includeAds = true, minRating } = params;
+    const { page = 1, pageSize = DEFAULT_PAGE_SIZE, query, category, tags, includeAds = true } = params;
     const normalizedPageSize = Math.min(MAX_PAGE_SIZE, Math.max(1, pageSize));
     const normalizedPage = Math.max(1, page);
 
@@ -37,23 +36,19 @@ export const websitesService = {
     }
 
     try {
-      console.log('Querying D1 database for websites list');
       const { rows, total, resolvedPage, pageSize: effectivePageSize } = await adapter.listWebsitesD1({
         page: normalizedPage,
         pageSize: normalizedPageSize,
         query,
         category,
-        featured,
+        tags,
         includeAds,
-        minRating,
       });
 
       const tagMap = await loadTagsForWebsites(adapter, rows.map((row) => String(row.id)));
       const dtoItems = rows
         .map((row) => mapDbRowToDTO(row, tagMap.get(String(row.id))))
         .map(validateDTO);
-
-      console.log('D1 database query successful, returned', dtoItems.length, 'items');
 
       const effectivePage = typeof resolvedPage === 'number' ? resolvedPage : normalizedPage;
       const finalPageSize = typeof effectivePageSize === 'number' ? effectivePageSize : normalizedPageSize;
@@ -65,7 +60,6 @@ export const websitesService = {
         total: Number(total ?? dtoItems.length)
       };
     } catch (error) {
-      console.error('D1 database query failed:', error);
       throw error instanceof Error ? error : new Error('Failed to load websites from database');
     }
   },
@@ -78,19 +72,15 @@ export const websitesService = {
     }
 
     try {
-      console.log('Querying D1 database for website by id:', id);
       const row = await adapter.getWebsiteByIdD1(id);
 
       if (!row) {
-        console.log('Website not found for id:', id);
         return null;
       }
 
-      console.log('D1 database query successful for id:', id);
       const tagMap = await loadTagsForWebsites(adapter, [String(row.id)]);
       return validateDTO(mapDbRowToDTO(row, tagMap.get(String(row.id))));
     } catch (error) {
-      console.error('D1 database query failed for id:', id, error);
       throw error instanceof Error ? error : new Error('Failed to load website from database');
     }
   },
@@ -98,13 +88,13 @@ export const websitesService = {
 
 type WebsiteDbRow = InferSelectModel<typeof websites>;
 
-const STATUS_VALUES: WebsiteDTO['status'][] = ['active', 'inactive', 'pending', 'rejected'];
+const STATUS_VALUES: WebsiteDTO['status'][] = ['draft', 'published'];
 
 function normalizeStatus(value: unknown): WebsiteDTO['status'] {
   if (typeof value === 'string' && (STATUS_VALUES as string[]).includes(value)) {
     return value as WebsiteDTO['status'];
   }
-  return 'active';
+  return 'published';
 }
 
 function validateDTO(dto: WebsiteDTO): WebsiteDTO {
@@ -129,7 +119,6 @@ function mapDbRowToDTO(row: WebsiteDbRow, tagNames?: string[]): WebsiteDTO {
     rating: typeof row.rating === 'number' ? row.rating : undefined,
     visit_count: typeof row.visitCount === 'number' ? row.visitCount : 0,
     is_featured: coerceBool(row.isFeatured),
-    is_public: coerceBool(row.isPublic, true),
     status: normalizeStatus(row.status),
     created_at: createdAt,
     updated_at: updatedAt,
@@ -155,12 +144,9 @@ type D1AdapterModule = typeof import('@/lib/db/adapters/d1');
 
 async function tryImportD1Adapter(): Promise<D1AdapterModule | null> {
   try {
-    console.log('Attempting to import adapter: @/lib/db/adapters/d1');
     const mod: D1AdapterModule = await import('@/lib/db/adapters/d1');
-    console.log('Adapter import successful:', Object.keys(mod));
     return mod;
-  } catch (e) {
-    console.log('Adapter import failed:', e);
+  } catch {
     return null;
   }
 }
@@ -191,8 +177,7 @@ async function loadTagsForWebsites(adapter: D1AdapterModule, websiteIds: string[
       map.set(key, list);
     }
     return map;
-  } catch (error) {
-    console.log('loadTagsForWebsites failed', error);
+  } catch {
     return new Map();
   }
 }
