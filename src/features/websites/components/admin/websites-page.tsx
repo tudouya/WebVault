@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 
-import type { WebsiteAdminListItem, WebsiteReviewStatus } from "@/features/websites/types/admin"
+import type { WebsiteAdminListItem } from "@/features/websites/types/admin"
 import type { WebsiteStatus } from "@/features/websites/types"
 
 import { WebsiteFilters } from "./website-filters"
@@ -29,7 +29,6 @@ export function WebsitesAdminPage() {
 
   const [search, setSearch] = useState("")
   const [status, setStatus] = useState<WebsiteStatus | "all">("all")
-  const [reviewStatus, setReviewStatus] = useState<WebsiteReviewStatus | "all">("all")
   const [adFilter, setAdFilter] = useState<AdFilter>("all")
 
   const [page, setPage] = useState(1)
@@ -42,8 +41,8 @@ export function WebsitesAdminPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const filtersMemo = useMemo(
-    () => ({ search, status, reviewStatus, adFilter }),
-    [search, status, reviewStatus, adFilter]
+    () => ({ search, status, adFilter }),
+    [search, status, adFilter]
   )
 
   const fetchWebsites = useCallback(async () => {
@@ -56,7 +55,6 @@ export function WebsitesAdminPage() {
       params.set("perPage", String(pageSize))
       if (filtersMemo.search) params.set("search", filtersMemo.search)
       if (filtersMemo.status !== "all") params.set("status", filtersMemo.status)
-      if (filtersMemo.reviewStatus !== "all") params.set("reviewStatus", filtersMemo.reviewStatus)
       if (filtersMemo.adFilter === "ad") params.set("isAd", "true")
       if (filtersMemo.adFilter === "organic") params.set("isAd", "false")
 
@@ -148,12 +146,10 @@ export function WebsitesAdminPage() {
       <WebsiteFilters
         search={search}
         status={status}
-        reviewStatus={reviewStatus}
         adFilter={adFilter}
         loading={loading}
         onSearchChange={setSearch}
         onStatusChange={(value) => setStatus(value)}
-        onReviewStatusChange={(value) => setReviewStatus(value)}
         onAdFilterChange={(value) => setAdFilter(value)}
         onApply={handleApplyFilters}
         onCreate={handleCreate}

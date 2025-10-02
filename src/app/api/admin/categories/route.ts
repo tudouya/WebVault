@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   const status = statusParam
 
   try {
-    const data = await categoriesService.list({ search, status })
+    const data = await categoriesService.list({ search, status, countStatus: "all" })
     return NextResponse.json({
       code: 0,
       message: "ok",

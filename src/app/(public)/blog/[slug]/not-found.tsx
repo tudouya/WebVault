@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Metadata } from 'next'
 import { Button } from '@/components/ui/button'
 import { BlogCard } from '@/features/blog/components/BlogCard'
-import { getMockBlogs } from '@/features/blog/data/mockBlogs'
+import { getMockBlogs } from '@/features/blog/data'
 import { Search, ArrowLeft, FileX, TrendingUp } from 'lucide-react'
 
 /**
@@ -48,8 +48,8 @@ export const metadata: Metadata = {
  * - 用户体验优化
  */
 export default function BlogNotFound() {
-  // 获取推荐文章（最新3篇）
-  const recommendedBlogs = getMockBlogs(3, 0)
+  // Mock data has been removed - use empty array
+  const recommendedBlogs = getMockBlogs()
 
   return (
     <div className="min-h-screen bg-background">

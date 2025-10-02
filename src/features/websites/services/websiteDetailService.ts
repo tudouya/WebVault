@@ -206,10 +206,8 @@ export class WebsiteDetailService {
         return this.validateAndCloneWebsiteData(cachedData);
       }
 
-      // 模拟数据获取延迟（实际项目中这里会是API调用）
-      await this.simulateNetworkDelay();
-
       // 从Mock数据中查找基础网站信息
+      // 注意：此服务现在主要用于客户端组件，服务端应该直接使用 websitesService
       const baseWebsite = mockWebsites.find(
         website => website.id === normalizedId
       );
@@ -222,15 +220,14 @@ export class WebsiteDetailService {
         );
       }
 
-      // 验证网站访问权限 (NFR-3.5.1: 只显示活跃且公开的网站)
+      // 验证网站访问权限 (只显示可访问的网站)
       if (!this.isWebsiteAccessible(baseWebsite)) {
         throw new WebsiteDetailServiceError(
-          `Website with ID "${websiteId}" is not accessible or not public`,
+          `Website with ID "${websiteId}" is not accessible`,
           'ACCESS_DENIED',
-          { 
+          {
             websiteId: websiteId,
-            status: 'inactive', // mockWebsites 中的数据结构可能不同
-            isPublic: false
+            status: 'draft'
           }
         );
       }
@@ -428,7 +425,7 @@ export class WebsiteDetailService {
         return {
           success: false,
           newVisitCount: website.visit_count || 0,
-          error: 'Website is not accessible or not public'
+          error: 'Website is not accessible'
         };
       }
 
@@ -513,10 +510,10 @@ export class WebsiteDetailService {
   }
 
   /**
-   * 验证网站是否可访问 (NFR-3.5.1: 只显示活跃且公开的网站)
+   * 验证网站是否可访问 (只显示已发布的网站)
    */
   private isWebsiteAccessible(website: WebsiteCardData): boolean {
-    // Mock数据中的网站默认都是可访问的，实际项目中会检查 status 和 is_public 字段
+    // Mock数据中的网站默认都是可访问的，实际项目中会检查 status 字段
     // 这里我们简单地检查是否有必要的字段
     return !!(website.id && website.title && website.url);
   }
@@ -554,7 +551,6 @@ export class WebsiteDetailService {
       rating: typeof baseWebsite.rating === 'number' ? baseWebsite.rating : undefined,
       visitCount,
       is_featured: 'is_featured' in baseWebsite ? Boolean(baseWebsite.is_featured) : false,
-      is_public: 'is_public' in baseWebsite ? Boolean(baseWebsite.is_public) : true,
       created_at: createdAt,
       updated_at: updatedAt,
 
@@ -647,11 +643,11 @@ export class WebsiteDetailService {
   }
 
   private normalizeStatus(value: unknown): WebsiteDetailData['status'] {
-    const allowedStatuses: WebsiteDetailData['status'][] = ['active', 'inactive', 'pending', 'rejected'];
+    const allowedStatuses: WebsiteDetailData['status'][] = ['draft', 'published'];
     if (typeof value === 'string' && (allowedStatuses as string[]).includes(value)) {
       return value as WebsiteDetailData['status'];
     }
-    return 'active';
+    return 'published';
   }
 
   /**
@@ -782,7 +778,7 @@ export class WebsiteDetailService {
     }
 
     // 状态验证
-    const validStatuses = ['active', 'inactive', 'pending', 'rejected'];
+    const validStatuses = ['draft', 'published'];
     if (!validStatuses.includes(data.status)) {
       errors.push('Invalid website status');
     }
@@ -946,10 +942,10 @@ export async function getSmartRecommendations(
     }
 
     // 获取候选网站（排除当前网站和已浏览的网站）
-    const candidates = mockWebsites.filter(website => 
-      website.id !== currentWebsiteId && 
+    const candidates = mockWebsites.filter(website =>
+      website.id !== currentWebsiteId &&
       !userBrowsingHistory.includes(website.id)
-      // Mock数据中暂时不检查 status 和 is_public，实际项目中会添加这些条件
+      // Mock数据中暂时不检查 status，实际项目中会添加这些条件
     );
 
     // 基于浏览历史计算个性化分数

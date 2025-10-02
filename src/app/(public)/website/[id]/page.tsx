@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { websiteDetailService } from '@/features/websites/services/websiteDetailService'
+import { websitesService } from '@/lib/services/websitesService'
+import type { WebsiteDTO } from '@/lib/validations/websites'
 import { generateWebsiteMetadata } from '@/features/websites/utils/seoUtils'
 import { WebsiteDetailData } from '@/features/websites/types/detail'
 import { WebsiteDetailPage } from '@/features/websites/components/WebsiteDetailPage'
@@ -9,6 +10,68 @@ import { WebsiteDetailPage } from '@/features/websites/components/WebsiteDetailP
 export const dynamic = 'force-dynamic'
 // Cloudflare Pages 需要 Edge Runtime
 export const runtime = 'edge'
+
+/**
+ * 将 WebsiteDTO 转换为 WebsiteDetailData
+ */
+function transformToWebsiteDetailData(dto: WebsiteDTO): WebsiteDetailData {
+  return {
+    id: dto.id,
+    title: dto.title,
+    description: dto.description || '',
+    url: dto.url,
+    tags: dto.tags || [],
+    favicon_url: dto.favicon_url || undefined,
+    screenshot_url: dto.screenshot_url || undefined,
+    category_id: dto.category || undefined,
+    status: dto.status,
+    isAd: dto.isAd || false,
+    adType: dto.adType as 'banner' | 'featured' | 'sponsored' | undefined,
+    rating: dto.rating,
+    visitCount: dto.visit_count || 0,
+    is_featured: dto.is_featured || false,
+    created_at: dto.created_at,
+    updated_at: dto.updated_at,
+
+    // 详情页面专有字段
+    content: dto.description || '',
+    language: 'zh-CN',
+    popularity_score: 0,
+    last_checked_at: new Date().toISOString(),
+    is_accessible: true,
+
+    // SEO 元数据
+    meta_title: dto.title,
+    meta_description: dto.description || '',
+
+    // 统计数据
+    stats: {
+      total_visits: dto.visit_count || 0,
+      monthly_visits: Math.floor((dto.visit_count || 0) * 0.3),
+      weekly_visits: Math.floor((dto.visit_count || 0) * 0.1),
+      daily_visits: Math.floor((dto.visit_count || 0) * 0.02),
+      bounce_rate: 45,
+      avg_session_duration: 180,
+    },
+
+    // 分类信息
+    category: dto.category ? {
+      id: dto.category,
+      name: dto.category,
+      slug: dto.category.toLowerCase().replace(/\s+/g, '-'),
+      parentId: null,
+      children: [],
+      status: 'active',
+      sort_order: 0,
+      website_count: 0,
+      is_expanded: false,
+      is_visible: true,
+      created_at: dto.created_at,
+      updated_at: dto.updated_at,
+    } : undefined,
+
+  };
+}
 
 /**
  * 网站详情页面路由参数类型
@@ -47,7 +110,11 @@ export async function generateMetadata({ params }: WebsiteDetailPageProps): Prom
     // 获取网站详情数据
     let websiteData: WebsiteDetailData
     try {
-      websiteData = await websiteDetailService.getWebsiteById(id)
+      const dto = await websitesService.getById(id)
+      if (!dto) {
+        throw new Error('Website not found')
+      }
+      websiteData = transformToWebsiteDetailData(dto)
     } catch (error) {
       console.warn(`Website not found for ID "${id}":`, error)
       // 如果网站不存在，返回默认元数据
@@ -122,16 +189,20 @@ export default async function WebsiteDetailPageRoute({ params }: WebsiteDetailPa
   // 获取网站详情数据
   let websiteData: WebsiteDetailData
   try {
-    websiteData = await websiteDetailService.getWebsiteById(id)
+    const dto = await websitesService.getById(id)
+    if (!dto) {
+      throw new Error('Website not found')
+    }
+    websiteData = transformToWebsiteDetailData(dto)
   } catch (error) {
     console.warn(`Website not found for ID "${id}":`, error)
     notFound()
   }
 
-  // 验证网站访问权限 (NFR-3.5.1, NFR-3.5.2)
-  // 只显示状态为'active'且'is_public'为true的网站
-  if (!websiteData.is_public || websiteData.status !== 'active') {
-    console.warn(`Website "${id}" is not accessible or not active`)
+  // 验证网站访问权限
+  // 只显示状态为'published'的网站
+  if (websiteData.status !== 'published') {
+    console.warn(`Website "${id}" is not published`)
     notFound()
   }
 

@@ -192,12 +192,10 @@ export {
   websiteAdminCreateSchema,
   websiteAdminUpdateSchema,
   websiteStatusUpdateSchema,
-  websiteBulkReviewSchema,
 } from './admin'
 
 export type {
   WebsiteAdminCreateInput,
   WebsiteAdminUpdateInput,
   WebsiteStatusUpdateInput,
-  WebsiteBulkReviewInput,
 } from './admin'

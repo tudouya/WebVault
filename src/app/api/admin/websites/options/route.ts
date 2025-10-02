@@ -18,7 +18,7 @@ interface OptionsPayload {
 export async function GET() {
   try {
     const [categoryResult, tagsResult, allCollections] = await Promise.all([
-      categoriesService.list({ status: "all" }),
+      categoriesService.list({ status: "all", countStatus: "all" }),
       tagsService.list({ status: "all" }),
       fetchAllCollections(),
     ])
@@ -101,4 +101,3 @@ async function fetchAllCollections() {
 
   return items
 }
-

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 
-import type { WebsiteAdminDetail, WebsiteReviewStatus } from "@/features/websites/types/admin"
+import type { WebsiteAdminDetail } from "@/features/websites/types/admin"
 
 import { Button } from "@/components/ui/button"
 
@@ -50,35 +50,6 @@ export function WebsiteDetailAdminPage({ websiteId }: WebsiteDetailAdminPageProp
   useEffect(() => {
     void fetchDetail()
   }, [fetchDetail])
-
-  const handleReviewChange = useCallback(
-    async (status: WebsiteReviewStatus) => {
-      if (!detail) return
-
-      try {
-        setActionPending(true)
-        const response = await fetch(`/api/admin/websites/${detail.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reviewStatus: status }),
-        })
-
-        const payload = (await response.json().catch(() => null)) as DetailResponse | null
-
-        if (!response.ok || !payload?.data) {
-          throw new Error(payload?.message ?? "更新审核状态失败")
-        }
-
-        setDetail(payload.data)
-      } catch (updateError) {
-        console.error("更新审核状态失败", updateError)
-        window.alert(updateError instanceof Error ? updateError.message : "更新审核状态失败")
-      } finally {
-        setActionPending(false)
-      }
-    },
-    [detail]
-  )
 
   const handleDelete = useCallback(
     async (current: WebsiteAdminDetail) => {
@@ -155,7 +126,6 @@ export function WebsiteDetailAdminPage({ websiteId }: WebsiteDetailAdminPageProp
         loading={false}
         onEdit={(current) => router.push(`/admin/websites/${current.id}/edit`)}
         onDelete={(current) => handleDelete(current)}
-        onReviewChange={(_detail, status) => handleReviewChange(status)}
       />
     </div>
   )

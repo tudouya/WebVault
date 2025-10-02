@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 import { WebsiteForm, type WebsiteFormPayload } from "./website-form"
-import { WebsiteReviewStatusBadge, WebsiteStatusBadge } from "./website-status-badge"
+import { WebsiteStatusBadge } from "./website-status-badge"
 
 import type { WebsiteAdminDetail } from "@/features/websites/types/admin"
 
@@ -26,7 +26,6 @@ export function WebsiteFormCard({ mode, website, submitting, onCancel, onSubmit 
           {website ? (
             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <WebsiteStatusBadge status={website.status} />
-              <WebsiteReviewStatusBadge status={website.reviewStatus} />
               {website.isFeatured ? (
                 <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
                   精选展示

@@ -1,15 +1,5 @@
 import type { AdType, WebsiteStatus } from "./website"
 
-export const WEBSITE_REVIEW_STATUSES = [
-  "pending",
-  "under_review",
-  "approved",
-  "rejected",
-  "changes_requested",
-] as const
-
-export type WebsiteReviewStatus = (typeof WEBSITE_REVIEW_STATUSES)[number]
-
 export interface WebsiteTagSummary {
   id: string
   name: string
@@ -41,9 +31,7 @@ export interface WebsiteAdminListItem {
   rating?: number | null
   visitCount: number
   isFeatured: boolean
-  isPublic: boolean
   status: WebsiteStatus
-  reviewStatus: WebsiteReviewStatus
   submittedBy?: string | null
   notes?: string | null
   faviconUrl?: string | null
@@ -63,11 +51,9 @@ export interface WebsiteAdminDetail extends WebsiteAdminListItem {
 export interface WebsiteAdminListParams {
   search?: string
   status?: WebsiteStatus | "all"
-  reviewStatus?: WebsiteReviewStatus | "all"
   categoryId?: string
   tagId?: string
   isFeatured?: boolean
-  isPublic?: boolean
   isAd?: boolean
   adType?: AdType | "all"
   includeAds?: boolean
@@ -100,9 +86,7 @@ export interface WebsiteAdminCreateInput {
   rating?: number
   visitCount?: number
   isFeatured?: boolean
-  isPublic?: boolean
   status?: WebsiteStatus
-  reviewStatus?: WebsiteReviewStatus
   faviconUrl?: string | null
   screenshotUrl?: string | null
   notes?: string
@@ -114,14 +98,6 @@ export type WebsiteAdminUpdateInput = Partial<WebsiteAdminCreateInput>
 
 export interface WebsiteStatusUpdateInput {
   status?: WebsiteStatus
-  reviewStatus?: WebsiteReviewStatus
   isFeatured?: boolean
-  isPublic?: boolean
-  notes?: string | null
-}
-
-export interface WebsiteBulkReviewInput {
-  ids: string[]
-  reviewStatus: Extract<WebsiteReviewStatus, "approved" | "rejected" | "under_review" | "changes_requested">
   notes?: string | null
 }

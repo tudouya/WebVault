@@ -13,7 +13,7 @@ interface UseHomepageCategoryTreeState {
 
 export function useHomepageCategoryTree(): UseHomepageCategoryTreeState {
   const [categories, setCategories] = useState<CategoryNode[]>([])
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [refreshToken, setRefreshToken] = useState(0)
 

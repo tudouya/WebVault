@@ -12,17 +12,6 @@ import { CategoryFilters } from "./category-filters"
 import { CategoryStats } from "./category-stats"
 import { CategoryTreePanel } from "./category-tree-panel"
 
-// TODO: 迁移到使用真实 API 调用
-const mockCategoryTree: CategoryNode[] = [];
-const mockCategoryStats = {
-  total: 0,
-  active: 0,
-  inactive: 0,
-  archived: 0,
-  topLevel: 0,
-  hidden: 0,
-};
-
 type FormState =
   | { type: "create" }
   | { type: "edit"; category: CategoryNode }
@@ -58,13 +47,15 @@ export function CategoriesPage() {
         }
 
         const payload = (await response.json()) as { data?: CategoryListPayload }
-        const value: CategoryListPayload = payload?.data ?? { tree: mockCategoryTree, stats: mockCategoryStats }
-        setData(value)
+        if (!payload?.data) {
+          throw new Error("响应缺少分类数据")
+        }
+        setData(payload.data)
       } catch (fetchError) {
         if (isAbortError(fetchError)) return
         console.error(fetchError)
-        setError("分类数据加载失败，将使用演示数据")
-        setData({ tree: mockCategoryTree, stats: mockCategoryStats })
+        setError("分类数据加载失败，请稍后再试")
+        setData(null)
       } finally {
         if (!options?.signal) {
           setLoading(false)
@@ -85,8 +76,8 @@ export function CategoriesPage() {
     return () => controller.abort()
   }, [fetchCategories])
 
-  const treeData = data?.tree ?? mockCategoryTree
-  const stats = data?.stats ?? mockCategoryStats
+  const treeData = useMemo(() => data?.tree ?? [], [data])
+  const stats = useMemo(() => data?.stats ?? null, [data])
 
   const selectedCategory = useMemo(() => {
     if (!selectedId) return null
@@ -136,7 +127,13 @@ export function CategoriesPage() {
         </Button>
       </div>
 
-      <CategoryStats stats={stats} />
+      {stats ? (
+        <CategoryStats stats={stats} />
+      ) : (
+        <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+          {loading ? "统计数据加载中..." : error ? "暂时无法获取分类统计" : "暂无分类统计数据"}
+        </div>
+      )}
 
       <CategoryFilters
         onSearch={setSearch}
@@ -154,7 +151,7 @@ export function CategoriesPage() {
               <div className="space-y-2 text-sm text-muted-foreground">
                 <p>加载分类数据中...</p>
               </div>
-            ) : (
+            ) : treeData.length > 0 ? (
               <CategoryTreePanel
                 categories={treeData}
                 selectedId={selectedId}
@@ -164,6 +161,10 @@ export function CategoriesPage() {
                 }}
                 expandInstruction={expandInstruction}
               />
+            ) : (
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>暂无分类数据</p>
+              </div>
             )}
             {error ? <p className="mt-4 text-sm text-amber-600">{error}</p> : null}
           </CardContent>

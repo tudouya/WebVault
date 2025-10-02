@@ -30,7 +30,7 @@ import {
   ErrorBoundaryProps,
   ErrorFallbackProps,
 } from './ErrorBoundary';
-import { WebsiteFilters } from '../types/website';
+import { SearchPageFilters } from '../types/website';
 
 /**
  * 搜索特定的错误类型枚举
@@ -566,7 +566,7 @@ export function useSearchErrorHandler() {
   
   const handleSearchError = React.useCallback((error: Error, context?: {
     searchQuery?: string;
-    filters?: Partial<WebsiteFilters>;
+    filters?: Partial<SearchPageFilters>;
     page?: number;
   }) => {
     setSearchError(error);

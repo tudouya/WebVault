@@ -11,6 +11,7 @@ export interface CategoryNode {
   displayOrder: number
   status: CategoryStatus
   children?: CategoryNode[]
+  directWebsiteCount?: number
   websiteCount?: number
   createdAt: string
   updatedAt: string

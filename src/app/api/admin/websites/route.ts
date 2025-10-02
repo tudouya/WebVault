@@ -5,7 +5,6 @@ import {
   websiteAdminCreateSchema,
 } from "@/features/websites/schemas"
 import type { WebsiteAdminListParams } from "@/features/websites/types/admin"
-import { WEBSITE_REVIEW_STATUSES } from "@/features/websites/types/admin"
 import type { WebsiteStatus } from "@/features/websites/types"
 import { websitesAdminService } from "@/lib/services/websitesAdminService"
 
@@ -107,16 +106,13 @@ function parseListParams(url: string): WebsiteAdminListParams {
   const { searchParams } = new URL(url)
 
   const status = parseStatus(searchParams.get("status"))
-  const reviewStatus = parseReviewStatus(searchParams.get("reviewStatus"))
 
   const result: WebsiteAdminListParams = {
     search: normalize(searchParams.get("search")),
     status,
-    reviewStatus,
     categoryId: normalize(searchParams.get("categoryId")),
     tagId: normalize(searchParams.get("tagId")),
     isFeatured: parseBoolean(searchParams.get("isFeatured")),
-    isPublic: parseBoolean(searchParams.get("isPublic")),
     isAd: parseBoolean(searchParams.get("isAd")),
     includeAds: parseBoolean(searchParams.get("includeAds")),
     adType: normalize(searchParams.get("adType")) as WebsiteAdminListParams["adType"],
@@ -134,18 +130,10 @@ function parseListParams(url: string): WebsiteAdminListParams {
 function parseStatus(value: string | null): WebsiteStatus | "all" {
   if (!value) return "all"
   const normalized = value.trim().toLowerCase()
-  if (["active", "inactive", "pending", "rejected"].includes(normalized)) {
+  if (["draft", "published"].includes(normalized)) {
     return normalized as WebsiteStatus
   }
   return "all"
-}
-
-function parseReviewStatus(value: string | null): WebsiteAdminListParams["reviewStatus"] {
-  if (!value) return "all"
-  const normalized = value.trim().toLowerCase()
-  return WEBSITE_REVIEW_STATUSES.includes(normalized as (typeof WEBSITE_REVIEW_STATUSES)[number])
-    ? (normalized as WebsiteAdminListParams["reviewStatus"])
-    : "all"
 }
 
 function parseBoolean(value: string | null): boolean | undefined {

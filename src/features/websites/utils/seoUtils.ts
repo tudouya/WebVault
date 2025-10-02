@@ -101,10 +101,10 @@ export function generateWebsiteMetadata(
       
       // Robots configuration
       robots: {
-        index: website.is_public && website.status === 'active',
+        index: website.status === 'published',
         follow: true,
         googleBot: {
-          index: website.is_public && website.status === 'active',
+          index: website.status === 'published',
           follow: true,
           'max-video-preview': -1,
           'max-image-preview': 'large',
